@@ -587,18 +587,6 @@
   </aside>
 
   <script>
-    /*
-      GANTI DUA NILAI DI BAWAH INI.
-
-      Project URL:
-      https://nama-project-anda.supabase.co
-
-      Jangan gunakan:
-      https://nama-project-anda.supabase.co/rest/v1/
-
-      Gunakan publishable key / anon key.
-      Jangan gunakan service_role key di browser.
-    */
     const CFG = {
       url: "https://yeraezbxsvwryuilyghe.supabase.co",
       key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllcmFlemJ4c3Z3cnl1aWx5Z2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzMTgwODksImV4cCI6MjEwNTg5NDA4OX0.R30XiOrq8G-DDlo4JkAGBoD9nJi4qg9x3vS24r6xAy4"
@@ -689,29 +677,20 @@
     }
 
     /*
-      Normalisasi hasil tabel kawasan:
-
-      Database:
-      - nkws    = nama kawasan
-      - nupt    = UPT
-      - npulau  = regional/pulau
-
-      Antarmuka memakai:
-      - nama
-      - upt
-      - pulau
+      Normalisasi tabel kawasan menggunakan field nkws (teks), nupt, npulau.
+      Key objek KAW menggunakan nkws itu sendiri karena nkws bertipe teks.
     */
     function normalisasiKawasan(rows = []) {
       return Object.fromEntries(
         rows.map((row) => {
           const kawasan = {
             ...row,
-            nama: row.nkws ?? row.nkws ?? "",
-            upt: row.nupt ?? row.nupt ?? "",
-            pulau: row.npulau ?? row.pulau ?? ""
+            nama: row.nkws ?? "",
+            upt: row.nupt ?? "",
+            pulau: row.npulau ?? ""
           };
 
-          return [kawasan.id, kawasan];
+          return [kawasan.nkws, kawasan];
         })
       );
     }
@@ -724,40 +703,36 @@
       };
 
       KAW = {
-        1: {
-          id: 1,
-          nama: "TN Contoh A",
-          upt: "Balai TN Contoh A",
-          pulau: "Sumatera"
+        "TN Contoh A": {
+          nkws: "TN Contoh A",
+          nupt: "Balai TN Contoh A",
+          npulau: "Sumatera"
         },
-        2: {
-          id: 2,
-          nama: "CA Contoh B",
-          upt: "Balai KSDA Contoh",
-          pulau: "Kalimantan"
+        "CA Contoh B": {
+          nkws: "CA Contoh B",
+          nupt: "Balai KSDA Contoh",
+          npulau: "Kalimantan"
         },
-        3: {
-          id: 3,
-          nama: "SM Contoh C",
-          upt: "Balai KSDA Contoh",
-          pulau: "Sulawesi"
+        "SM Contoh C": {
+          nkws: "SM Contoh C",
+          nupt: "Balai KSDA Contoh",
+          npulau: "Sulawesi"
         },
-        4: {
-          id: 4,
-          nama: "TWA Contoh D",
-          upt: "Balai KSDA Contoh",
-          pulau: "Jawa"
+        "TWA Contoh D": {
+          nkws: "TWA Contoh D",
+          nupt: "Balai KSDA Contoh",
+          npulau: "Jawa"
         }
       };
 
-      const r = (t, k, s, l) => ({
+      const r = (t, kName, s, l, idx) => ({
         id: crypto.randomUUID?.() ?? Math.random(),
         tanggal: d(t),
-        nkws: k,
+        nkws: kName,
         status: s,
         luas: l,
-        lat: -2.8 + k * 0.01,
-        lon: 113 + k * 0.01,
+        lat: -2.8 + idx * 0.01,
+        lon: 113 + idx * 0.01,
         upaya: "Tim melakukan pengecekan lapangan.",
         rencana: "Pemantauan berkala.",
         personel: "4 orang",
@@ -766,18 +741,18 @@
       });
 
       LAP = [
-        r(9, 1, "upaya pemadaman", 8),
-        r(9, 1, "proses groundcheck", 8),
-        r(8, 1, "upaya pemadaman", 15),
-        r(5, 1, "proses groundcheck", 15),
-        r(3, 1, "sudah padam", 15),
-        r(6, 2, "upaya pemadaman", 4),
-        r(6, 2, "upaya pemadaman", 6),
-        r(2, 2, "proses groundcheck", 10),
-        r(4, 3, "false hotspot", 0),
-        r(1, 4, "perlu konfirmasi", 0),
-        r(0, 4, "upaya pemadaman", 3),
-        r(0, 2, "sudah padam", 10)
+        r(9, "TN Contoh A", "upaya pemadaman", 8, 1),
+        r(9, "TN Contoh A", "proses groundcheck", 8, 1),
+        r(8, "TN Contoh A", "upaya pemadaman", 15, 1),
+        r(5, "TN Contoh A", "proses groundcheck", 15, 1),
+        r(3, "TN Contoh A", "sudah padam", 15, 1),
+        r(6, "CA Contoh B", "upaya pemadaman", 4, 2),
+        r(6, "CA Contoh B", "upaya pemadaman", 6, 2),
+        r(2, "CA Contoh B", "proses groundcheck", 10, 2),
+        r(4, "SM Contoh C", "false hotspot", 0, 3),
+        r(1, "TWA Contoh D", "perlu konfirmasi", 0, 4),
+        r(0, "TWA Contoh D", "upaya pemadaman", 3, 4),
+        r(0, "CA Contoh B", "sudah padam", 10, 2)
       ];
     }
 
@@ -933,7 +908,6 @@
             const nama =
               feature.properties?.NKWS ??
               feature.properties?.nkws ??
-              feature.properties?.nkws ??
               feature.properties?.NAMOBJ ??
               "";
 
@@ -976,7 +950,7 @@
         const kawasan = KAW[report.nkws] || {};
 
         const popup = `
-          <b>${esc(kawasan.nkws || "-")}</b><br>
+          <b>${esc(kawasan.nkws || report.nkws || "-")}</b><br>
           ${esc(kawasan.nupt || "-")}<br>
           ${esc(report.tanggal)} · ${esc(report.status)}
           ${report.luas ? ` · ${esc(report.luas)} ha` : ""}
@@ -1084,11 +1058,7 @@
       const byKawasan = {};
 
       filteredReports.forEach((report) => {
-        if (!KAW[report.nkws]) {
-          console.warn(
-            "Laporan memiliki nkws yang tidak ditemukan:",
-            report
-          );
+        if (!report.nkws) {
           return;
         }
 
@@ -1104,14 +1074,13 @@
       });
 
       const rows = Object.entries(byKawasan)
-        .map(([id, reportsByDate]) => ({
-          id,
-          k: KAW[id],
+        .map(([nkws, reportsByDate]) => ({
+          nkws,
+          k: KAW[nkws] || { nkws, nupt: "-", pulau: "-" },
           tl: buildTimeline(reportsByDate)
         }))
         .filter(
           (row) =>
-            row.k &&
             row.tl &&
             Object.keys(row.tl.display).length
         );
@@ -1120,7 +1089,7 @@
         (ST[b.tl.current]?.[1] || 0) -
           (ST[a.tl.current]?.[1] || 0) ||
         (a.k?.nupt || "").localeCompare(b.k?.nupt || "", "id") ||
-        (a.k?.nkws || "").localeCompare(b.k?.nkws || "", "id")
+        a.nkws.localeCompare(b.nkws, "id")
       );
 
       const latestDate = filteredReports.length
@@ -1206,8 +1175,7 @@
               .map(
                 (date) => `
                   <th>
-                    ${date.slice(8)}<br>
-                    ${date.slice(5, 7)}
+                    ${date.slice(8)}<br>${date.slice(5, 7)}
                   </th>
                 `
               )
@@ -1219,7 +1187,7 @@
         html += `
           <tr>
             <td class="n k1">${esc(row.k.nupt)}</td>
-            <td class="n k2">${esc(row.k.nkws)}</td>
+            <td class="n k2">${esc(row.nkws)}</td>
         `;
 
         columns.forEach((date) => {
@@ -1237,7 +1205,7 @@
               class="c ${automatic ? "a" : ""}"
               style="background-color:${ST[status][0]}"
               title="${esc(date)}: ${esc(status)}"
-              data-k="${esc(row.id)}"
+              data-k="${encodeURIComponent(row.nkws)}"
               data-d="${esc(date)}"
             ></td>
           `;
@@ -1287,7 +1255,7 @@
                 (row) => `
                   <li>
                     <span>
-                      ${esc(row.k.nkws)}
+                      ${esc(row.nkws)}
                       <span class="mut">· ${esc(row.k.nupt)}</span>
                     </span>
 
@@ -1312,21 +1280,21 @@
       const cell = event.target.closest("td.c[data-k]");
 
       if (cell) {
-        openPanel(cell.dataset.k, cell.dataset.d);
+        openPanel(decodeURIComponent(cell.dataset.k), cell.dataset.d);
       }
     });
 
-    function openPanel(kawasanId, date) {
+    function openPanel(nkwsName, date) {
       const reports = LAP.filter(
         (report) =>
-          String(report.nkws) === String(kawasanId) &&
+          String(report.nkws) === String(nkwsName) &&
           report.tanggal === date
       );
 
-      const kawasan = KAW[kawasanId] || {};
+      const kawasan = KAW[nkwsName] || {};
 
       $("pc").innerHTML = `
-        <h3>${esc(kawasan.nkws || "-")}</h3>
+        <h3>${esc(nkwsName)}</h3>
         <p class="mut">
           ${esc(kawasan.nupt || "-")} · ${esc(date)}
         </p>
@@ -1345,7 +1313,7 @@
                       <dd>${esc(report.status)}</dd>
 
                       <dt>Koordinat</dt>
-                      <dd>${esc(report.lat)}, ${esc(report.lon)}</dd>
+                      <dd>${esc(report.lat)},${esc(report.lon)}</dd>
 
                       <dt>Luas (ha)</dt>
                       <dd>${esc(report.luas ?? "-")}</dd>
@@ -1385,30 +1353,6 @@
     $("px").onclick = closePanel;
     $("ov").onclick = closePanel;
 
-    /*
-      Mengambil data dari Supabase.
-
-      kawasan:
-      - id
-      - nkws
-      - nupt
-      - npulau
-
-      laporan:
-      - id
-      - tanggal
-      - nkws
-      - status
-      - lat
-      - lon
-      - luas
-      - upaya
-      - rencana
-      - personel
-      - kendala
-      - kebutuhan
-      - diubah
-    */
     async function load() {
       if (!map) {
         initMap();
@@ -1431,7 +1375,7 @@
           const [resKawasan, resLaporan] = await Promise.all([
             sb
               .from("kawasan")
-              .select("id, nkws, nupt, npulau")
+              .select("nkws, nupt, npulau")
               .order("nupt", { ascending: true })
               .order("nkws", { ascending: true }),
 
@@ -1472,13 +1416,7 @@
 
           LAP = (resLaporan.data || []).map((report) => ({
             ...report,
-
-            /*
-              UPT berasal dari master kawasan.
-              Jika kolom upt masih ada di tabel laporan, kode ini tetap
-              akan memakai nilai fallback tersebut bila kawasan tidak ditemukan.
-            */
-            upt: KAW[report.nkws]?.nupt ?? report.nupt ?? ""
+            upt: KAW[report.nkws]?.nupt ?? ""
           }));
 
           console.table(Object.values(KAW));
@@ -1505,8 +1443,8 @@
               <br>1. CFG.url harus memakai Project URL tanpa <code>/rest/v1</code>.
               <br>2. CFG.key harus publishable key atau anon key yang benar.
               <br>3. Tabel harus bernama <code>kawasan</code> dan <code>laporan</code>.
-              <br>4. Tabel kawasan memiliki kolom <code>id</code>, <code>nkws</code>, <code>nupt</code>, <code>npulau</code>.
-              <br>5. Tabel laporan memiliki kolom <code>tanggal</code>, <code>nkws</code>, <code>status</code>, <code>lat</code>, dan <code>lon</code>.
+              <br>4. Tabel kawasan memiliki kolom teks <code>nkws</code>, <code>nupt</code>, <code>npulau</code>.
+              <br>5. Tabel laporan memiliki kolom <code>tanggal</code>, relasi teks <code>nkws</code>, <code>status</code>, <code>lat</code>, dan <code>lon</code>.
               <br>6. RLS policy harus mengizinkan <code>SELECT</code>.
               <br>7. Lihat Browser Console dengan tombol F12 untuk error lengkap.
             </div>
@@ -1816,15 +1754,13 @@
 
         const kawasanPilihan = Object.entries(KAW)
           .filter(([, kawasan]) => kawasan.nupt === selectedUpt)
-          .sort((a, b) =>
-            (a[1].nkws || "").localeCompare(b[1].nkws || "", "id")
-          );
+          .sort((a, b) => a[0].localeCompare(b[0], "id"));
 
         $("kw").innerHTML = kawasanPilihan
           .map(
-            ([id, kawasan]) => `
-              <option value="${esc(id)}">
-                ${esc(kawasan.nkws)}
+            ([nkws]) => `
+              <option value="${esc(nkws)}">
+                ${esc(nkws)}
               </option>
             `
           )
@@ -1896,16 +1832,16 @@
       $("f").onsubmit = async (event) => {
         event.preventDefault();
 
-        const selectedKawasanId = Number($("kw").value);
+        const selectedNkws = $("kw").value;
 
-        if (!selectedKawasanId) {
+        if (!selectedNkws) {
           $("msg").textContent = "Pilih kawasan terlebih dahulu.";
           return;
         }
 
         const shared = {
           tanggal: $("tg").value,
-          nkws: selectedKawasanId,
+          nkws: selectedNkws,
           diubah: new Date().toISOString()
         };
 
@@ -2006,7 +1942,7 @@
 
       const duplicateBox = $("dup");
 
-      if (!$("tg").value || !$("kw").value) {
+      if (!$("tg").value \vert{}\vert{} !$("kw").value) {
         duplicateBox.innerHTML = "";
         return;
       }
@@ -2038,7 +1974,7 @@
               .map(
                 (report) => `
                   <button type="button" data-id="${esc(report.id)}">
-                    Edit titik ${esc(report.lat)}, ${esc(report.lon)}
+                    Edit titik ${esc(report.lat)},${esc(report.lon)}
                     (${esc(report.status)})
                   </button>
                 `
