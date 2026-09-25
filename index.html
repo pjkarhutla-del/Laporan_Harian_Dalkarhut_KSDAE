@@ -1,279 +1,2087 @@
 <!doctype html>
-<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Pemantauan Kebakaran Kawasan</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-<style>
-:root{--bg:#f2f4f3;--ink:#1b2422;--mut:#5d6b67;--line:#d3dad7;--pri:#1f4a3d;--w:#fff;--sh:0 8px 30px rgba(0,0,0,.15)}
-@media(prefers-color-scheme:dark){:root{--bg:#141a18;--ink:#e7ecea;--mut:#9aa8a3;--line:#2c3834;--pri:#6fb49c;--w:#1c2421}}
-*{box-sizing:border-box}html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.5 "Public Sans",system-ui,sans-serif;padding-top:env(safe-area-inset-top,0)}
-header{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--w);position:sticky;top:0;z-index:5}
-h1{font-size:18px;margin:0;font-weight:700}nav{display:flex;gap:4px}
-button,select,input,textarea{font:inherit;color:inherit}
-nav button{border:0;background:none;padding:6px 12px;border-radius:6px;cursor:pointer}
-nav button[aria-current=true]{background:var(--pri);color:#fff}
-main{padding:20px;max-width:1200px;margin:auto}
-.mut{color:var(--mut);font-size:13px}
-h2{font-size:15px;margin:28px 0 10px}h3.f{font-size:14px;margin:0 0 10px}
-#cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.card{background:var(--w);border:1px solid var(--line);border-left:4px solid var(--c,var(--pri));border-radius:8px;padding:10px 12px}
-.card b{display:block;font-size:24px}.card span{font-size:12px;color:var(--mut)}
-.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
-select,input,textarea{border:1px solid var(--line);background:var(--w);border-radius:6px;padding:7px 9px;width:100%}
-.bar select{width:auto}
-.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--w)}
-table{border-collapse:collapse;width:100%}
-th,td{padding:0;border-bottom:1px solid var(--line);font-size:12px;text-align:center}
-th{color:var(--mut);font-weight:500;padding:6px 4px;min-width:32px}
-td.n,th.n{text-align:left;padding:6px 10px;min-width:150px;position:sticky;background:var(--w)}
-td.n.k1,th.n.k1{left:0;min-width:170px}td.n.k2,th.n.k2{left:170px;min-width:190px;border-right:1px solid var(--line)}
-td.n small{display:block;color:var(--mut)}
-td.c{height:32px;border-left:1px solid var(--w);cursor:pointer;position:relative}
-td.c.a::after{content:"!";color:#fff;font-weight:800;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px}
-#leg{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:13px}
-#leg i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-2px}
-#map{height:420px;border-radius:8px;margin-bottom:6px}
-#mapbar{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:13px;margin-bottom:8px}
-#mapbar label{display:flex;align-items:center;gap:5px;color:var(--ink)}
-.mk{display:inline-block;width:12px;height:12px;border-radius:50%;border:1px solid #fff;vertical-align:-2px;margin-right:2px}
-.mt{display:inline-block;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid #d33a2f;vertical-align:-2px;margin-right:2px}
-ul.stat{list-style:none;margin:0 0 18px;padding:0;background:var(--w);border:1px solid var(--line);border-radius:8px}
-ul.stat li{padding:9px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-ul.stat li:last-child{border-bottom:0}
-.pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;max-width:900px;margin-bottom:18px}
-.split{display:grid;grid-template-columns:minmax(240px,1fr) minmax(280px,1.5fr);gap:20px;align-items:start}
-@media(max-width:720px){.split{grid-template-columns:1fr}}
-.pane{background:var(--w);border:1px solid var(--line);border-radius:8px;padding:14px}
-label{display:block;font-size:13px;color:var(--mut);margin-bottom:12px}label>*{margin-top:4px;color:var(--ink)}
-.full{grid-column:1/-1}
-.btn{background:var(--pri);color:#fff;border:0;border-radius:6px;padding:9px 18px;cursor:pointer;font-weight:600}
-.btn2{background:none;border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer;font-size:13px}
-.note{background:var(--w);border:1px solid #e8b800;border-left-width:5px;border-radius:6px;padding:10px 14px;margin-bottom:12px}
-.note button{margin:6px 8px 0 0;border:1px solid var(--line);background:none;border-radius:6px;padding:4px 10px;cursor:pointer}
-#msg{margin:10px 0;font-weight:600}
-.trow{display:grid;grid-template-columns:1.2fr 1.2fr 1.6fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
-.trow input,.trow select{margin:0}.trow button{border:0;background:none;color:var(--mut);cursor:pointer;font-size:16px}
-@media(max-width:560px){.trow{grid-template-columns:1fr 1fr}}
-#ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:9}
-#pnl{position:fixed;right:0;top:0;bottom:0;width:min(380px,92vw);background:var(--w);box-shadow:var(--sh);transform:translateX(100%);transition:transform .2s;z-index:10;overflow-y:auto;padding:18px;padding-top:calc(18px + env(safe-area-inset-top,0))}
-#pnl.open,#ov.open{transform:none;display:block}
-#pnl h3{margin:0 0 4px}#pnl dt{color:var(--mut);font-size:12px;margin-top:10px}#pnl dd{margin:2px 0 0;white-space:pre-wrap}
-#pnl .x{float:right;background:none;border:0;font-size:20px;cursor:pointer;color:var(--mut)}
-:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
-</style></head><body>
-<header><h1>Pemantauan kebakaran kawasan</h1>
-<nav><button data-t="dash" aria-current="true">Dashboard</button><button data-t="form">Isi laporan</button></nav></header>
-<main>
-<section id="dash">
-<div id="cards"></div>
-<div class="bar"><label>Rentang <select id="rng"><option value="7">7 hari</option><option value="14" selected>14 hari</option><option value="30">30 hari</option></select></label>
-<label>Regional <select id="fp"></select></label><label>UPT <select id="fu"></select></label></div>
-<h2>Peta lokasi</h2>
-<div id="mapbar">
-<label><input type="checkbox" id="lp" checked><span class="mt"></span>Upaya pemadaman</label>
-<label><input type="checkbox" id="lg" checked><span class="mk" style="background:#e8b800"></span>Proses groundcheck</label>
-<label><input type="checkbox" id="ld" checked><span class="mk" style="background:#2f6fd0"></span>Sudah padam</label>
-<label><input type="checkbox" id="lh" checked><span class="mk" style="width:8px;height:8px;background:#e8291f"></span>Titik hotspot (SIPONGI)</label>
-<label><input type="checkbox" id="lk" checked><span style="display:inline-block;width:14px;height:2px;background:#2f6fd0;vertical-align:2px"></span>Batas kawasan</label>
-<button type="button" class="btn2" id="rfh">Perbarui titik panas</button><span class="mut" id="hscount"></span>
-</div>
-<div id="map"></div>
-<div class="scroll" id="mx"></div><div id="leg"></div>
-<h2>Status per kawasan pada tanggal terbaru</h2>
-<div id="lists"></div>
-</section>
-<section id="form" hidden></section>
-</main>
-<div id="ov"></div>
-<aside id="pnl" aria-hidden="true"><button class="x" id="px" aria-label="Tutup">×</button><div id="pc"></div></aside>
-<script>
-// Isi dari Supabase: Project Settings > API. Kosong = mode demo (data contoh, hanya dashboard).
-const CFG={url:"https://yeraezbxsvwryuilyghe.supabase.co/rest/v1/",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllcmFlemJ4c3Z3cnl1aWx5Z2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzMTgwODksImV4cCI6MjEwNTg5NDA4OX0.R30XiOrq8G-DDlo4JkAGBoD9nJi4qg9x3vS24r6xAy4"};
-const ST={"upaya pemadaman":["#d33a2f",5],"proses groundcheck":["#e8b800",4],"perlu konfirmasi":["#7c4dbd",3],"sudah padam":["#2f6fd0",2],"false hotspot":["#8b949e",1]};
-const ORDER=["upaya pemadaman","proses groundcheck","perlu konfirmasi","sudah padam","false hotspot"];
-const OPEN=s=>["upaya pemadaman","proses groundcheck","perlu konfirmasi"].includes(s);
-const TX=[["upaya","Upaya yang sudah dilakukan"],["rencana","Rencana tindak lanjut"],["personel","Jumlah personel"],["kendala","Kendala"],["kebutuhan","Kebutuhan"]];
-const $=id=>document.getElementById(id),iso=d=>d.toLocaleDateString("sv"),today=iso(new Date());
-const sb=CFG.url?supabase.createClient(CFG.url,CFG.key):null;
-let KAW={},LAP=[],editId=null,tCount=0;
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Pemantauan Kebakaran Kawasan</title>
 
-function span(a,b){const o=[];for(let x=new Date(a+"T00:00");iso(x)<=b;x.setDate(x.getDate()+1))o.push(iso(x));return o}
-function dayDiff(a,b){return Math.round((new Date(b)-new Date(a))/86400000)}
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-// Aturan matriks: hari berisi -> status tertinggi (hierarki); hari kosong -> "perlu konfirmasi" otomatis bila status terakhir belum selesai
-function buildTimeline(by){
-  const ks=Object.keys(by).sort();if(!ks.length)return null;const o={};let prev=null;
-  for(const d of span(ks[0],today)){const l=by[d];
-    if(l){prev=l.reduce((a,b)=>ST[a][1]>=ST[b][1]?a:b);o[d]=[prev,0]}
-    else if(prev&&OPEN(prev)){prev="perlu konfirmasi";o[d]=[prev,1]}
-    else prev=null}
-  const keys=Object.keys(o).sort();if(!keys.length)return{display:o,current:null};
-  let runs=[[keys[0]]];
-  for(let i=1;i<keys.length;i++){if(dayDiff(keys[i-1],keys[i])===1)runs.at(-1).push(keys[i]);else runs.push([keys[i]])}
-  const last=runs.at(-1),start=last[0],end=last.at(-1);
-  return{display:o,current:o[end][0],start,end,days:dayDiff(start,end)+1};
-}
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
+  >
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 
-function demo(){const d=n=>{const x=new Date();x.setDate(x.getDate()-n);return iso(x)};
-  KAW={1:{nama:"TN Contoh A",upt:"Balai TN Contoh A",pulau:"Sumatera"},2:{nama:"CA Contoh B",upt:"Balai KSDA Contoh",pulau:"Kalimantan"},3:{nama:"SM Contoh C",upt:"Balai KSDA Contoh",pulau:"Sulawesi"},4:{nama:"TWA Contoh D",upt:"Balai KSDA Contoh",pulau:"Jawa"}};
-  const r=(t,k,s,l)=>({tanggal:d(t),kawasan_id:k,upt:KAW[k].upt,status:s,luas:l,lat:-2.8+k*.01,lon:113+k*.01,upaya:"Tim melakukan pengecekan lapangan.",rencana:"Pemantauan berkala.",personel:"4 orang",kendala:"Sumber air terbatas.",kebutuhan:"Sarpras tambahan."});
-  LAP=[r(9,1,"upaya pemadaman",8),r(9,1,"proses groundcheck",8),r(8,1,"upaya pemadaman",15),r(5,1,"proses groundcheck",15),r(3,1,"sudah padam",15),
-       r(6,2,"upaya pemadaman",4),r(6,2,"upaya pemadaman",6),r(2,2,"proses groundcheck",10),
-       r(4,3,"false hotspot",0),r(1,4,"perlu konfirmasi",0),r(0,4,"upaya pemadaman",3),r(0,2,"sudah padam",10)]}
+  <style>
+    :root {
+      --bg: #f2f4f3;
+      --ink: #1b2422;
+      --mut: #5d6b67;
+      --line: #d3dad7;
+      --pri: #1f4a3d;
+      --w: #fff;
+      --sh: 0 8px 30px rgba(0, 0, 0, .15);
+    }
 
-let map,layers;
-function triIcon(){return L.divIcon({className:"",html:'<div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:14px solid #d33a2f;filter:drop-shadow(0 0 1px #fff)"></div>',iconSize:[14,14],iconAnchor:[7,11]})}
-function initMap(){
-  if(typeof L==="undefined"){$("map").innerHTML='<p class="mut" style="padding:16px">Peta tidak bisa dimuat: pustaka Leaflet gagal diakses (periksa koneksi internet atau pemblokir skrip).</p>';return}
-  map=L.map("map").setView([-2,118],5);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap",maxZoom:18}).addTo(map);
-  layers={pemadaman:L.layerGroup().addTo(map),groundcheck:L.layerGroup().addTo(map),padam:L.layerGroup().addTo(map),hotspot:L.layerGroup().addTo(map),batas:L.layerGroup().addTo(map)};
-  const tog=(id,key)=>$(id).onchange=()=>$(id).checked?map.addLayer(layers[key]):map.removeLayer(layers[key]);
-  tog("lp","pemadaman");tog("lg","groundcheck");tog("ld","padam");tog("lh","hotspot");tog("lk","batas");
-  $("rfh").onclick=loadHotspot;loadBatas();
-  setTimeout(()=>map.invalidateSize(),200)}
-async function loadBatas(){
-  try{const j=await(await fetch("kawasan.geojson")).json();
-    L.geoJSON(j,{style:{color:"#2f6fd0",weight:1.5,fillOpacity:0},onEachFeature:(f,l)=>{const nm=f.properties?.NKWS||f.properties?.nama||f.properties?.NAMOBJ||"";if(nm)l.bindPopup(nm)}}).addTo(layers.batas)}
-  catch(e){/* kawasan.geojson belum ada di repo — lapisan batas dilewati */}}
-function drawPoints(flt){
-  if(!map)return;layers.pemadaman.clearLayers();layers.groundcheck.clearLayers();layers.padam.clearLayers();
-  const map2={"upaya pemadaman":"pemadaman","proses groundcheck":"groundcheck","sudah padam":"padam"};
-  flt.forEach(r=>{const g=map2[r.status];if(!g||r.lat==null||r.lon==null)return;
-    const k=KAW[r.kawasan_id]||{};const pop=`<b>${k.nama||""}</b><br>${k.upt||""}<br>${r.tanggal} · ${r.status}${r.luas?` · ${r.luas} ha`:""}`;
-    const m=g==="pemadaman"?L.marker([r.lat,r.lon],{icon:triIcon()}):L.circleMarker([r.lat,r.lon],{radius:6,color:"#fff",weight:1,fillColor:g==="padam"?"#2f6fd0":"#e8b800",fillOpacity:1});
-    m.bindPopup(pop).addTo(layers[g])})}
-async function loadHotspot(){$("hscount").textContent="Memuat...";
-  try{const url="https://opsroom.sipongidata.my.id/api/opsroom/indoHotspot?wilayah=IN&filterperiode=false&from=&to=&late=24&satelit[]=NASA-MODIS&satelit[]=NASA-SNPP&satelit[]=NASA-NOAA20&confidence[]=low&confidence[]=medium&confidence[]=high&provinsi=&kabkota=";
-    const j=await(await fetch(url)).json();layers.hotspot.clearLayers();
-    j.features.forEach(f=>{const[lon,lat]=f.geometry.coordinates,p=f.properties;
-      L.circleMarker([lat,lon],{radius:3,color:"#fff",weight:1,fillColor:"#e8291f",fillOpacity:1})
-        .bindPopup(`Hotspot ${p.sumber||""}<br>${p.date_hotspot||""}<br>${p.desa||""}, ${p.kecamatan||""}, ${p.kabkota||""}`).addTo(layers.hotspot)});
-    $("hscount").textContent=j.features.length+" titik"}
-  catch(e){$("hscount").textContent="Gagal memuat (kemungkinan diblokir CORS oleh browser)"}}
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141a18;
+        --ink: #e7ecea;
+        --mut: #9aa8a3;
+        --line: #2c3834;
+        --pri: #6fb49c;
+        --w: #1c2421;
+      }
+    }
 
-function render(){
-  const nDays=+$("rng").value,f=$("fu").value,fp=$("fp").value,a=new Date();a.setDate(a.getDate()-nDays+1);const cols=span(iso(a),today);
-  const flt=LAP.filter(r=>(!f||r.upt===f)&&(!fp||KAW[r.kawasan_id]?.pulau===fp));
-  drawPoints(flt);
-  const by={};flt.forEach(r=>{((by[r.kawasan_id]??={})[r.tanggal]??=[]).push(r.status)});
-  let rows=Object.entries(by).map(([id,b])=>({id,k:KAW[id],tl:buildTimeline(b)})).filter(x=>x.tl&&Object.keys(x.tl.display).length);
-  rows.sort((a,b)=>(ST[b.tl.current]?.[1]||0)-(ST[a.tl.current]?.[1]||0)||a.k.upt.localeCompare(b.k.upt)||a.k.nama.localeCompare(b.k.nama));
+    * {
+      box-sizing: border-box;
+    }
 
-  const latestDate=flt.length?flt.map(r=>r.tanggal).sort().at(-1):today;
-  const kejadian=flt.filter(r=>r.tanggal===latestDate).length;
-  const cur=s=>rows.filter(x=>x.tl.current===s).length;
-  $("cards").innerHTML=[["Kejadian dilaporkan",kejadian,"tanggal "+latestDate.slice(8)+"/"+latestDate.slice(5,7),"var(--pri)"],
-    ["Kawasan terdampak",rows.filter(x=>x.tl.current&&x.tl.current!=="false hotspot").length,"selain false hotspot","#444"],
-    ["Upaya pemadaman berlangsung",cur("upaya pemadaman"),"belum sudah padam",ST["upaya pemadaman"][0]],
-    ["Proses groundcheck",cur("proses groundcheck"),"belum berubah status",ST["proses groundcheck"][0]],
-    ["Sudah padam",cur("sudah padam"),"status terakhir",ST["sudah padam"][0]]
-  ].map(([t,v,s,c])=>`<div class="card" style="--c:${c}"><b>${v}</b><span>${t} · ${s}</span></div>`).join("");
+    html,
+    body {
+      margin: 0;
+    }
 
-  if(!rows.length){$("mx").innerHTML=`<p style="padding:20px" class="mut">Belum ada laporan pada rentang ini.</p>`;$("lists").innerHTML="";return}
-  let html=`<table><tr><th class="n k1">UPT</th><th class="n k2">Kawasan</th>${cols.map(c=>`<th>${c.slice(8)}<br>${c.slice(5,7)}</th>`).join("")}</tr>`;
-  rows.forEach(x=>{html+=`<tr><td class="n k1">${x.k.upt}</td><td class="n k2">${x.k.nama}</td>${cols.map(c=>{const v=x.tl.display[c];
-    return v?`<td class="c${v[1]?" a":""}" style="background-color:${ST[v[0]][0]}" title="${c}: ${v[0]}" data-k="${x.id}" data-d="${c}"></td>`:`<td class="c"></td>`}).join("")}</tr>`});
-  $("mx").innerHTML=html+`</table>`;
-  $("leg").innerHTML=ORDER.map(s=>`<span><i style="background:${ST[s][0]}"></i>${s}</span>`).join("")+`<span>! = perlu konfirmasi</span>`;
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.5 "Public Sans", system-ui, sans-serif;
+      padding-top: env(safe-area-inset-top, 0);
+    }
 
-  $("lists").innerHTML=ORDER.map(s=>{const l=rows.filter(x=>x.tl.current===s);if(!l.length)return"";
-    return `<h2 style="margin-top:16px"><i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${ST[s][0]};margin-right:7px"></i>${s} (${l.length})</h2><ul class="stat">`+
-      l.map(x=>`<li><span>${x.k.nama} <span class="mut">· ${x.k.upt}</span></span><span>${s==="sudah padam"?`padam dalam ${x.tl.days} hari`:`berlangsung ${x.tl.days} hari`} · mulai ${x.tl.start.slice(8)}/${x.tl.start.slice(5,7)}</span></li>`).join("")+`</ul>`}).join("");
-}
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--w);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
 
-document.addEventListener("click",e=>{const c=e.target.closest("td.c[data-k]");if(c)openPanel(c.dataset.k,c.dataset.d)});
-function openPanel(kid,date){
-  const same=LAP.filter(r=>String(r.kawasan_id)===String(kid)&&r.tanggal===date);
-  $("pc").innerHTML=`<h3>${KAW[kid]?.nama||""}</h3><p class="mut">${KAW[kid]?.upt} · ${date}</p>`+
-    (same.length?same.map(r=>`<dl style="border-top:1px solid var(--line);padding-top:8px;margin-top:8px"><dt>Status</dt><dd>${r.status}</dd><dt>Koordinat</dt><dd>${r.lat}, ${r.lon}</dd><dt>Luas (ha)</dt><dd>${r.luas??"-"}</dd>${TX.map(([k,t])=>r[k]?`<dt>${t}</dt><dd>${r[k]}</dd>`:"").join("")}</dl>`).join("")
-      :`<p class="mut">Tidak ada isian pada tanggal ini (status otomatis).</p>`);
-  $("pnl").classList.add("open");$("ov").classList.add("open");$("pnl").setAttribute("aria-hidden","false")}
-function closePanel(){$("pnl").classList.remove("open");$("ov").classList.remove("open");$("pnl").setAttribute("aria-hidden","true")}
-$("px").onclick=closePanel;$("ov").onclick=closePanel;
+    h1 {
+      font-size: 18px;
+      margin: 0;
+      font-weight: 700;
+    }
 
-async function load(){
-  if(!map)initMap();
-  if(!sb){demo()}
-  else{const[k,l]=await Promise.all([sb.from("kawasan").select("*").limit(1000),sb.from("laporan").select("*").limit(20000)]);
-    if(k.error||l.error){$("mx").innerHTML=`<p style="padding:20px" class="mut">Gagal memuat data: ${k.error?.message||l.error?.message}</p>`;loadHotspot();return}
-    KAW=Object.fromEntries(k.data.map(x=>[x.id,x]));LAP=l.data}
-  const u=[...new Set(Object.values(KAW).map(k=>k.upt))].sort(),p=[...new Set(Object.values(KAW).map(k=>k.pulau))].sort();
-  $("fu").innerHTML=`<option value="">Semua UPT</option>`+u.map(x=>`<option>${x}</option>`).join("");
-  $("fp").innerHTML=`<option value="">Semua regional</option>`+p.map(x=>`<option>${x}</option>`).join("");
-  render();loadHotspot()}
-$("rng").onchange=$("fu").onchange=$("fp").onchange=render;
+    nav {
+      display: flex;
+      gap: 4px;
+    }
 
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
-  document.querySelectorAll("nav button").forEach(x=>x.removeAttribute("aria-current"));b.setAttribute("aria-current","true");
-  $("dash").hidden=b.dataset.t!=="dash";$("form").hidden=b.dataset.t!=="form";if(b.dataset.t==="form")showForm()});
+    button,
+    select,
+    input,
+    textarea {
+      font: inherit;
+      color: inherit;
+    }
 
-// Pengurai teks laporan (heuristik): mencari beberapa pasangan koordinat+status dan label umum
-function parseLaporan(t){
-  const pts=[];
-  for(const m of t.matchAll(/X\s*:?\s*(-?\d{1,3}\.\d+)[^\d\n]{0,15}Y\s*:?\s*(-?\d{1,3}\.\d+)[^()\n]*\(?\s*Status\s*:?\s*([^)\n]+)\)?/gi))
-    pts.push({lon:+m[1],lat:+m[2],status:ORDER.find(s=>new RegExp(s,"i").test(m[3]))||""});
-  for(const m of t.matchAll(/Tikor\s*:?\s*(-?\d{1,2}\.\d+)\s*,\s*(\d{2,3}\.\d+)[\s\S]{0,40}?\(Status\s*:?\s*([^)\n]+)\)/gi))
-    pts.push({lat:+m[1],lon:+m[2],status:ORDER.find(s=>new RegExp(s,"i").test(m[3]))||""});
-  const out={pts};
-  const lu=t.match(/(?:estimasi|perkiraan)\s*luas[^:]*:?\s*±?\s*([\d.,]+)/i);if(lu)out.luas=lu[1].replace(",",".");
-  const labels={personel:/jumlah\s*personel\s*:?/i,upaya:/upaya\s*(?:yang\s*)?(?:sudah\s*)?dilakukan\s*:?/i,rencana:/rencana\s*tindak\s*lanjut\s*:?/i,kendala:/kendala\s*:?/i,kebutuhan:/kebutuhan\s*:?/i};
-  const hits=Object.entries(labels).map(([k,re])=>{const m=t.match(re);return m?{k,i:m.index+m[0].length}:null}).filter(Boolean).sort((a,b)=>a.i-b.i);
-  hits.forEach((h,i)=>{out[h.k]=t.slice(h.i,i+1<hits.length?hits[i+1].i-hits[i+1].k.length-2:t.length).replace(/^[\s:\-]+/,"").split(/\n\s*\n|\n(?=\d\.\s*(?:Resor|Tim))/)[0].trim().slice(0,2000)});
-  return out}
+    nav button {
+      border: 0;
+      background: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
 
-function titikRow(v={}){const id=tCount++;
-  return `<div class="trow" data-id="${id}"><input type="number" step="any" placeholder="Lintang (lat)" class="lat" value="${v.lat??""}" required>
-  <input type="number" step="any" placeholder="Bujur (lon)" class="lon" value="${v.lon??""}" required>
-  <select class="sst">${ORDER.map(s=>`<option ${s===v.status?"selected":""}>${s}</option>`).join("")}</select>
-  <input type="number" step="any" min="0" placeholder="Luas (ha)" class="slu" value="${v.luas??""}">
-  <button type="button" class="rm" title="Hapus titik">✕</button></div>`}
-function addTitik(v){$("titik").insertAdjacentHTML("beforeend",titikRow(v))}
+    nav button[aria-current="true"] {
+      background: var(--pri);
+      color: #fff;
+    }
 
-async function showForm(){
-  const upts=[...new Set(Object.values(KAW).map(k=>k.upt))].sort();tCount=0;editId=null;
-  $("form").innerHTML=`<div class="pick"><label>Tanggal<input id="tg" type="date" value="${today}" max="${today}" required></label>
-  <label>UPT<select id="up">${upts.map(x=>`<option>${x}</option>`).join("")}</select></label>
-  <label>Nama kawasan<select id="kw" required></select></label></div>
-  <div id="dup"></div>
-  <div class="split"><div class="pane"><h3 class="f">Tempel teks laporan (opsional)</h3>
-    <textarea id="raw" rows="10" placeholder="Tempel teks laporan lapangan di sini, lalu klik Pisahkan ke kolom"></textarea>
-    <div style="margin-top:10px"><button type="button" class="btn2" id="parse">Pisahkan ke kolom →</button></div></div>
-  <div class="pane"><h3 class="f">Isian detail</h3><form id="f">
-    <label class="full">Titik koordinat &amp; status (bisa lebih dari satu)</label><div id="titik"></div>
-    <button type="button" class="btn2" id="addt" style="margin-bottom:14px">+ Tambah titik</button>
-    ${TX.map(([k,t])=>`<label>${t}<textarea id="x_${k}" rows="2"></textarea></label>`).join("")}
-    <div><button class="btn" id="sv">Simpan laporan</button><p id="msg"></p></div></form></div></div>`;
-  addTitik();
-  const fillK=()=>{$("kw").innerHTML=Object.entries(KAW).filter(([,k])=>k.upt===$("up").value).sort((a,b)=>a[1].nama.localeCompare(b[1].nama)).map(([id,k])=>`<option value="${id}">${k.nama}</option>`).join("");check()};
-  $("up").onchange=fillK;$("kw").onchange=$("tg").onchange=check;fillK();
-  $("addt").onclick=()=>addTitik();
-  $("titik").addEventListener("click",e=>{if(e.target.classList.contains("rm")&&$("titik").children.length>1)e.target.closest(".trow").remove()});
-  $("parse").onclick=()=>{const p=parseLaporan($("raw").value);
-    if(p.pts.length){$("titik").innerHTML="";p.pts.forEach(pt=>addTitik({...pt,luas:p.luas}))}else if(p.luas)$("titik").querySelector(".slu").value=p.luas;
-    ["upaya","rencana","personel","kendala","kebutuhan"].forEach(k=>{if(p[k])$("x_"+k).value=p[k]});
-    $("msg").textContent=(p.pts.length?p.pts.length+" titik terdeteksi. ":"")+"Mohon periksa sebelum menyimpan."};
-  if(!sb){$("f").insertAdjacentHTML("beforeend",'<p class="mut">Menyimpan aktif setelah CFG.url dan CFG.key diisi (lihat schema.sql).</p>');return}
-  $("f").onsubmit=async e=>{e.preventDefault();
-    const shared={tanggal:$("tg").value,kawasan_id:+$("kw").value,upt:$("up").value,diubah:new Date().toISOString()};
-    TX.forEach(([k])=>shared[k]=$("x_"+k).value||null);
-    let r;
-    if(editId){const t=$("titik").children[0];
-      r=await sb.from("laporan").update({...shared,status:t.querySelector(".sst").value,lat:+t.querySelector(".lat").value,lon:+t.querySelector(".lon").value,luas:t.querySelector(".slu").value||null}).eq("id",editId)}
-    else{const list=[...$("titik").children].map(t=>({...shared,status:t.querySelector(".sst").value,lat:+t.querySelector(".lat").value,lon:+t.querySelector(".lon").value,luas:t.querySelector(".slu").value||null}));
-      r=await sb.from("laporan").insert(list)}
-    if(r.error){$("msg").textContent=r.error.code==="23505"?"Salah satu koordinat sudah ada untuk kawasan dan tanggal yang sama. Ubah koordinat titik itu, atau edit data yang sudah terisi di atas.":"Gagal menyimpan: "+r.error.message;return}
-    $("msg").textContent="Laporan tersimpan.";editId=null;$("sv").textContent="Simpan laporan";await load();check()}}
+    main {
+      padding: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
 
-async function check(){
-  if(!sb)return;editId=null;$("sv").textContent="Simpan laporan";const d=$("dup");
-  const{data}=await sb.from("laporan").select("*").eq("tanggal",$("tg").value).eq("kawasan_id",$("kw").value);
-  if(!data||!data.length){d.innerHTML="";return}
-  d.innerHTML=`<div class="note"><b>Data sudah terisi</b> untuk kawasan ini pada tanggal tersebut (${data.length} titik). Tambahkan titik baru dengan koordinat berbeda di bawah, atau edit salah satu:<br>`+
-    data.map(r=>`<button type="button" data-id="${r.id}">Edit titik ${r.lat}, ${r.lon} (${r.status})</button>`).join("")+`</div>`;
-  d.querySelectorAll("button").forEach(b=>b.onclick=()=>{const r=data.find(x=>x.id==b.dataset.id);editId=r.id;
-    $("titik").innerHTML="";addTitik(r);TX.forEach(([k])=>$("x_"+k).value=r[k]||"");$("sv").textContent="Simpan perubahan"})}
-load();
-</script></body></html>
+    .mut {
+      color: var(--mut);
+      font-size: 13px;
+    }
+
+    h2 {
+      font-size: 15px;
+      margin: 28px 0 10px;
+    }
+
+    h3.f {
+      font-size: 14px;
+      margin: 0 0 10px;
+    }
+
+    #cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      background: var(--w);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--c, var(--pri));
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .card b {
+      display: block;
+      font-size: 24px;
+    }
+
+    .card span {
+      font-size: 12px;
+      color: var(--mut);
+    }
+
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin: 14px 0;
+    }
+
+    select,
+    input,
+    textarea {
+      border: 1px solid var(--line);
+      background: var(--w);
+      border-radius: 6px;
+      padding: 7px 9px;
+      width: 100%;
+    }
+
+    .bar select {
+      width: auto;
+    }
+
+    .scroll {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--w);
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th,
+    td {
+      padding: 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    th {
+      color: var(--mut);
+      font-weight: 500;
+      padding: 6px 4px;
+      min-width: 32px;
+    }
+
+    td.n,
+    th.n {
+      text-align: left;
+      padding: 6px 10px;
+      min-width: 150px;
+      position: sticky;
+      background: var(--w);
+    }
+
+    td.n.k1,
+    th.n.k1 {
+      left: 0;
+      min-width: 170px;
+    }
+
+    td.n.k2,
+    th.n.k2 {
+      left: 170px;
+      min-width: 190px;
+      border-right: 1px solid var(--line);
+    }
+
+    td.n small {
+      display: block;
+      color: var(--mut);
+    }
+
+    td.c {
+      height: 32px;
+      border-left: 1px solid var(--w);
+      cursor: pointer;
+      position: relative;
+    }
+
+    td.c.a::after {
+      content: "!";
+      color: #fff;
+      font-weight: 800;
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    #leg {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 18px;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    #leg i {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+
+    #map {
+      height: 420px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+
+    #mapbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    #mapbar label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--ink);
+    }
+
+    .mk {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid #fff;
+      vertical-align: -2px;
+      margin-right: 2px;
+    }
+
+    .mt {
+      display: inline-block;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 11px solid #d33a2f;
+      vertical-align: -2px;
+      margin-right: 2px;
+    }
+
+    ul.stat {
+      list-style: none;
+      margin: 0 0 18px;
+      padding: 0;
+      background: var(--w);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    ul.stat li {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    ul.stat li:last-child {
+      border-bottom: 0;
+    }
+
+    .pick {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      max-width: 900px;
+      margin-bottom: 18px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) minmax(280px, 1.5fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 720px) {
+      .split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pane {
+      background: var(--w);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--mut);
+      margin-bottom: 12px;
+    }
+
+    label > * {
+      margin-top: 4px;
+      color: var(--ink);
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .btn {
+      background: var(--pri);
+      color: #fff;
+      border: 0;
+      border-radius: 6px;
+      padding: 9px 18px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn2 {
+      background: none;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 7px 12px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .note {
+      background: var(--w);
+      border: 1px solid #e8b800;
+      border-left-width: 5px;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+    }
+
+    .note button {
+      margin: 6px 8px 0 0;
+      border: 1px solid var(--line);
+      background: none;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+
+    #msg {
+      margin: 10px 0;
+      font-weight: 600;
+    }
+
+    .trow {
+      display: grid;
+      grid-template-columns: 1.2fr 1.2fr 1.6fr 1fr auto;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .trow input,
+    .trow select {
+      margin: 0;
+    }
+
+    .trow button {
+      border: 0;
+      background: none;
+      color: var(--mut);
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    @media (max-width: 560px) {
+      .trow {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    #ov {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .35);
+      display: none;
+      z-index: 9;
+    }
+
+    #pnl {
+      position: fixed;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: min(380px, 92vw);
+      background: var(--w);
+      box-shadow: var(--sh);
+      transform: translateX(100%);
+      transition: transform .2s;
+      z-index: 10;
+      overflow-y: auto;
+      padding: 18px;
+      padding-top: calc(18px + env(safe-area-inset-top, 0));
+    }
+
+    #pnl.open,
+    #ov.open {
+      transform: none;
+      display: block;
+    }
+
+    #pnl h3 {
+      margin: 0 0 4px;
+    }
+
+    #pnl dt {
+      color: var(--mut);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    #pnl dd {
+      margin: 2px 0 0;
+      white-space: pre-wrap;
+    }
+
+    #pnl .x {
+      float: right;
+      background: none;
+      border: 0;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--mut);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--pri);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Pemantauan kebakaran kawasan</h1>
+
+    <nav>
+      <button data-t="dash" aria-current="true">Dashboard</button>
+      <button data-t="form">Isi laporan</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="dash">
+      <div id="cards"></div>
+
+      <div class="bar">
+        <label>
+          Rentang
+          <select id="rng">
+            <option value="7">7 hari</option>
+            <option value="14" selected>14 hari</option>
+            <option value="30">30 hari</option>
+          </select>
+        </label>
+
+        <label>
+          Regional
+          <select id="fp"></select>
+        </label>
+
+        <label>
+          UPT
+          <select id="fu"></select>
+        </label>
+      </div>
+
+      <h2>Peta lokasi</h2>
+
+      <div id="mapbar">
+        <label>
+          <input type="checkbox" id="lp" checked>
+          <span class="mt"></span>
+          Upaya pemadaman
+        </label>
+
+        <label>
+          <input type="checkbox" id="lg" checked>
+          <span class="mk" style="background:#e8b800"></span>
+          Proses groundcheck
+        </label>
+
+        <label>
+          <input type="checkbox" id="ld" checked>
+          <span class="mk" style="background:#2f6fd0"></span>
+          Sudah padam
+        </label>
+
+        <label>
+          <input type="checkbox" id="lh" checked>
+          <span class="mk" style="width:8px;height:8px;background:#e8291f"></span>
+          Titik hotspot SIPONGI
+        </label>
+
+        <label>
+          <input type="checkbox" id="lk" checked>
+          <span style="display:inline-block;width:14px;height:2px;background:#2f6fd0;vertical-align:2px"></span>
+          Batas kawasan
+        </label>
+
+        <button type="button" class="btn2" id="rfh">
+          Perbarui titik panas
+        </button>
+
+        <span class="mut" id="hscount"></span>
+      </div>
+
+      <div id="map"></div>
+
+      <div class="scroll" id="mx"></div>
+      <div id="leg"></div>
+
+      <h2>Status per kawasan pada tanggal terbaru</h2>
+      <div id="lists"></div>
+    </section>
+
+    <section id="form" hidden></section>
+  </main>
+
+  <div id="ov"></div>
+
+  <aside id="pnl" aria-hidden="true">
+    <button class="x" id="px" aria-label="Tutup">×</button>
+    <div id="pc"></div>
+  </aside>
+
+  <script>
+    /*
+      GANTI DUA NILAI DI BAWAH INI.
+
+      Project URL:
+      https://nama-project-anda.supabase.co
+
+      Jangan gunakan:
+      https://nama-project-anda.supabase.co/rest/v1/
+
+      Gunakan publishable key / anon key.
+      Jangan gunakan service_role key di browser.
+    */
+    const CFG = {
+      url: "https://yeraezbxsvwryuilyghe.supabase.co",
+      key: "GANTI_DENGAN_PUBLISHABLE_ATAU_ANON_KEY"
+    };
+
+    const ST = {
+      "upaya pemadaman": ["#d33a2f", 5],
+      "proses groundcheck": ["#e8b800", 4],
+      "perlu konfirmasi": ["#7c4dbd", 3],
+      "sudah padam": ["#2f6fd0", 2],
+      "false hotspot": ["#8b949e", 1]
+    };
+
+    const ORDER = [
+      "upaya pemadaman",
+      "proses groundcheck",
+      "perlu konfirmasi",
+      "sudah padam",
+      "false hotspot"
+    ];
+
+    const OPEN = (status) =>
+      [
+        "upaya pemadaman",
+        "proses groundcheck",
+        "perlu konfirmasi"
+      ].includes(status);
+
+    const TX = [
+      ["upaya", "Upaya yang sudah dilakukan"],
+      ["rencana", "Rencana tindak lanjut"],
+      ["personel", "Jumlah personel"],
+      ["kendala", "Kendala"],
+      ["kebutuhan", "Kebutuhan"]
+    ];
+
+    const $ = (id) => document.getElementById(id);
+
+    const iso = (date) => date.toLocaleDateString("sv");
+
+    const today = iso(new Date());
+
+    const sb =
+      CFG.url && CFG.key && !CFG.key.startsWith("GANTI_")
+        ? supabase.createClient(CFG.url, CFG.key, {
+            auth: {
+              persistSession: false,
+              autoRefreshToken: false,
+              detectSessionInUrl: false
+            }
+          })
+        : null;
+
+    let KAW = {};
+    let LAP = [];
+    let editId = null;
+    let tCount = 0;
+    let map = null;
+    let layers = null;
+
+    function esc(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function span(start, end) {
+      const output = [];
+
+      for (
+        const x = new Date(start + "T00:00:00");
+        iso(x) <= end;
+        x.setDate(x.getDate() + 1)
+      ) {
+        output.push(iso(x));
+      }
+
+      return output;
+    }
+
+    function dayDiff(start, end) {
+      return Math.round(
+        (new Date(end) - new Date(start)) / 86400000
+      );
+    }
+
+    /*
+      Normalisasi hasil tabel kawasan:
+
+      Database:
+      - nkws    = nama kawasan
+      - nupt    = UPT
+      - npulau  = regional/pulau
+
+      Antarmuka memakai:
+      - nama
+      - upt
+      - pulau
+    */
+    function normalisasiKawasan(rows = []) {
+      return Object.fromEntries(
+        rows.map((row) => {
+          const kawasan = {
+            ...row,
+            nama: row.nkws ?? row.nama ?? "",
+            upt: row.nupt ?? row.upt ?? "",
+            pulau: row.npulau ?? row.pulau ?? ""
+          };
+
+          return [kawasan.id, kawasan];
+        })
+      );
+    }
+
+    function demo() {
+      const d = (n) => {
+        const x = new Date();
+        x.setDate(x.getDate() - n);
+        return iso(x);
+      };
+
+      KAW = {
+        1: {
+          id: 1,
+          nama: "TN Contoh A",
+          upt: "Balai TN Contoh A",
+          pulau: "Sumatera"
+        },
+        2: {
+          id: 2,
+          nama: "CA Contoh B",
+          upt: "Balai KSDA Contoh",
+          pulau: "Kalimantan"
+        },
+        3: {
+          id: 3,
+          nama: "SM Contoh C",
+          upt: "Balai KSDA Contoh",
+          pulau: "Sulawesi"
+        },
+        4: {
+          id: 4,
+          nama: "TWA Contoh D",
+          upt: "Balai KSDA Contoh",
+          pulau: "Jawa"
+        }
+      };
+
+      const r = (t, k, s, l) => ({
+        id: crypto.randomUUID?.() ?? Math.random(),
+        tanggal: d(t),
+        kawasan_id: k,
+        status: s,
+        luas: l,
+        lat: -2.8 + k * 0.01,
+        lon: 113 + k * 0.01,
+        upaya: "Tim melakukan pengecekan lapangan.",
+        rencana: "Pemantauan berkala.",
+        personel: "4 orang",
+        kendala: "Sumber air terbatas.",
+        kebutuhan: "Sarpras tambahan."
+      });
+
+      LAP = [
+        r(9, 1, "upaya pemadaman", 8),
+        r(9, 1, "proses groundcheck", 8),
+        r(8, 1, "upaya pemadaman", 15),
+        r(5, 1, "proses groundcheck", 15),
+        r(3, 1, "sudah padam", 15),
+        r(6, 2, "upaya pemadaman", 4),
+        r(6, 2, "upaya pemadaman", 6),
+        r(2, 2, "proses groundcheck", 10),
+        r(4, 3, "false hotspot", 0),
+        r(1, 4, "perlu konfirmasi", 0),
+        r(0, 4, "upaya pemadaman", 3),
+        r(0, 2, "sudah padam", 10)
+      ];
+    }
+
+    function buildTimeline(byDate) {
+      const keys = Object.keys(byDate).sort();
+
+      if (!keys.length) return null;
+
+      const display = {};
+      let previous = null;
+
+      for (const date of span(keys[0], today)) {
+        const list = byDate[date];
+
+        if (list) {
+          previous = list.reduce((a, b) =>
+            ST[a][1] >= ST[b][1] ? a : b
+          );
+
+          display[date] = [previous, 0];
+        } else if (previous && OPEN(previous)) {
+          previous = "perlu konfirmasi";
+          display[date] = [previous, 1];
+        } else {
+          previous = null;
+        }
+      }
+
+      const displayDates = Object.keys(display).sort();
+
+      if (!displayDates.length) {
+        return {
+          display,
+          current: null
+        };
+      }
+
+      const runs = [[displayDates[0]]];
+
+      for (let i = 1; i < displayDates.length; i++) {
+        const current = displayDates[i];
+        const previousDate = displayDates[i - 1];
+
+        if (dayDiff(previousDate, current) === 1) {
+          runs.at(-1).push(current);
+        } else {
+          runs.push([current]);
+        }
+      }
+
+      const lastRun = runs.at(-1);
+      const start = lastRun[0];
+      const end = lastRun.at(-1);
+
+      return {
+        display,
+        current: display[end][0],
+        start,
+        end,
+        days: dayDiff(start, end) + 1
+      };
+    }
+
+    function triIcon() {
+      return L.divIcon({
+        className: "",
+        html: `
+          <div style="
+            width:0;
+            height:0;
+            border-left:7px solid transparent;
+            border-right:7px solid transparent;
+            border-bottom:14px solid #d33a2f;
+            filter:drop-shadow(0 0 1px #fff)
+          "></div>
+        `,
+        iconSize: [14, 14],
+        iconAnchor: [7, 11]
+      });
+    }
+
+    function initMap() {
+      if (typeof L === "undefined") {
+        $("map").innerHTML = `
+          <p class="mut" style="padding:16px">
+            Peta tidak bisa dimuat. Periksa koneksi internet atau pemblokir skrip browser.
+          </p>
+        `;
+        return;
+      }
+
+      map = L.map("map").setView([-2, 118], 5);
+
+      L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution: "&copy; OpenStreetMap",
+          maxZoom: 18
+        }
+      ).addTo(map);
+
+      layers = {
+        pemadaman: L.layerGroup().addTo(map),
+        groundcheck: L.layerGroup().addTo(map),
+        padam: L.layerGroup().addTo(map),
+        hotspot: L.layerGroup().addTo(map),
+        batas: L.layerGroup().addTo(map)
+      };
+
+      const toggleLayer = (checkboxId, layerName) => {
+        $(checkboxId).onchange = () => {
+          if ($(checkboxId).checked) {
+            map.addLayer(layers[layerName]);
+          } else {
+            map.removeLayer(layers[layerName]);
+          }
+        };
+      };
+
+      toggleLayer("lp", "pemadaman");
+      toggleLayer("lg", "groundcheck");
+      toggleLayer("ld", "padam");
+      toggleLayer("lh", "hotspot");
+      toggleLayer("lk", "batas");
+
+      $("rfh").onclick = loadHotspot;
+
+      loadBatas();
+
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 250);
+    }
+
+    async function loadBatas() {
+      try {
+        const response = await fetch("kawasan.geojson");
+
+        if (!response.ok) {
+          throw new Error("File kawasan.geojson tidak ditemukan.");
+        }
+
+        const geojson = await response.json();
+
+        L.geoJSON(geojson, {
+          style: {
+            color: "#2f6fd0",
+            weight: 1.5,
+            fillOpacity: 0
+          },
+
+          onEachFeature: (feature, layer) => {
+            const nama =
+              feature.properties?.NKWS ??
+              feature.properties?.nkws ??
+              feature.properties?.nama ??
+              feature.properties?.NAMOBJ ??
+              "";
+
+            if (nama) {
+              layer.bindPopup(esc(nama));
+            }
+          }
+        }).addTo(layers.batas);
+      } catch (error) {
+        console.info("Lapisan batas kawasan tidak dimuat:", error.message);
+      }
+    }
+
+    function drawPoints(filteredReports) {
+      if (!map || !layers) return;
+
+      layers.pemadaman.clearLayers();
+      layers.groundcheck.clearLayers();
+      layers.padam.clearLayers();
+
+      const groupByStatus = {
+        "upaya pemadaman": "pemadaman",
+        "proses groundcheck": "groundcheck",
+        "sudah padam": "padam"
+      };
+
+      filteredReports.forEach((report) => {
+        const group = groupByStatus[report.status];
+
+        if (
+          !group ||
+          report.lat === null ||
+          report.lat === undefined ||
+          report.lon === null ||
+          report.lon === undefined
+        ) {
+          return;
+        }
+
+        const kawasan = KAW[report.kawasan_id] || {};
+
+        const popup = `
+          <b>${esc(kawasan.nama || "-")}</b><br>
+          ${esc(kawasan.upt || "-")}<br>
+          ${esc(report.tanggal)} · ${esc(report.status)}
+          ${report.luas ? ` · ${esc(report.luas)} ha` : ""}
+        `;
+
+        const marker =
+          group === "pemadaman"
+            ? L.marker([report.lat, report.lon], {
+                icon: triIcon()
+              })
+            : L.circleMarker([report.lat, report.lon], {
+                radius: 6,
+                color: "#fff",
+                weight: 1,
+                fillColor:
+                  group === "padam" ? "#2f6fd0" : "#e8b800",
+                fillOpacity: 1
+              });
+
+        marker.bindPopup(popup).addTo(layers[group]);
+      });
+    }
+
+    async function loadHotspot() {
+      if (!layers?.hotspot) return;
+
+      $("hscount").textContent = "Memuat...";
+
+      try {
+        const hotspotUrl =
+          "https://opsroom.sipongidata.my.id/api/opsroom/indoHotspot?" +
+          "wilayah=IN&filterperiode=false&from=&to=&late=24&" +
+          "satelit[]=NASA-MODIS&satelit[]=NASA-SNPP&satelit[]=NASA-NOAA20&" +
+          "confidence[]=low&confidence[]=medium&confidence[]=high&" +
+          "provinsi=&kabkota=";
+
+        const response = await fetch(hotspotUrl);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const json = await response.json();
+
+        layers.hotspot.clearLayers();
+
+        const features = json.features || [];
+
+        features.forEach((feature) => {
+          const [lon, lat] = feature.geometry.coordinates;
+          const p = feature.properties || {};
+
+          L.circleMarker([lat, lon], {
+            radius: 3,
+            color: "#fff",
+            weight: 1,
+            fillColor: "#e8291f",
+            fillOpacity: 1
+          })
+            .bindPopup(`
+              Hotspot ${esc(p.sumber || "")}<br>
+              ${esc(p.date_hotspot || "")}<br>
+              ${esc(p.desa || "")},
+              ${esc(p.kecamatan || "")},
+              ${esc(p.kabkota || "")}
+            `)
+            .addTo(layers.hotspot);
+        });
+
+        $("hscount").textContent = `${features.length} titik`;
+      } catch (error) {
+        console.warn("Gagal memuat hotspot:", error);
+
+        $("hscount").textContent =
+          "Gagal memuat hotspot (kemungkinan diblokir CORS)";
+      }
+    }
+
+    function render() {
+      const nDays = Number($("rng").value);
+      const selectedUpt = $("fu").value;
+      const selectedRegional = $("fp").value;
+
+      const begin = new Date();
+      begin.setDate(begin.getDate() - nDays + 1);
+
+      const columns = span(iso(begin), today);
+
+      const filteredReports = LAP.filter((report) => {
+        const kawasan = KAW[report.kawasan_id];
+
+        const matchesUpt =
+          !selectedUpt ||
+          (kawasan?.upt ?? report.upt ?? "") === selectedUpt;
+
+        const matchesRegional =
+          !selectedRegional ||
+          (kawasan?.pulau ?? "") === selectedRegional;
+
+        return matchesUpt && matchesRegional;
+      });
+
+      drawPoints(filteredReports);
+
+      const byKawasan = {};
+
+      filteredReports.forEach((report) => {
+        if (!KAW[report.kawasan_id]) {
+          console.warn(
+            "Laporan memiliki kawasan_id yang tidak ditemukan:",
+            report
+          );
+          return;
+        }
+
+        if (!byKawasan[report.kawasan_id]) {
+          byKawasan[report.kawasan_id] = {};
+        }
+
+        if (!byKawasan[report.kawasan_id][report.tanggal]) {
+          byKawasan[report.kawasan_id][report.tanggal] = [];
+        }
+
+        byKawasan[report.kawasan_id][report.tanggal].push(report.status);
+      });
+
+      const rows = Object.entries(byKawasan)
+        .map(([id, reportsByDate]) => ({
+          id,
+          k: KAW[id],
+          tl: buildTimeline(reportsByDate)
+        }))
+        .filter(
+          (row) =>
+            row.k &&
+            row.tl &&
+            Object.keys(row.tl.display).length
+        );
+
+      rows.sort((a, b) =>
+        (ST[b.tl.current]?.[1] || 0) -
+          (ST[a.tl.current]?.[1] || 0) ||
+        (a.k?.upt || "").localeCompare(b.k?.upt || "", "id") ||
+        (a.k?.nama || "").localeCompare(b.k?.nama || "", "id")
+      );
+
+      const latestDate = filteredReports.length
+        ? filteredReports
+            .map((report) => report.tanggal)
+            .sort()
+            .at(-1)
+        : today;
+
+      const reportsOnLatestDate = filteredReports.filter(
+        (report) => report.tanggal === latestDate
+      ).length;
+
+      const currentCount = (status) =>
+        rows.filter((row) => row.tl.current === status).length;
+
+      const affectedAreas = rows.filter(
+        (row) =>
+          row.tl.current &&
+          row.tl.current !== "false hotspot"
+      ).length;
+
+      $("cards").innerHTML = [
+        [
+          "Kejadian dilaporkan",
+          reportsOnLatestDate,
+          `tanggal ${latestDate.slice(8)}/${latestDate.slice(5, 7)}`,
+          "var(--pri)"
+        ],
+        [
+          "Kawasan terdampak",
+          affectedAreas,
+          "selain false hotspot",
+          "#444"
+        ],
+        [
+          "Upaya pemadaman berlangsung",
+          currentCount("upaya pemadaman"),
+          "belum sudah padam",
+          ST["upaya pemadaman"][0]
+        ],
+        [
+          "Proses groundcheck",
+          currentCount("proses groundcheck"),
+          "belum berubah status",
+          ST["proses groundcheck"][0]
+        ],
+        [
+          "Sudah padam",
+          currentCount("sudah padam"),
+          "status terakhir",
+          ST["sudah padam"][0]
+        ]
+      ]
+        .map(
+          ([title, value, subtitle, color]) => `
+            <div class="card" style="--c:${color}">
+              <b>${esc(value)}</b>
+              <span>${esc(title)} · ${esc(subtitle)}</span>
+            </div>
+          `
+        )
+        .join("");
+
+      if (!rows.length) {
+        $("mx").innerHTML = `
+          <p style="padding:20px" class="mut">
+            Belum ada laporan pada rentang atau filter yang dipilih.
+          </p>
+        `;
+
+        $("lists").innerHTML = "";
+        $("leg").innerHTML = "";
+        return;
+      }
+
+      let html = `
+        <table>
+          <tr>
+            <th class="n k1">UPT</th>
+            <th class="n k2">Kawasan</th>
+            ${columns
+              .map(
+                (date) => `
+                  <th>
+                    ${date.slice(8)}<br>
+                    ${date.slice(5, 7)}
+                  </th>
+                `
+              )
+              .join("")}
+          </tr>
+      `;
+
+      rows.forEach((row) => {
+        html += `
+          <tr>
+            <td class="n k1">${esc(row.k.upt)}</td>
+            <td class="n k2">${esc(row.k.nama)}</td>
+        `;
+
+        columns.forEach((date) => {
+          const value = row.tl.display[date];
+
+          if (!value) {
+            html += `<td class="c"></td>`;
+            return;
+          }
+
+          const [status, automatic] = value;
+
+          html += `
+            <td
+              class="c ${automatic ? "a" : ""}"
+              style="background-color:${ST[status][0]}"
+              title="${esc(date)}: ${esc(status)}"
+              data-k="${esc(row.id)}"
+              data-d="${esc(date)}"
+            ></td>
+          `;
+        });
+
+        html += "</tr>";
+      });
+
+      html += "</table>";
+
+      $("mx").innerHTML = html;
+
+      $("leg").innerHTML =
+        ORDER.map(
+          (status) => `
+            <span>
+              <i style="background:${ST[status][0]}"></i>
+              ${esc(status)}
+            </span>
+          `
+        ).join("") +
+        "<span>! = perlu konfirmasi otomatis</span>";
+
+      $("lists").innerHTML = ORDER.map((status) => {
+        const list = rows.filter(
+          (row) => row.tl.current === status
+        );
+
+        if (!list.length) return "";
+
+        return `
+          <h2 style="margin-top:16px">
+            <i style="
+              display:inline-block;
+              width:11px;
+              height:11px;
+              border-radius:3px;
+              background:${ST[status][0]};
+              margin-right:7px
+            "></i>
+            ${esc(status)} (${list.length})
+          </h2>
+
+          <ul class="stat">
+            ${list
+              .map(
+                (row) => `
+                  <li>
+                    <span>
+                      ${esc(row.k.nama)}
+                      <span class="mut">· ${esc(row.k.upt)}</span>
+                    </span>
+
+                    <span>
+                      ${
+                        status === "sudah padam"
+                          ? `padam dalam ${row.tl.days} hari`
+                          : `berlangsung ${row.tl.days} hari`
+                      }
+                      · mulai ${row.tl.start.slice(8)}/${row.tl.start.slice(5, 7)}
+                    </span>
+                  </li>
+                `
+              )
+              .join("")}
+          </ul>
+        `;
+      }).join("");
+    }
+
+    document.addEventListener("click", (event) => {
+      const cell = event.target.closest("td.c[data-k]");
+
+      if (cell) {
+        openPanel(cell.dataset.k, cell.dataset.d);
+      }
+    });
+
+    function openPanel(kawasanId, date) {
+      const reports = LAP.filter(
+        (report) =>
+          String(report.kawasan_id) === String(kawasanId) &&
+          report.tanggal === date
+      );
+
+      const kawasan = KAW[kawasanId] || {};
+
+      $("pc").innerHTML = `
+        <h3>${esc(kawasan.nama || "-")}</h3>
+        <p class="mut">
+          ${esc(kawasan.upt || "-")} · ${esc(date)}
+        </p>
+
+        ${
+          reports.length
+            ? reports
+                .map(
+                  (report) => `
+                    <dl style="
+                      border-top:1px solid var(--line);
+                      padding-top:8px;
+                      margin-top:8px
+                    ">
+                      <dt>Status</dt>
+                      <dd>${esc(report.status)}</dd>
+
+                      <dt>Koordinat</dt>
+                      <dd>${esc(report.lat)}, ${esc(report.lon)}</dd>
+
+                      <dt>Luas (ha)</dt>
+                      <dd>${esc(report.luas ?? "-")}</dd>
+
+                      ${TX.map(([key, label]) =>
+                        report[key]
+                          ? `
+                            <dt>${esc(label)}</dt>
+                            <dd>${esc(report[key])}</dd>
+                          `
+                          : ""
+                      ).join("")}
+                    </dl>
+                  `
+                )
+                .join("")
+            : `
+              <p class="mut">
+                Tidak ada isian langsung pada tanggal ini.
+                Status tersebut dibuat otomatis karena laporan sebelumnya belum ditutup.
+              </p>
+            `
+        }
+      `;
+
+      $("pnl").classList.add("open");
+      $("ov").classList.add("open");
+      $("pnl").setAttribute("aria-hidden", "false");
+    }
+
+    function closePanel() {
+      $("pnl").classList.remove("open");
+      $("ov").classList.remove("open");
+      $("pnl").setAttribute("aria-hidden", "true");
+    }
+
+    $("px").onclick = closePanel;
+    $("ov").onclick = closePanel;
+
+    /*
+      Mengambil data dari Supabase.
+
+      kawasan:
+      - id
+      - nkws
+      - nupt
+      - npulau
+
+      laporan:
+      - id
+      - tanggal
+      - kawasan_id
+      - status
+      - lat
+      - lon
+      - luas
+      - upaya
+      - rencana
+      - personel
+      - kendala
+      - kebutuhan
+      - diubah
+    */
+    async function load() {
+      if (!map) {
+        initMap();
+      }
+
+      if (!sb) {
+        console.info(
+          "Mode demo aktif. Isi CFG.url dan CFG.key untuk memakai Supabase."
+        );
+
+        demo();
+      } else {
+        $("mx").innerHTML = `
+          <p style="padding:20px" class="mut">
+            Memuat data kawasan dan laporan...
+          </p>
+        `;
+
+        try {
+          const [resKawasan, resLaporan] = await Promise.all([
+            sb
+              .from("kawasan")
+              .select("id, nkws, nupt, npulau")
+              .order("nupt", { ascending: true })
+              .order("nkws", { ascending: true }),
+
+            sb
+              .from("laporan")
+              .select(`
+                id,
+                tanggal,
+                kawasan_id,
+                status,
+                luas,
+                lat,
+                lon,
+                upaya,
+                rencana,
+                personel,
+                kendala,
+                kebutuhan,
+                diubah
+              `)
+              .order("tanggal", { ascending: false })
+              .limit(20000)
+          ]);
+
+          if (resKawasan.error) {
+            throw new Error(
+              `Gagal membaca tabel kawasan: ${resKawasan.error.message}`
+            );
+          }
+
+          if (resLaporan.error) {
+            throw new Error(
+              `Gagal membaca tabel laporan: ${resLaporan.error.message}`
+            );
+          }
+
+          KAW = normalisasiKawasan(resKawasan.data || []);
+
+          LAP = (resLaporan.data || []).map((report) => ({
+            ...report,
+
+            /*
+              UPT berasal dari master kawasan.
+              Jika kolom upt masih ada di tabel laporan, kode ini tetap
+              akan memakai nilai fallback tersebut bila kawasan tidak ditemukan.
+            */
+            upt: KAW[report.kawasan_id]?.upt ?? report.upt ?? ""
+          }));
+
+          console.table(Object.values(KAW));
+          console.table(LAP);
+
+          if (!Object.keys(KAW).length) {
+            throw new Error(
+              "Tidak ada data kawasan. Periksa isi tabel kawasan atau RLS policy SELECT."
+            );
+          }
+        } catch (error) {
+          console.error("Gagal memuat dashboard:", error);
+
+          $("cards").innerHTML = "";
+          $("lists").innerHTML = "";
+          $("leg").innerHTML = "";
+
+          $("mx").innerHTML = `
+            <div style="padding:20px" class="mut">
+              <b>Gagal memuat data Supabase.</b><br><br>
+              ${esc(error.message)}<br><br>
+
+              Periksa hal berikut:
+              <br>1. CFG.url harus memakai Project URL tanpa <code>/rest/v1</code>.
+              <br>2. CFG.key harus publishable key atau anon key yang benar.
+              <br>3. Tabel harus bernama <code>kawasan</code> dan <code>laporan</code>.
+              <br>4. Tabel kawasan memiliki kolom <code>id</code>, <code>nkws</code>, <code>nupt</code>, <code>npulau</code>.
+              <br>5. Tabel laporan memiliki kolom <code>tanggal</code>, <code>kawasan_id</code>, <code>status</code>, <code>lat</code>, dan <code>lon</code>.
+              <br>6. RLS policy harus mengizinkan <code>SELECT</code>.
+              <br>7. Lihat Browser Console dengan tombol F12 untuk error lengkap.
+            </div>
+          `;
+
+          return;
+        }
+      }
+
+      const upts = [
+        ...new Set(
+          Object.values(KAW)
+            .map((kawasan) => kawasan.upt)
+            .filter(Boolean)
+        )
+      ].sort((a, b) => a.localeCompare(b, "id"));
+
+      const regionals = [
+        ...new Set(
+          Object.values(KAW)
+            .map((kawasan) => kawasan.pulau)
+            .filter(Boolean)
+        )
+      ].sort((a, b) => a.localeCompare(b, "id"));
+
+      $("fu").innerHTML =
+        `<option value="">Semua UPT</option>` +
+        upts
+          .map(
+            (upt) =>
+              `<option value="${esc(upt)}">${esc(upt)}</option>`
+          )
+          .join("");
+
+      $("fp").innerHTML =
+        `<option value="">Semua regional</option>` +
+        regionals
+          .map(
+            (regional) =>
+              `<option value="${esc(regional)}">${esc(regional)}</option>`
+          )
+          .join("");
+
+      render();
+      loadHotspot();
+    }
+
+    $("rng").onchange = render;
+    $("fu").onchange = render;
+    $("fp").onchange = render;
+
+    document.querySelectorAll("nav button").forEach((button) => {
+      button.onclick = () => {
+        document.querySelectorAll("nav button").forEach((item) => {
+          item.removeAttribute("aria-current");
+        });
+
+        button.setAttribute("aria-current", "true");
+
+        $("dash").hidden = button.dataset.t !== "dash";
+        $("form").hidden = button.dataset.t !== "form";
+
+        if (button.dataset.t === "form") {
+          showForm();
+        } else if (map) {
+          setTimeout(() => map.invalidateSize(), 100);
+        }
+      };
+    });
+
+    function parseLaporan(text) {
+      const points = [];
+
+      for (
+        const match of text.matchAll(
+          /X\s*:?\s*(-?\d{1,3}\.\d+)[^\d\n]{0,15}Y\s*:?\s*(-?\d{1,3}\.\d+)[^()\n]*\(?\s*Status\s*:?\s*([^)\n]+)\)?/gi
+        )
+      ) {
+        points.push({
+          lon: Number(match[1]),
+          lat: Number(match[2]),
+          status:
+            ORDER.find((status) =>
+              new RegExp(status, "i").test(match[3])
+            ) || ""
+        });
+      }
+
+      for (
+        const match of text.matchAll(
+          /Tikor\s*:?\s*(-?\d{1,2}\.\d+)\s*,\s*(\d{2,3}\.\d+)[\s\S]{0,40}?\(Status\s*:?\s*([^)\n]+)\)/gi
+        )
+      ) {
+        points.push({
+          lat: Number(match[1]),
+          lon: Number(match[2]),
+          status:
+            ORDER.find((status) =>
+              new RegExp(status, "i").test(match[3])
+            ) || ""
+        });
+      }
+
+      const output = { pts: points };
+
+      const area = text.match(
+        /(?:estimasi|perkiraan)\s*luas[^:]*:?\s*±?\s*([\d.,]+)/i
+      );
+
+      if (area) {
+        output.luas = area[1].replace(",", ".");
+      }
+
+      const labels = {
+        personel: /jumlah\s*personel\s*:?/i,
+        upaya: /upaya\s*(?:yang\s*)?(?:sudah\s*)?dilakukan\s*:?/i,
+        rencana: /rencana\s*tindak\s*lanjut\s*:?/i,
+        kendala: /kendala\s*:?/i,
+        kebutuhan: /kebutuhan\s*:?/i
+      };
+
+      const hits = Object.entries(labels)
+        .map(([key, regex]) => {
+          const match = text.match(regex);
+
+          return match
+            ? {
+                key,
+                index: match.index + match[0].length
+              }
+            : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.index - b.index);
+
+      hits.forEach((hit, index) => {
+        const next = hits[index + 1];
+
+        output[hit.key] = text
+          .slice(
+            hit.index,
+            next ? next.index - next.key.length - 2 : text.length
+          )
+          .replace(/^[\s:\-]+/, "")
+          .split(/\n\s*\n|\n(?=\d\.\s*(?:Resor|Tim))/)[0]
+          .trim()
+          .slice(0, 2000);
+      });
+
+      return output;
+    }
+
+    function titikRow(value = {}) {
+      const id = tCount++;
+
+      return `
+        <div class="trow" data-id="${id}">
+          <input
+            type="number"
+            step="any"
+            placeholder="Lintang (lat)"
+            class="lat"
+            value="${esc(value.lat ?? "")}"
+            required
+          >
+
+          <input
+            type="number"
+            step="any"
+            placeholder="Bujur (lon)"
+            class="lon"
+            value="${esc(value.lon ?? "")}"
+            required
+          >
+
+          <select class="sst">
+            ${ORDER.map(
+              (status) => `
+                <option ${status === value.status ? "selected" : ""}>
+                  ${esc(status)}
+                </option>
+              `
+            ).join("")}
+          </select>
+
+          <input
+            type="number"
+            step="any"
+            min="0"
+            placeholder="Luas (ha)"
+            class="slu"
+            value="${esc(value.luas ?? "")}"
+          >
+
+          <button type="button" class="rm" title="Hapus titik">✕</button>
+        </div>
+      `;
+    }
+
+    function addTitik(value) {
+      $("titik").insertAdjacentHTML("beforeend", titikRow(value));
+    }
+
+    async function showForm() {
+      const upts = [
+        ...new Set(
+          Object.values(KAW)
+            .map((kawasan) => kawasan.upt)
+            .filter(Boolean)
+        )
+      ].sort((a, b) => a.localeCompare(b, "id"));
+
+      tCount = 0;
+      editId = null;
+
+      $("form").innerHTML = `
+        <div class="pick">
+          <label>
+            Tanggal
+            <input
+              id="tg"
+              type="date"
+              value="${today}"
+              max="${today}"
+              required
+            >
+          </label>
+
+          <label>
+            UPT
+            <select id="up">
+              ${upts
+                .map(
+                  (upt) =>
+                    `<option value="${esc(upt)}">${esc(upt)}</option>`
+                )
+                .join("")}
+            </select>
+          </label>
+
+          <label>
+            Nama kawasan
+            <select id="kw" required></select>
+          </label>
+        </div>
+
+        <div id="dup"></div>
+
+        <div class="split">
+          <div class="pane">
+            <h3 class="f">Tempel teks laporan (opsional)</h3>
+
+            <textarea
+              id="raw"
+              rows="10"
+              placeholder="Tempel teks laporan lapangan di sini, lalu klik Pisahkan ke kolom"
+            ></textarea>
+
+            <div style="margin-top:10px">
+              <button type="button" class="btn2" id="parse">
+                Pisahkan ke kolom →
+              </button>
+            </div>
+          </div>
+
+          <div class="pane">
+            <h3 class="f">Isian detail</h3>
+
+            <form id="f">
+              <label class="full">
+                Titik koordinat &amp; status (bisa lebih dari satu)
+              </label>
+
+              <div id="titik"></div>
+
+              <button
+                type="button"
+                class="btn2"
+                id="addt"
+                style="margin-bottom:14px"
+              >
+                + Tambah titik
+              </button>
+
+              ${TX.map(
+                ([key, label]) => `
+                  <label>
+                    ${esc(label)}
+                    <textarea id="x_${esc(key)}" rows="2"></textarea>
+                  </label>
+                `
+              ).join("")}
+
+              <div>
+                <button class="btn" id="sv">Simpan laporan</button>
+                <p id="msg"></p>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+
+      addTitik();
+
+      const fillKawasan = () => {
+        const selectedUpt = $("up").value;
+
+        const kawasanPilihan = Object.entries(KAW)
+          .filter(([, kawasan]) => kawasan.upt === selectedUpt)
+          .sort((a, b) =>
+            (a[1].nama || "").localeCompare(b[1].nama || "", "id")
+          );
+
+        $("kw").innerHTML = kawasanPilihan
+          .map(
+            ([id, kawasan]) => `
+              <option value="${esc(id)}">
+                ${esc(kawasan.nama)}
+              </option>
+            `
+          )
+          .join("");
+
+        checkDuplicate();
+      };
+
+      $("up").onchange = fillKawasan;
+      $("kw").onchange = checkDuplicate;
+      $("tg").onchange = checkDuplicate;
+
+      fillKawasan();
+
+      $("addt").onclick = () => addTitik();
+
+      $("titik").addEventListener("click", (event) => {
+        if (
+          event.target.classList.contains("rm") &&
+          $("titik").children.length > 1
+        ) {
+          event.target.closest(".trow").remove();
+        }
+      });
+
+      $("parse").onclick = () => {
+        const parsed = parseLaporan($("raw").value);
+
+        if (parsed.pts.length) {
+          $("titik").innerHTML = "";
+
+          parsed.pts.forEach((point) => {
+            addTitik({
+              ...point,
+              luas: parsed.luas
+            });
+          });
+        } else if (parsed.luas) {
+          $("titik").querySelector(".slu").value = parsed.luas;
+        }
+
+        ["upaya", "rencana", "personel", "kendala", "kebutuhan"].forEach(
+          (key) => {
+            if (parsed[key]) {
+              $("x_" + key).value = parsed[key];
+            }
+          }
+        );
+
+        $("msg").textContent =
+          `${parsed.pts.length ? `${parsed.pts.length} titik terdeteksi. ` : ""}` +
+          "Mohon periksa seluruh data sebelum menyimpan.";
+      };
+
+      if (!sb) {
+        $("f").insertAdjacentHTML(
+          "beforeend",
+          `
+            <p class="mut">
+              Mode demo aktif. Menyimpan laporan tersedia setelah
+              CFG.url dan CFG.key Supabase diisi.
+            </p>
+          `
+        );
+
+        return;
+      }
+
+      $("f").onsubmit = async (event) => {
+        event.preventDefault();
+
+        const selectedKawasanId = Number($("kw").value);
+
+        if (!selectedKawasanId) {
+          $("msg").textContent = "Pilih kawasan terlebih dahulu.";
+          return;
+        }
+
+        const shared = {
+          tanggal: $("tg").value,
+          kawasan_id: selectedKawasanId,
+          diubah: new Date().toISOString()
+        };
+
+        TX.forEach(([key]) => {
+          shared[key] = $("x_" + key).value.trim() || null;
+        });
+
+        const titik = [...$("titik").children];
+
+        const invalidCoordinates = titik.some((row) => {
+          const lat = Number(row.querySelector(".lat").value);
+          const lon = Number(row.querySelector(".lon").value);
+
+          return (
+            !Number.isFinite(lat) ||
+            !Number.isFinite(lon) ||
+            lat < -90 ||
+            lat > 90 ||
+            lon < -180 ||
+            lon > 180
+          );
+        });
+
+        if (invalidCoordinates) {
+          $("msg").textContent =
+            "Koordinat tidak valid. Lintang harus -90 sampai 90 dan bujur -180 sampai 180.";
+
+          return;
+        }
+
+        $("sv").disabled = true;
+        $("msg").textContent = "Menyimpan...";
+
+        try {
+          let result;
+
+          if (editId) {
+            const row = titik[0];
+
+            result = await sb
+              .from("laporan")
+              .update({
+                ...shared,
+                status: row.querySelector(".sst").value,
+                lat: Number(row.querySelector(".lat").value),
+                lon: Number(row.querySelector(".lon").value),
+                luas: row.querySelector(".slu").value || null
+              })
+              .eq("id", editId);
+          } else {
+            const list = titik.map((row) => ({
+              ...shared,
+              status: row.querySelector(".sst").value,
+              lat: Number(row.querySelector(".lat").value),
+              lon: Number(row.querySelector(".lon").value),
+              luas: row.querySelector(".slu").value || null
+            }));
+
+            result = await sb.from("laporan").insert(list);
+          }
+
+          if (result.error) {
+            if (result.error.code === "23505") {
+              throw new Error(
+                "Salah satu koordinat sudah tercatat untuk kawasan dan tanggal tersebut."
+              );
+            }
+
+            throw new Error(result.error.message);
+          }
+
+          $("msg").textContent = "Laporan berhasil disimpan.";
+
+          editId = null;
+          $("sv").textContent = "Simpan laporan";
+
+          await load();
+          await checkDuplicate();
+        } catch (error) {
+          console.error("Gagal menyimpan laporan:", error);
+
+          $("msg").textContent =
+            `Gagal menyimpan laporan: ${error.message}`;
+        } finally {
+          $("sv").disabled = false;
+        }
+      };
+    }
+
+    async function checkDuplicate() {
+      if (!sb) return;
+
+      editId = null;
+
+      if ($("sv")) {
+        $("sv").textContent = "Simpan laporan";
+      }
+
+      const duplicateBox = $("dup");
+
+      if (!$("tg").value || !$("kw").value) {
+        duplicateBox.innerHTML = "";
+        return;
+      }
+
+      try {
+        const { data, error } = await sb
+          .from("laporan")
+          .select("*")
+          .eq("tanggal", $("tg").value)
+          .eq("kawasan_id", $("kw").value)
+          .order("id", { ascending: true });
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data || !data.length) {
+          duplicateBox.innerHTML = "";
+          return;
+        }
+
+        duplicateBox.innerHTML = `
+          <div class="note">
+            <b>Data sudah terisi</b> untuk kawasan ini pada tanggal tersebut
+            (${data.length} titik). Tambahkan titik baru dengan koordinat berbeda,
+            atau edit salah satu titik berikut:<br>
+
+            ${data
+              .map(
+                (report) => `
+                  <button type="button" data-id="${esc(report.id)}">
+                    Edit titik ${esc(report.lat)}, ${esc(report.lon)}
+                    (${esc(report.status)})
+                  </button>
+                `
+              )
+              .join("")}
+          </div>
+        `;
+
+        duplicateBox.querySelectorAll("button").forEach((button) => {
+          button.onclick = () => {
+            const report = data.find(
+              (item) => String(item.id) === String(button.dataset.id)
+            );
+
+            if (!report) return;
+
+            editId = report.id;
+
+            $("titik").innerHTML = "";
+            addTitik(report);
+
+            TX.forEach(([key]) => {
+              $("x_" + key).value = report[key] || "";
+            });
+
+            $("sv").textContent = "Simpan perubahan";
+            $("msg").textContent =
+              `Mode edit aktif untuk titik ${report.lat}, ${report.lon}.`;
+          };
+        });
+      } catch (error) {
+        console.error("Gagal memeriksa data duplikat:", error);
+
+        duplicateBox.innerHTML = `
+          <div class="note">
+            Tidak dapat memeriksa data yang sudah ada:
+            ${esc(error.message)}
+          </div>
+        `;
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>
