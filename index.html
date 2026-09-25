@@ -706,8 +706,8 @@
         rows.map((row) => {
           const kawasan = {
             ...row,
-            nama: row.nkws ?? row.nama ?? "",
-            upt: row.nupt ?? row.upt ?? "",
+            nama: row.nkws ?? row.nkws ?? "",
+            upt: row.nupt ?? row.nupt ?? "",
             pulau: row.npulau ?? row.pulau ?? ""
           };
 
@@ -753,7 +753,7 @@
       const r = (t, k, s, l) => ({
         id: crypto.randomUUID?.() ?? Math.random(),
         tanggal: d(t),
-        kawasan_id: k,
+        nkws: k,
         status: s,
         luas: l,
         lat: -2.8 + k * 0.01,
@@ -933,7 +933,7 @@
             const nama =
               feature.properties?.NKWS ??
               feature.properties?.nkws ??
-              feature.properties?.nama ??
+              feature.properties?.nkws ??
               feature.properties?.NAMOBJ ??
               "";
 
@@ -973,11 +973,11 @@
           return;
         }
 
-        const kawasan = KAW[report.kawasan_id] || {};
+        const kawasan = KAW[report.nkws] || {};
 
         const popup = `
-          <b>${esc(kawasan.nama || "-")}</b><br>
-          ${esc(kawasan.upt || "-")}<br>
+          <b>${esc(kawasan.nkws || "-")}</b><br>
+          ${esc(kawasan.nupt || "-")}<br>
           ${esc(report.tanggal)} · ${esc(report.status)}
           ${report.luas ? ` · ${esc(report.luas)} ha` : ""}
         `;
@@ -1066,11 +1066,11 @@
       const columns = span(iso(begin), today);
 
       const filteredReports = LAP.filter((report) => {
-        const kawasan = KAW[report.kawasan_id];
+        const kawasan = KAW[report.nkws];
 
         const matchesUpt =
           !selectedUpt ||
-          (kawasan?.upt ?? report.upt ?? "") === selectedUpt;
+          (kawasan?.nupt ?? report.nupt ?? "") === selectedUpt;
 
         const matchesRegional =
           !selectedRegional ||
@@ -1084,23 +1084,23 @@
       const byKawasan = {};
 
       filteredReports.forEach((report) => {
-        if (!KAW[report.kawasan_id]) {
+        if (!KAW[report.nkws]) {
           console.warn(
-            "Laporan memiliki kawasan_id yang tidak ditemukan:",
+            "Laporan memiliki nkws yang tidak ditemukan:",
             report
           );
           return;
         }
 
-        if (!byKawasan[report.kawasan_id]) {
-          byKawasan[report.kawasan_id] = {};
+        if (!byKawasan[report.nkws]) {
+          byKawasan[report.nkws] = {};
         }
 
-        if (!byKawasan[report.kawasan_id][report.tanggal]) {
-          byKawasan[report.kawasan_id][report.tanggal] = [];
+        if (!byKawasan[report.nkws][report.tanggal]) {
+          byKawasan[report.nkws][report.tanggal] = [];
         }
 
-        byKawasan[report.kawasan_id][report.tanggal].push(report.status);
+        byKawasan[report.nkws][report.tanggal].push(report.status);
       });
 
       const rows = Object.entries(byKawasan)
@@ -1119,8 +1119,8 @@
       rows.sort((a, b) =>
         (ST[b.tl.current]?.[1] || 0) -
           (ST[a.tl.current]?.[1] || 0) ||
-        (a.k?.upt || "").localeCompare(b.k?.upt || "", "id") ||
-        (a.k?.nama || "").localeCompare(b.k?.nama || "", "id")
+        (a.k?.nupt || "").localeCompare(b.k?.nupt || "", "id") ||
+        (a.k?.nkws || "").localeCompare(b.k?.nkws || "", "id")
       );
 
       const latestDate = filteredReports.length
@@ -1218,8 +1218,8 @@
       rows.forEach((row) => {
         html += `
           <tr>
-            <td class="n k1">${esc(row.k.upt)}</td>
-            <td class="n k2">${esc(row.k.nama)}</td>
+            <td class="n k1">${esc(row.k.nupt)}</td>
+            <td class="n k2">${esc(row.k.nkws)}</td>
         `;
 
         columns.forEach((date) => {
@@ -1287,8 +1287,8 @@
                 (row) => `
                   <li>
                     <span>
-                      ${esc(row.k.nama)}
-                      <span class="mut">· ${esc(row.k.upt)}</span>
+                      ${esc(row.k.nkws)}
+                      <span class="mut">· ${esc(row.k.nupt)}</span>
                     </span>
 
                     <span>
@@ -1319,16 +1319,16 @@
     function openPanel(kawasanId, date) {
       const reports = LAP.filter(
         (report) =>
-          String(report.kawasan_id) === String(kawasanId) &&
+          String(report.nkws) === String(kawasanId) &&
           report.tanggal === date
       );
 
       const kawasan = KAW[kawasanId] || {};
 
       $("pc").innerHTML = `
-        <h3>${esc(kawasan.nama || "-")}</h3>
+        <h3>${esc(kawasan.nkws || "-")}</h3>
         <p class="mut">
-          ${esc(kawasan.upt || "-")} · ${esc(date)}
+          ${esc(kawasan.nupt || "-")} · ${esc(date)}
         </p>
 
         ${
@@ -1397,7 +1397,7 @@
       laporan:
       - id
       - tanggal
-      - kawasan_id
+      - nkws
       - status
       - lat
       - lon
@@ -1440,7 +1440,7 @@
               .select(`
                 id,
                 tanggal,
-                kawasan_id,
+                nkws,
                 status,
                 luas,
                 lat,
@@ -1478,7 +1478,7 @@
               Jika kolom upt masih ada di tabel laporan, kode ini tetap
               akan memakai nilai fallback tersebut bila kawasan tidak ditemukan.
             */
-            upt: KAW[report.kawasan_id]?.upt ?? report.upt ?? ""
+            upt: KAW[report.nkws]?.nupt ?? report.nupt ?? ""
           }));
 
           console.table(Object.values(KAW));
@@ -1506,7 +1506,7 @@
               <br>2. CFG.key harus publishable key atau anon key yang benar.
               <br>3. Tabel harus bernama <code>kawasan</code> dan <code>laporan</code>.
               <br>4. Tabel kawasan memiliki kolom <code>id</code>, <code>nkws</code>, <code>nupt</code>, <code>npulau</code>.
-              <br>5. Tabel laporan memiliki kolom <code>tanggal</code>, <code>kawasan_id</code>, <code>status</code>, <code>lat</code>, dan <code>lon</code>.
+              <br>5. Tabel laporan memiliki kolom <code>tanggal</code>, <code>nkws</code>, <code>status</code>, <code>lat</code>, dan <code>lon</code>.
               <br>6. RLS policy harus mengizinkan <code>SELECT</code>.
               <br>7. Lihat Browser Console dengan tombol F12 untuk error lengkap.
             </div>
@@ -1519,7 +1519,7 @@
       const upts = [
         ...new Set(
           Object.values(KAW)
-            .map((kawasan) => kawasan.upt)
+            .map((kawasan) => kawasan.nupt)
             .filter(Boolean)
         )
       ].sort((a, b) => a.localeCompare(b, "id"));
@@ -1714,7 +1714,7 @@
       const upts = [
         ...new Set(
           Object.values(KAW)
-            .map((kawasan) => kawasan.upt)
+            .map((kawasan) => kawasan.nupt)
             .filter(Boolean)
         )
       ].sort((a, b) => a.localeCompare(b, "id"));
@@ -1815,16 +1815,16 @@
         const selectedUpt = $("up").value;
 
         const kawasanPilihan = Object.entries(KAW)
-          .filter(([, kawasan]) => kawasan.upt === selectedUpt)
+          .filter(([, kawasan]) => kawasan.nupt === selectedUpt)
           .sort((a, b) =>
-            (a[1].nama || "").localeCompare(b[1].nama || "", "id")
+            (a[1].nkws || "").localeCompare(b[1].nkws || "", "id")
           );
 
         $("kw").innerHTML = kawasanPilihan
           .map(
             ([id, kawasan]) => `
               <option value="${esc(id)}">
-                ${esc(kawasan.nama)}
+                ${esc(kawasan.nkws)}
               </option>
             `
           )
@@ -1905,7 +1905,7 @@
 
         const shared = {
           tanggal: $("tg").value,
-          kawasan_id: selectedKawasanId,
+          nkws: selectedKawasanId,
           diubah: new Date().toISOString()
         };
 
@@ -2016,7 +2016,7 @@
           .from("laporan")
           .select("*")
           .eq("tanggal", $("tg").value)
-          .eq("kawasan_id", $("kw").value)
+          .eq("nkws", $("kw").value)
           .order("id", { ascending: true });
 
         if (error) {
