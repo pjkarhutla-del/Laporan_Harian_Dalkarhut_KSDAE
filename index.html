@@ -53,17 +53,27 @@ to anon using (true);</pre></article></div></section>
 const SUPABASE_URL = 'https://yeraezbxsvwryuilyghe.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_hs-c6YzPRKm_31ofdowClQ_Ke3PpQFo';
 
+const cleanSupabaseUrl = String(SUPABASE_URL || '').trim();
+const cleanSupabaseKey = String(SUPABASE_KEY || '').trim();
+
 const isConfigured =
-  SUPABASE_URL &&
-  SUPABASE_KEY &&
-  SUPABASE_URL.startsWith('https://') &&
-  SUPABASE_URL.includes('.supabase.co') &&
-  !SUPABASE_URL.includes('PASTE_YOUR') &&
-  !SUPABASE_KEY.includes('PASTE_YOUR');
+  cleanSupabaseUrl.startsWith('https://') &&
+  cleanSupabaseKey.length > 20 &&
+  !cleanSupabaseUrl.includes('PASTE_YOUR') &&
+  !cleanSupabaseKey.includes('PASTE_YOUR');
+
+console.log('Supabase config check:', {
+  url: cleanSupabaseUrl,
+  urlValid: cleanSupabaseUrl.startsWith('https://'),
+  keyExists: cleanSupabaseKey.length > 20,
+  keyPrefix: cleanSupabaseKey.slice(0, 18),
+  isConfigured
+});
 
 const supabaseClient = isConfigured
-  ? window.supabase.createClient(SUPABASE_URL.trim(), SUPABASE_KEY.trim())
+  ? window.supabase.createClient(cleanSupabaseUrl, cleanSupabaseKey)
   : null;
+  
 const PULAU = ['SUMATERA','KALIMANTAN','JAWA','BALI NUSRA','SULAWESI','MALUKU','PAPUA'];
 const STATUS = {'Upaya Pemadaman':{cls:'status-upaya',badge:'bg-red-600',icon:'♨',color:'#dc2626'},'Proses Groundcheck':{cls:'status-groundcheck',badge:'bg-amber-500',icon:'⌖',color:'#eab308'},'Sudah Padam':{cls:'status-padam',badge:'bg-blue-600',icon:'✓',color:'#2563eb'},'Perlu Konfirmasi':{cls:'status-konfirmasi',badge:'bg-purple-600',icon:'!',color:'#9333ea'},'False Hotspot':{cls:'status-false',badge:'bg-gray-600',icon:'×',color:'#6b7280'}};
 const FALLBACK_REPORTS=[
