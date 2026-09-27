@@ -98,9 +98,6 @@ const FALLBACK_REPORTS=[
 const HOTSPOTS=[{lat:.49,lon:101.44,confidence:'High',area:'Riau'},{lat:-2.28,lon:113.8,confidence:'High',area:'Kalimantan Tengah'},{lat:-7.9,lon:114.3,confidence:'Medium',area:'Jawa Timur'},{lat:-2.6,lon:140.6,confidence:'Medium',area:'Papua'}];
 let reports=[],map,reportLayer,hotspotLayer,selectedReport=null,collapsedPulau=new Set(),usingFallback=!isConfigured,matrixStartDate=null;
 let kawasanMaster = [];
-let map;
-let reportLayer;
-let hotspotLayer;
   
 const KAWASAN_GEOJSON_URL = 'https://raw.githubusercontent.com/pjkarhutla-del/Laporan_Harian_Dalkarhut_KSDAE/main/kawasan.geojson';
 let kawasanGeoJsonLayer = null;
@@ -137,6 +134,7 @@ async function loadReports() {
       const { data, error } = await supabaseClient
         .from('reports')
         .select(`
+          report_uuid,
           id,
           tanggal,
           npulau,
