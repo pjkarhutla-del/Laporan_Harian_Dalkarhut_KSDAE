@@ -194,6 +194,10 @@ async function loadReports() {
 
     reports = allReports.map((row) => ({
       ...row,
+
+      id: row.report_uuid,
+      legacy_id: row.id,
+      
       npulau: canonicalPulau(row.npulau),
       status: normalizeStatus(row.status)
     }));
@@ -294,9 +298,159 @@ async function loadKawasanMaster() {
     );
   }
 }  
-async function createReport(row){if(!supabaseClient){const x={...row,id:'local-'+Date.now()};reports.push(x);return x}const {data,error}=await supabaseClient.from('reports').insert(row).select().single();if(error)throw error;return {...data,npulau:canonicalPulau(data.npulau),status:normalizeStatus(data.status)}}
-async function updateReport(id,row){if(!supabaseClient){const i=reports.findIndex(r=>String(r.id)===String(id));reports[i]={...reports[i],...row};return reports[i]}const {data,error}=await supabaseClient.from('reports').update(row).eq('id',id).select().single();if(error)throw error;return {...data,npulau:canonicalPulau(data.npulau),status:normalizeStatus(data.status)}}
-async function deleteReport(id){if(!supabaseClient){reports=reports.filter(r=>String(r.id)!==String(id));return}const {error}=await supabaseClient.from('reports').delete().eq('id',id);if(error)throw error}
+async function createReport(row) {
+  if (!supabaseClient) {
+    const localReport = {
+      ...row,
+      report_uuid: crypto.randomUUID(),
+      id: crypto.randomUUID()
+    };
+
+    reports.push(localReport);
+
+    return localReport;
+  }
+
+  const { data, error } = await supabaseClient
+    .from('reports')
+    .insert(row)
+    .select(`
+      report_uuid,
+      id,
+      tanggal,
+      npulau,
+      nupt,
+      nkws,
+      status,
+      lat,
+      lon,
+      luas,
+      upaya,
+      rencana,
+      personel,
+      kendala,
+      kebutuhan,
+      laporan,
+      kawasan_id,
+      gakkum,
+      created_at,
+      updated_at
+    `)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    ...data,
+    id: data.report_uuid,
+    legacy_id: data.id,
+    npulau: canonicalPulau(data.npulau),
+    status: normalizeStatus(data.status)
+  };
+}
+
+async function updateReport(reportUuid, row) {
+  if (!reportUuid) {
+    throw new Error('UUID laporan kosong. Laporan tidak dapat diperbarui.');
+  }
+
+  if (!supabaseClient) {
+    const index = reports.findIndex(
+      (report) => String(report.id) === String(reportUuid)
+    );
+
+    if (index === -1) {
+      throw new Error('Laporan tidak ditemukan di state lokal.');
+    }
+
+    reports[index] = {
+      ...reports[index],
+      ...row
+    };
+
+    return reports[index];
+  }
+
+  const { data, error } = await supabaseClient
+    .from('reports')
+    .update(row)
+    .eq('report_uuid', reportUuid)
+    .select(`
+      report_uuid,
+      id,
+      tanggal,
+      npulau,
+      nupt,
+      nkws,
+      status,
+      lat,
+      lon,
+      luas,
+      upaya,
+      rencana,
+      personel,
+      kendala,
+      kebutuhan,
+      laporan,
+      kawasan_id,
+      gakkum,
+      created_at,
+      updated_at
+    `)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    ...data,
+    id: data.report_uuid,
+    legacy_id: data.id,
+    npulau: canonicalPulau(data.npulau),
+    status: normalizeStatus(data.status)
+  };
+}  
+
+async function deleteReport(reportUuid) {
+  if (
+    !reportUuid ||
+    String(reportUuid).toLowerCase() === 'null'
+  ) {
+    throw new Error(
+      'UUID laporan kosong. Tidak dapat menentukan laporan yang akan dihapus.'
+    );
+  }
+
+  if (!supabaseClient) {
+    reports = reports.filter(
+      (report) => String(report.id) !== String(reportUuid)
+    );
+
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from('reports')
+    .delete()
+    .eq('report_uuid', reportUuid)
+    .select('report_uuid');
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error(
+      'Tidak ada laporan yang terhapus. Periksa RLS DELETE atau UUID laporan.'
+    );
+  }
+
+  return data[0];
+}
+  
 function statusBadge(status){const s=STATUS[status]||STATUS['Perlu Konfirmasi'];return `<span class="inline-flex items-center gap-1 rounded-full ${s.badge} px-2 py-1 text-xs font-bold text-white">${s.icon} ${esc(status)}</span>`}
 function renderSummary(){const n=s=>reports.filter(r=>r.status===s).length,total=reports.length,upaya=n('Upaya Pemadaman'),padam=n('Sudah Padam'),ground=n('Proses Groundcheck'),confirm=n('Perlu Konfirmasi'),falseHot=n('False Hotspot'),success=total?Math.round(padam*100/total):0;$('#summaryCards').innerHTML=`<article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><p class="text-sm font-medium text-slate-500">Total Laporan Kejadian</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-slate-900">${total}</p><span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">${falseHot} false hotspot</span></div><p class="mt-3 text-xs text-slate-500">Akumulasi seluruh laporan Karhutla.</p></article><article class="rounded-2xl border border-red-100 bg-red-50 p-5 shadow-sm"><p class="text-sm font-medium text-red-700">Upaya Pemadaman Aktif</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-red-700">${upaya}</p><span class="rounded-full bg-red-600 px-2 py-1 text-xs font-bold text-white">♨ Prioritas</span></div><p class="mt-3 text-xs text-red-700">Kejadian memerlukan tindakan pemadaman.</p></article><article class="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm"><p class="text-sm font-medium text-blue-700">Sudah Padam</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-blue-700">${padam}</p><span class="rounded-full bg-blue-600 px-2 py-1 text-xs font-bold text-white">${success}%</span></div><p class="mt-3 text-xs text-blue-700">Persentase dari total laporan kejadian.</p></article><article class="rounded-2xl border border-amber-100 bg-amber-50 p-5 shadow-sm"><p class="text-sm font-medium text-amber-800">Groundcheck & Konfirmasi</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-amber-800">${ground+confirm}</p><span class="rounded-full bg-amber-500 px-2 py-1 text-xs font-bold text-white">${ground} + ${confirm}</span></div><p class="mt-3 text-xs text-amber-800">${ground} groundcheck • ${confirm} perlu konfirmasi.</p></article><article class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm"><p class="text-sm font-medium text-emerald-800">Hotspot SIPONGI</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-emerald-800">${HOTSPOTS.length}</p><span class="rounded-full bg-emerald-600 px-2 py-1 text-xs font-bold text-white">Mock API</span></div><p class="mt-3 text-xs text-emerald-800">${HOTSPOTS.filter(x=>x.confidence==='High').length} High • ${HOTSPOTS.filter(x=>x.confidence==='Medium').length} Medium.</p></article>`;$('#lastUpdate').textContent='Pembaruan tampilan: '+new Date().toLocaleString('id-ID')}
 function renderStatus(){const counts=Object.fromEntries(Object.keys(STATUS).map(s=>[s,reports.filter(r=>r.status===s).length])),total=reports.length||1;$('#statusLegend').innerHTML=Object.entries(STATUS).map(([k,v])=>`<span class="inline-flex items-center gap-1 rounded-full ${v.badge} px-2 py-1 text-xs font-bold text-white">${v.icon} ${k}</span>`).join('');$('#segmentedBar').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div title="${k}: ${counts[k]}" style="width:${counts[k]*100/total}%;background-color:${v.color}"></div>`).join('');$('#statusBreakdown').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div class="rounded-lg bg-slate-50 p-3"><div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-600">${k}</span><b>${counts[k]}</b></div><div class="mt-2 h-1.5 rounded" style="background-color:${v.color}"></div></div>`).join('')}
@@ -1041,10 +1195,65 @@ function populateSelects(preset = {}) {
 function setView(v){$$('.view').forEach(x=>x.classList.add('hidden'));$('#view-'+v).classList.remove('hidden');$$('.tab-button').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='dashboard')setTimeout(()=>map.invalidateSize(),120)}
 function resetForm(){const f=$('#reportForm');f.reset();delete f.dataset.editId;$('#editPill').classList.add('hidden');$('#cancelEditBtn').classList.add('hidden');$('#saveBtn').textContent='Simpan laporan ke database';$('#tanggal').value=today();$('#pointsContainer').innerHTML=pointRow();populateSelects()}
 function openNew(p){setView('report');resetForm();$('#tanggal').value=p.tanggal;populateSelects(p);ensureOpt($('#npulau'),p.npulau);populateSelects(p);ensureOpt($('#nupt'),p.nupt);populateSelects(p);ensureOpt($('#nkws'),p.nkws);toast(`Form disiapkan untuk ${p.nkws} pada ${p.tanggal}.`)}
-function openEdit(r){closeModal();setView('report');const f=$('#reportForm');f.dataset.editId=r.id;$('#editPill').classList.remove('hidden');$('#cancelEditBtn').classList.remove('hidden');$('#saveBtn').textContent='Simpan perubahan ke database';$('#tanggal').value=r.tanggal;populateSelects(r);ensureOpt($('#npulau'),r.npulau);populateSelects(r);ensureOpt($('#nupt'),r.nupt);populateSelects(r);ensureOpt($('#nkws'),r.nkws);$('#upaya').value=r.upaya||'';$('#rencana').value=r.rencana||'';$('#personel').value=r.personel||'';$('#kendala').value=r.kendala||'';$('#kebutuhan').value=r.kebutuhan||'';$('#laporan').value = r.laporan || '';$('#pointsContainer').innerHTML=pointRow(r)}
+
+function openEdit(r) {
+  if (!r || !r.id) {
+    toast('UUID laporan tidak tersedia.', true);
+    return;
+  }
+
+  closeModal();
+  setView('report');
+
+  const form = $('#reportForm');
+
+  /*
+    r.id sekarang adalah report_uuid.
+  */
+  form.dataset.editId = r.id;
+
+  // lanjutan kode openEdit...
+}
+  
 function parseRaw(){const text=$('#rawText').value;$('#laporan').value = $('#rawText').value.trim();if(!text.trim())return toast('Tempel teks laporan terlebih dahulu.',true);const dm=text.match(/(?:\d{1,2}[\/.-]\d{1,2}[\/.-](?:20)?\d{2})|(?:\d{1,2}\s+(?:januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+20\d{2})/i);const coords=[...text.matchAll(/([+-]?\d{1,2}[.,]\d{3,})\s*[,;|\/]\s*([+-]?\d{2,3}[.,]\d{3,})/g)].map(x=>({lat:+x[1].replace(',','.'),lon:+x[2].replace(',','.')}));const luas=(text.match(/(\d+(?:[.,]\d+)?)\s*(?:ha|hektar)/i)||[])[1];const status=normalizeStatus(text);$('#pointsContainer').innerHTML=(coords.length?coords:[{lat:'',lon:''}]).map((x,i)=>pointRow({...x,status,luas:i===0?(luas||''):''})).join('');$('#parserNotes').innerHTML=`<b>Parser selesai:</b> status ${status}, ${coords.length} koordinat, luas ${luas||'belum terdeteksi'} ha. Periksa hasil sebelum simpan.`;toast('Hasil parser masuk ke form manual.')} 
 async function saveForm(e){e.preventDefault();const f=$('#reportForm'),btn=$('#saveBtn'),pts=[...$$('.point-row')].map(x=>({lat:+x.querySelector('.pt-lat').value,lon:+x.querySelector('.pt-lon').value,status:x.querySelector('.pt-status').value,luas:x.querySelector('.pt-luas').value||'0'}));if(pts.some(x=>!Number.isFinite(x.lat)||!Number.isFinite(x.lon)))return toast('Koordinat harus valid.',true);const base={tanggal:$('#tanggal').value,npulau:canonicalPulau($('#npulau').value),nupt:$('#nupt').value,nkws:$('#nkws').value,upaya:$('#upaya').value,rencana:$('#rencana').value,personel:$('#personel').value,kendala:$('#kendala').value,kebutuhan:$('#kebutuhan').value,laporan: $('#laporan').value.trim()};btn.disabled=true;try{if(f.dataset.editId){const row=await updateReport(f.dataset.editId,{...base,...pts[0]});const i=reports.findIndex(r=>String(r.id)===String(row.id));reports[i]=row;toast('Laporan diperbarui.')}else{for(const p of pts){const row=await createReport({...base,...p});reports.push(row)}toast(`${pts.length} laporan disimpan.`)}resetForm();matrixStartDate=null;renderAll();setView('dashboard')}catch(err){console.error(err);toast('Gagal menyimpan: '+err.message,true)}finally{btn.disabled=false}}
-async function removeCurrent(){if(!selectedReport||!confirm('Hapus laporan ini?'))return;try{await deleteReport(selectedReport.id);reports=reports.filter(r=>String(r.id)!==String(selectedReport.id));closeModal();renderAll();toast('Laporan dihapus.')}catch(e){toast('Gagal menghapus: '+e.message,true)}}
+
+async function removeCurrent() {
+  if (!selectedReport || !selectedReport.id) {
+    toast('UUID laporan tidak tersedia.', true);
+    return;
+  }
+
+  const confirmed = confirm(
+    `Hapus laporan ${selectedReport.nkws || '-'} tanggal ${selectedReport.tanggal || '-'}?`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    await deleteReport(selectedReport.id);
+
+    reports = reports.filter(
+      (report) => String(report.id) !== String(selectedReport.id)
+    );
+
+    closeModal();
+    renderAll();
+
+    toast('Laporan berhasil dihapus.');
+
+  } catch (error) {
+    console.error('Gagal menghapus laporan:', error);
+
+    toast(
+      `Gagal menghapus: ${error.message || 'Lihat Console browser.'}`,
+      true
+    );
+  }
+}  
+  
 async function init() {
   // 1. Inisialisasi Peta & Form Awal
   setupMap();
