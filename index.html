@@ -17,6 +17,16 @@
     #map{height:460px}.matrix-cell{min-width:52px;height:44px;box-sizing:border-box;transition:transform .14s,filter .14s}.matrix-cell:hover{transform:scale(1.06);filter:brightness(.9);position:relative;z-index:2}
     .matrix-empty{background:#f8fafc;color:#17603c}.matrix-empty:hover{background:#d8f2e1}.status-upaya{background-color:#dc2626!important;color:#fff!important}.status-groundcheck{background-color:#eab308!important;color:#3d2700!important}.status-padam{background-color:#2563eb!important;color:#fff!important}.status-konfirmasi{background-color:#9333ea!important;color:#fff!important}.status-false{background-color:#6b7280!important;color:#fff!important}
     .modal-bg{background:rgba(3,25,15,.70)}.scrollbar-thin::-webkit-scrollbar{width:9px;height:10px}.scrollbar-thin::-webkit-scrollbar-thumb{background:#8da596;border-radius:99px}.scrollbar-thin::-webkit-scrollbar-track{background:#edf3ef;border-radius:99px}input,select,textarea{outline:none}
+    .kawasan-tooltip {
+      border: 1px solid #2563eb;
+      border-radius: 6px;
+      background: rgba(239, 246, 255, 0.96);
+      color: #1e3a8a;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 7px;
+      box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);
+    }
   </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-800">
@@ -87,6 +97,17 @@ const FALLBACK_REPORTS=[
 {id:'f7',tanggal:'2026-09-28',npulau:'PAPUA',nupt:'BBKSDA PAPUA',nkws:'CA Pegunungan Cycloop',status:'Sudah Padam',lat:-2.53,lon:140.52,luas:'9',upaya:'Pendinginan dan patroli.',rencana:'Patroli tiga hari.',personel:'16 personel',kendala:'Sumber air jauh.',kebutuhan:'Tangki air'}];
 const HOTSPOTS=[{lat:.49,lon:101.44,confidence:'High',area:'Riau'},{lat:-2.28,lon:113.8,confidence:'High',area:'Kalimantan Tengah'},{lat:-7.9,lon:114.3,confidence:'Medium',area:'Jawa Timur'},{lat:-2.6,lon:140.6,confidence:'Medium',area:'Papua'}];
 let reports=[],map,reportLayer,hotspotLayer,selectedReport=null,collapsedPulau=new Set(),usingFallback=!isConfigured,matrixStartDate=null;
+
+/* URL file GeoJSON kawasan dari GitHub Raw */
+const KAWASAN_GEOJSON_URL =
+  'https://raw.githubusercontent.com/pjkarhutla-del/Laporan_Harian_Dalkarhut_KSDAE/kawasan.geojson';
+
+/*
+  Layer kawasan akan dibuat saat GeoJSON berhasil dimuat.
+  Variabel global diperlukan agar layer dapat dikelola atau dimatikan nanti.
+*/
+let kawasanGeoJsonLayer = null;
+  
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const fmtDate=d=>new Intl.DateTimeFormat('id-ID',{day:'2-digit',month:'short'}).format(new Date(d+'T12:00:00'));
 function toast(m,bad=false){const e=$('#toast');e.textContent=m;e.className=`fixed bottom-5 right-5 z-[60] max-w-sm rounded-xl px-4 py-3 text-sm font-medium text-white shadow-xl ${bad?'bg-red-700':'bg-slate-900'}`;setTimeout(()=>e.classList.add('hidden'),3500)}
@@ -679,6 +700,158 @@ function resetMatrix() {
   
 function renderFilters(){const val=$('#pulauFilter').value;$('#pulauFilter').innerHTML='<option value="">Semua pulau</option>'+PULAU.map(p=>`<option ${p===val?'selected':''}>${p}</option>`).join('');const set=a=>[...new Set(a)].filter(Boolean).sort();const u=$('#mapUptFilter').value;$('#mapUptFilter').innerHTML='<option value="">Semua UPT</option>'+set(reports.map(r=>r.nupt)).map(x=>`<option ${x===u?'selected':''}>${esc(x)}</option>`).join('');const k=$('#mapKawasanFilter').value;$('#mapKawasanFilter').innerHTML='<option value="">Semua kawasan</option>'+set(reports.map(r=>r.nkws)).map(x=>`<option ${x===k?'selected':''}>${esc(x)}</option>`).join('')}
 function setupMap(){map=L.map('map').setView([-2.5,118],5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);reportLayer=L.layerGroup().addTo(map);hotspotLayer=L.layerGroup().addTo(map);HOTSPOTS.forEach(h=>L.circleMarker([h.lat,h.lon],{radius:8,color:'#92400e',fillColor:'#f59e0b',fillOpacity:.9,weight:2}).bindPopup(`<b>Hotspot SIPONGI (mock)</b><br>Confidence: ${h.confidence}<br>Wilayah: ${h.area}`).addTo(hotspotLayer))}
+async function loadKawasanGeoJSON() {
+  if (!map) {
+    console.warn('Peta Leaflet belum siap. GeoJSON tidak dimuat.');
+    return;
+  }
+
+  try {
+    console.log('Memuat GeoJSON kawasan:', KAWASAN_GEOJSON_URL);
+
+    const response = await fetch(KAWASAN_GEOJSON_URL, {
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Gagal memuat GeoJSON. HTTP ${response.status} ${response.statusText}`
+      );
+    }
+
+    const geojson = await response.json();
+
+    /*
+      Hapus layer lama jika fungsi dipanggil ulang,
+      agar garis/poligon tidak tampil dua kali.
+    */
+    if (kawasanGeoJsonLayer) {
+      map.removeLayer(kawasanGeoJsonLayer);
+    }
+
+    kawasanGeoJsonLayer = L.geoJSON(geojson, {
+      /*
+        Style garis batas kawasan:
+        - Biru
+        - Tidak diberi fill agar marker kejadian tetap jelas
+      */
+      style: () => ({
+        color: '#2563eb',
+        weight: 2,
+        opacity: 0.9,
+        fillColor: '#2563eb',
+        fillOpacity: 0.05
+      }),
+
+      /*
+        onEachFeature dipanggil untuk setiap feature pada GeoJSON.
+        Dipakai untuk memasang label NKWS dan popup detail.
+      */
+      onEachFeature: (feature, layer) => {
+        const properties = feature.properties || {};
+
+        const nkws =
+          properties.nkws ||
+          properties.NKWS ||
+          properties.nama_kawasan ||
+          properties.nama ||
+          'Kawasan tanpa nama';
+
+        const nupt =
+          properties.nupt ||
+          properties.NUPT ||
+          '-';
+
+        const npulau =
+          properties.npulau ||
+          properties.NPULAU ||
+          '-';
+
+        /*
+          Label NKWS muncul saat hover.
+        */
+        layer.bindTooltip(esc(nkws), {
+          sticky: true,
+          direction: 'top',
+          className: 'kawasan-tooltip',
+          opacity: 0.95
+        });
+
+        /*
+          Popup muncul saat batas kawasan diklik.
+        */
+        layer.bindPopup(`
+          <div class="min-w-[190px]">
+            <p class="text-xs font-bold uppercase tracking-wide text-blue-700">
+              Kawasan Konservasi
+            </p>
+
+            <h4 class="mt-1 font-bold text-slate-900">
+              ${esc(nkws)}
+            </h4>
+
+            <dl class="mt-3 space-y-1 text-xs text-slate-600">
+              <div>
+                <dt class="inline font-semibold">Pulau:</dt>
+                <dd class="inline">${esc(npulau)}</dd>
+              </div>
+
+              <div>
+                <dt class="inline font-semibold">UPT:</dt>
+                <dd class="inline">${esc(nupt)}</dd>
+              </div>
+            </dl>
+          </div>
+        `);
+
+        /*
+          Efek interaktif ketika mouse melewati batas kawasan.
+        */
+        layer.on({
+          mouseover: (event) => {
+            event.target.setStyle({
+              color: '#1d4ed8',
+              weight: 4,
+              fillOpacity: 0.15
+            });
+          },
+
+          mouseout: (event) => {
+            kawasanGeoJsonLayer.resetStyle(event.target);
+          }
+        });
+      }
+    }).addTo(map);
+
+    const featureCount = Array.isArray(geojson.features)
+      ? geojson.features.length
+      : 0;
+
+    console.log(
+      `GeoJSON kawasan berhasil dimuat: ${featureCount} feature.`
+    );
+
+    /*
+      Hanya zoom otomatis jika peta belum memiliki marker laporan.
+      Bila tidak, map tidak akan terus melompat saat dashboard dirender ulang.
+    */
+    const bounds = kawasanGeoJsonLayer.getBounds();
+
+    if (bounds.isValid() && reports.length === 0) {
+      map.fitBounds(bounds, {
+        padding: [24, 24]
+      });
+    }
+
+  } catch (error) {
+    console.error('Gagal memuat kawasan.geojson:', error);
+
+    toast(
+      `Layer kawasan tidak dapat dimuat: ${error.message}`,
+      true
+    );
+  }
+}
 function renderMap(){if(!map)return;reportLayer.clearLayers();const u=$('#mapUptFilter').value,k=$('#mapKawasanFilter').value,d=$('#mapDateFilter').value;reports.filter(r=>(!u||r.nupt===u)&&(!k||r.nkws===k)&&(!d||r.tanggal===d)&&Number.isFinite(+r.lat)&&Number.isFinite(+r.lon)).forEach(r=>{const s=STATUS[r.status]||STATUS['Perlu Konfirmasi'];L.circleMarker([+r.lat,+r.lon],{radius:9,color:'#fff',weight:2,fillColor:s.color,fillOpacity:1}).bindPopup(`<b>${esc(r.nkws)}</b><br>${esc(r.nupt)} • ${esc(r.npulau)}<br>${esc(r.tanggal)}<br>${statusBadge(r.status)}<br>Luas: ${esc(r.luas||0)} ha<br><button onclick="window.showReport('${r.id}')" style="margin-top:7px;padding:4px 8px;background:#174d31;color:#fff;border:0;border-radius:4px">Detail</button>`).addTo(reportLayer)})}window.showReport=id=>openDetail(reports.find(r=>String(r.id)===String(id)));
 function renderAll(){renderSummary();renderStatus();renderFilters();renderMatrix();renderMap();populateSelects()}
 function openDetail(r){if(!r)return;selectedReport=r;$('#modalSub').textContent=`${r.tanggal} • ${r.npulau} • ${r.nupt} — ${r.nkws}`;$('#modalContent').innerHTML=`<div class="flex flex-wrap items-center justify-between gap-3">${statusBadge(r.status)}<span class="text-sm text-slate-500">ID: ${esc(r.id)}</span></div><div class="mt-5 grid gap-4 sm:grid-cols-2"><div class="rounded-xl bg-slate-50 p-4"><p class="text-xs font-bold uppercase text-slate-500">Koordinat & luas</p><p class="mt-1 font-semibold">${esc(r.lat)}, ${esc(r.lon)}</p><p class="text-sm text-slate-600">${esc(r.luas||0)} ha</p></div><div class="rounded-xl bg-slate-50 p-4"><p class="text-xs font-bold uppercase text-slate-500">Personel</p><p class="mt-1 font-semibold">${esc(r.personel||'Belum diisi')}</p></div><div class="sm:col-span-2"><p class="text-xs font-bold uppercase text-slate-500">Upaya</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.upaya||'—')}</p></div><div class="sm:col-span-2"><p class="text-xs font-bold uppercase text-slate-500">Rencana tindak lanjut</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.rencana||'—')}</p></div><div><p class="text-xs font-bold uppercase text-slate-500">Kendala</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.kendala||'—')}</p></div><div><p class="text-xs font-bold uppercase text-slate-500">Kebutuhan</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.kebutuhan||'—')}</p></div><div class="sm:col-span-2 rounded-xl border border-forest-100 bg-forest-50 p-4"><div class="flex flex-wrap items-center justify-between gap-3"><div><p class="text-xs font-bold uppercase text-forest-700">Laporan Lapangan</p><p class="mt-1 text-sm text-slate-600">${r.laporan ? 'Narasi laporan mentah tersedia untuk ditinjau.' : 'Belum ada narasi laporan yang tersimpan.'}</p></div>${r.laporan ? `<button type="button" class="read-report-btn rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800" data-report-text="${encodeURIComponent(r.laporan)}" data-report-title="${encodeURIComponent(`${r.nupt} — ${r.nkws}`)}">Baca selengkapnya</button>` : ''}</div>${r.laporan ? `<p class="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-slate-700">${esc(r.laporan)}</p>` : ''}</div></div>`;document.querySelectorAll('.read-report-btn').forEach(button => button.onclick = () => openFullReport(decodeURIComponent(button.dataset.reportTitle || ''), decodeURIComponent(button.dataset.reportText || '')));$('#detailModal').classList.remove('hidden');$('#detailModal').classList.add('flex')}
@@ -697,15 +870,25 @@ async function removeCurrent(){if(!selectedReport||!confirm('Hapus laporan ini?'
 async function init() {
   // 1. Inisialisasi Peta & Form Awal
   setupMap();
+
+  /*
+    Muat batas kawasan setelah objek peta Leaflet tersedia.
+    Tidak perlu menunggu data reports selesai.
+  */
+  loadKawasanGeoJSON();
+
   $('#tanggal').value = today();
   $('#pointsContainer').innerHTML = pointRow();
 
-  // 2. Muat Data & Update Tampilan
   connectionLabel();
+
   await loadReports();
+
   matrixStartDate = null;
   renderAll();
 
+  // event listener lainnya tetap di bawah ini
+  }
   // 3. Event Listeners - Navigasi Tab
   $$('.tab-button').forEach(btn => {
     btn.onclick = () => setView(btn.dataset.view);
