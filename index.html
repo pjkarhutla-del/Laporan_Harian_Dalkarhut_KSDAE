@@ -222,12 +222,14 @@ async function deleteReport(id){if(!supabaseClient){reports=reports.filter(r=>St
 function statusBadge(status){const s=STATUS[status]||STATUS['Perlu Konfirmasi'];return `<span class="inline-flex items-center gap-1 rounded-full ${s.badge} px-2 py-1 text-xs font-bold text-white">${s.icon} ${esc(status)}</span>`}
 function renderSummary(){const n=s=>reports.filter(r=>r.status===s).length,total=reports.length,upaya=n('Upaya Pemadaman'),padam=n('Sudah Padam'),ground=n('Proses Groundcheck'),confirm=n('Perlu Konfirmasi'),falseHot=n('False Hotspot'),success=total?Math.round(padam*100/total):0;$('#summaryCards').innerHTML=`<article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><p class="text-sm font-medium text-slate-500">Total Laporan Kejadian</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-slate-900">${total}</p><span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">${falseHot} false hotspot</span></div><p class="mt-3 text-xs text-slate-500">Akumulasi seluruh laporan Karhutla.</p></article><article class="rounded-2xl border border-red-100 bg-red-50 p-5 shadow-sm"><p class="text-sm font-medium text-red-700">Upaya Pemadaman Aktif</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-red-700">${upaya}</p><span class="rounded-full bg-red-600 px-2 py-1 text-xs font-bold text-white">♨ Prioritas</span></div><p class="mt-3 text-xs text-red-700">Kejadian memerlukan tindakan pemadaman.</p></article><article class="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm"><p class="text-sm font-medium text-blue-700">Sudah Padam</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-blue-700">${padam}</p><span class="rounded-full bg-blue-600 px-2 py-1 text-xs font-bold text-white">${success}%</span></div><p class="mt-3 text-xs text-blue-700">Persentase dari total laporan kejadian.</p></article><article class="rounded-2xl border border-amber-100 bg-amber-50 p-5 shadow-sm"><p class="text-sm font-medium text-amber-800">Groundcheck & Konfirmasi</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-amber-800">${ground+confirm}</p><span class="rounded-full bg-amber-500 px-2 py-1 text-xs font-bold text-white">${ground} + ${confirm}</span></div><p class="mt-3 text-xs text-amber-800">${ground} groundcheck • ${confirm} perlu konfirmasi.</p></article><article class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm"><p class="text-sm font-medium text-emerald-800">Hotspot SIPONGI</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-emerald-800">${HOTSPOTS.length}</p><span class="rounded-full bg-emerald-600 px-2 py-1 text-xs font-bold text-white">Mock API</span></div><p class="mt-3 text-xs text-emerald-800">${HOTSPOTS.filter(x=>x.confidence==='High').length} High • ${HOTSPOTS.filter(x=>x.confidence==='Medium').length} Medium.</p></article>`;$('#lastUpdate').textContent='Pembaruan tampilan: '+new Date().toLocaleString('id-ID')}
 function renderStatus(){const counts=Object.fromEntries(Object.keys(STATUS).map(s=>[s,reports.filter(r=>r.status===s).length])),total=reports.length||1;$('#statusLegend').innerHTML=Object.entries(STATUS).map(([k,v])=>`<span class="inline-flex items-center gap-1 rounded-full ${v.badge} px-2 py-1 text-xs font-bold text-white">${v.icon} ${k}</span>`).join('');$('#segmentedBar').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div title="${k}: ${counts[k]}" style="width:${counts[k]*100/total}%;background-color:${v.color}"></div>`).join('');$('#statusBreakdown').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div class="rounded-lg bg-slate-50 p-3"><div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-600">${k}</span><b>${counts[k]}</b></div><div class="mt-2 h-1.5 rounded" style="background-color:${v.color}"></div></div>`).join('')}
-function groups(){const bucket=Object.fromEntries(PULAU.map(p=>[p,{}]));reports.forEach(r=>{const p=canonicalPulau(r.npulau);if(!bucket[p])return;const key=`${r.nupt}|${r.nkws}`;if(!bucket[p][key])bucket[p][key]={npulau:p,nupt:r.nupt,nkws:r.nkws,byDate:{}};const old=bucket[p][key].byDate[r.tanggal];if(!old||String(r.created_at||r.id)>String(old.created_at||old.id))bucket[p][key].byDate[r.tanggal]=r});return PULAU.map(p=>({npulau:p,items:Object.values(bucket[p]).sort((a,b)=>a.nupt.localeCompare(b.nupt)||a.nkws.localeCompare(b.nkws))})).filter(x=>x.items.length)}
+
+/* ===================== MATRIKS DINAMIS ===================== */
+
 const MATRIX_WINDOW_DAYS = 14;
 
 /*
-  Menghasilkan YYYY-MM-DD berdasarkan zona waktu lokal browser.
-  Aman untuk input type="date" dan kolom PostgreSQL bertipe date.
+  Konversi Date ke YYYY-MM-DD berbasis zona waktu browser.
+  Hindari toISOString() agar tanggal tidak bergeser akibat UTC.
 */
 function toISODateLocal(date) {
   const year = date.getFullYear();
@@ -237,73 +239,157 @@ function toISODateLocal(date) {
   return `${year}-${month}-${day}`;
 }
 
+/*
+  Parsing string PostgreSQL DATE secara lokal pada pukul 12:00.
+  Format YYYY-MM-DD yang diparsing langsung dapat dianggap UTC oleh browser.
+*/
 function parseDateOnly(value) {
-  /*
-    Jangan gunakan new Date('YYYY-MM-DD') tanpa T12:00:00
-    untuk logika matriks, karena browser dapat menginterpretasikan
-    date-only sebagai UTC dan menyebabkan pergeseran hari.
-  */
-  const [year, month, day] = String(value).slice(0, 10).split('-').map(Number);
+  const [year, month, day] = String(value)
+    .slice(0, 10)
+    .split('-')
+    .map(Number);
 
   return new Date(year, month - 1, day, 12, 0, 0);
 }
 
-function addDaysLocal(date, amount) {
+function addDaysLocal(date, days) {
   const next = new Date(date);
-  next.setDate(next.getDate() + amount);
+  next.setDate(next.getDate() + days);
 
   return next;
 }
 
+/*
+  Menyusun baris matriks:
+  NPULAU → NUPT → NKWS → map laporan per tanggal.
+*/
+function groups() {
+  const bucket = Object.fromEntries(
+    PULAU.map((pulau) => [pulau, {}])
+  );
+
+  reports.forEach((report) => {
+    const pulau = canonicalPulau(report.npulau);
+
+    /*
+      Data yang belum memiliki NPULAU valid dikelompokkan sementara.
+      Ini membantu debugging agar laporan tidak hilang diam-diam.
+    */
+    if (!bucket[pulau]) {
+      bucket[pulau] = {};
+    }
+
+    const key = `${report.nupt || '-'}|${report.nkws || '-'}`;
+
+    if (!bucket[pulau][key]) {
+      bucket[pulau][key] = {
+        npulau: pulau,
+        nupt: report.nupt || 'NUPT belum diisi',
+        nkws: report.nkws || 'NKWS belum diisi',
+        byDate: {}
+      };
+    }
+
+    const dateKey = String(report.tanggal || '').slice(0, 10);
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+      return;
+    }
+
+    /*
+      Jika satu kawasan punya lebih dari satu laporan pada tanggal sama,
+      gunakan laporan terakhir menurut updated_at / created_at / id.
+    */
+    const existing = bucket[pulau][key].byDate[dateKey];
+
+    const currentStamp =
+      report.updated_at ||
+      report.created_at ||
+      String(report.id || '');
+
+    const existingStamp =
+      existing?.updated_at ||
+      existing?.created_at ||
+      String(existing?.id || '');
+
+    if (!existing || String(currentStamp) >= String(existingStamp)) {
+      bucket[pulau][key].byDate[dateKey] = report;
+    }
+  });
+
+  /*
+    Tampilkan semua tujuh pulau utama yang memiliki kawasan.
+    Tambahkan LAINNYA bila ditemukan data NPULAU tidak valid.
+  */
+  const orderedPulau = [...PULAU];
+
+  if (bucket.LAINNYA && Object.keys(bucket.LAINNYA).length) {
+    orderedPulau.push('LAINNYA');
+  }
+
+  return orderedPulau
+    .map((pulau) => ({
+      npulau: pulau,
+      items: Object.values(bucket[pulau] || {}).sort((a, b) =>
+        a.nupt.localeCompare(b.nupt) ||
+        a.nkws.localeCompare(b.nkws)
+      )
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+/*
+  Memuat seluruh rentang:
+  - minimal H-30 hingga H+7
+  - diperluas bila ada tanggal laporan lebih lama / lebih baru.
+*/
 function getAllMatrixDates() {
-  const validDates = reports
+  const reportDates = reports
     .map((report) => String(report.tanggal || '').slice(0, 10))
     .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date));
 
   const now = new Date();
   now.setHours(12, 0, 0, 0);
 
-  /*
-    Minimal H-30 hingga H+7 dari hari ini.
-    Jika ada laporan lebih lama atau lebih baru,
-    rentang diperluas agar semua laporan tetap tercakup.
-  */
-  const minimumDate = addDaysLocal(now, -30);
-  const maximumDate = addDaysLocal(now, 7);
+  const defaultStart = addDaysLocal(now, -30);
+  const defaultEnd = addDaysLocal(now, 7);
 
-  const oldestReportDate = validDates.length
-    ? validDates
+  const oldestReport = reportDates.length
+    ? reportDates
         .map(parseDateOnly)
-        .reduce((oldest, current) => current < oldest ? current : oldest)
-    : minimumDate;
+        .reduce((oldest, current) =>
+          current < oldest ? current : oldest
+        )
+    : defaultStart;
 
-  const newestReportDate = validDates.length
-    ? validDates
+  const latestReport = reportDates.length
+    ? reportDates
         .map(parseDateOnly)
-        .reduce((newest, current) => current > newest ? current : newest)
-    : maximumDate;
+        .reduce((latest, current) =>
+          current > latest ? current : latest
+        )
+    : defaultEnd;
 
-  const startDate = oldestReportDate < minimumDate
-    ? oldestReportDate
-    : minimumDate;
+  const start = oldestReport < defaultStart ? oldestReport : defaultStart;
+  const end = latestReport > defaultEnd ? latestReport : defaultEnd;
 
-  const endDate = newestReportDate > maximumDate
-    ? newestReportDate
-    : maximumDate;
-
-  const dates = [];
+  const output = [];
 
   for (
-    let cursor = new Date(startDate);
-    cursor <= endDate;
+    let cursor = new Date(start);
+    cursor <= end;
     cursor = addDaysLocal(cursor, 1)
   ) {
-    dates.push(toISODateLocal(cursor));
+    output.push(toISODateLocal(cursor));
   }
 
-  return dates;
+  return output;
 }
 
+/*
+  Mengambil 14 tanggal yang sedang terlihat.
+  Saat pertama kali dimuat, periode diposisikan agar tanggal hari ini tampil.
+*/
 function getVisibleMatrixDates() {
   const allDates = getAllMatrixDates();
 
@@ -311,44 +397,258 @@ function getVisibleMatrixDates() {
     return [];
   }
 
-  /*
-    Jika belum ada posisi matriks, mulai pada 14 hari sebelum hari ini.
-    Bukan mulai pada tanggal laporan tertua.
-  */
+  const now = new Date();
+  now.setHours(12, 0, 0, 0);
+
+  const defaultWindowStart = toISODateLocal(
+    addDaysLocal(now, -(MATRIX_WINDOW_DAYS - 1))
+  );
+
   if (!matrixStartDate || !allDates.includes(matrixStartDate)) {
-    const now = new Date();
-    now.setHours(12, 0, 0, 0);
-
-    const preferredStart = toISODateLocal(addDaysLocal(now, -13));
-
     matrixStartDate =
-      allDates.find((date) => date >= preferredStart) ||
+      allDates.find((date) => date >= defaultWindowStart) ||
       allDates[Math.max(0, allDates.length - MATRIX_WINDOW_DAYS)];
   }
 
-  let startIndex = allDates.indexOf(matrixStartDate);
+  const startIndex = Math.max(0, allDates.indexOf(matrixStartDate));
 
-  if (startIndex < 0) {
-    startIndex = Math.max(0, allDates.length - MATRIX_WINDOW_DAYS);
-    matrixStartDate = allDates[startIndex];
-  }
-
-  return allDates.slice(startIndex, startIndex + MATRIX_WINDOW_DAYS);
+  return allDates.slice(
+    startIndex,
+    startIndex + MATRIX_WINDOW_DAYS
+  );
 }
 
-function shiftMatrix(days) {
+function matrixHeader(dates) {
+  return `
+    <tr>
+      <th class="sticky left-0 z-10 min-w-[145px] bg-slate-100 p-3 font-bold">
+        NUPT
+      </th>
+
+      <th class="sticky left-[149px] z-10 min-w-[190px] bg-slate-100 p-3 font-bold">
+        NKWS
+      </th>
+
+      ${dates.map((date) => `
+        <th class="min-w-[52px] bg-slate-100 p-2 text-center font-bold">
+          ${fmtDate(date)}
+        </th>
+      `).join('')}
+    </tr>
+  `;
+}
+
+function matrixCell(report, group, date) {
+  /*
+    Bila ada laporan: warna berasal langsung dari STATUS.
+  */
+  if (report) {
+    const config = STATUS[report.status] || STATUS['Perlu Konfirmasi'];
+
+    const symbol =
+      report.status === 'Perlu Konfirmasi'
+        ? '!'
+        : report.status === 'False Hotspot'
+          ? '×'
+          : '';
+
+    return `
+      <td
+        class="matrix-cell ${config.cls} cursor-pointer text-center align-middle text-base font-black"
+        data-detail="${esc(report.id)}"
+        title="${esc(report.status)} — klik untuk detail"
+      >
+        ${symbol}
+      </td>
+    `;
+  }
+
+  /*
+    Bila kosong: tombol + membuka form dengan tanggal/kawasan terisi.
+  */
+  return `
+    <td class="matrix-cell matrix-empty text-center align-middle">
+      <button
+        type="button"
+        class="grid h-full w-full place-items-center text-xl font-light"
+        data-new-date="${date}"
+        data-new-pulau="${esc(group.npulau)}"
+        data-new-nupt="${esc(group.nupt)}"
+        data-new-nkws="${esc(group.nkws)}"
+        title="Isi laporan untuk tanggal ini"
+      >
+        +
+      </button>
+    </td>
+  `;
+}
+
+function renderMatrix() {
+  const dates = getVisibleMatrixDates();
+  const selectedPulau = $('#pulauFilter').value;
+  const matrixHead = $('#matrixHead');
+  const matrixBody = $('#matrixBody');
+
+  console.log('Matriks debug:', {
+    reports: reports.length,
+    totalGroups: groups().length,
+    visibleDates: dates,
+    matrixStartDate
+  });
+
+  /*
+    Lindungi aplikasi jika data belum tersedia.
+  */
+  if (!dates.length) {
+    matrixHead.innerHTML = '';
+
+    matrixBody.innerHTML = `
+      <tr>
+        <td colspan="3" class="p-8 text-center text-slate-500">
+          Belum ada tanggal laporan yang dapat ditampilkan.
+        </td>
+      </tr>
+    `;
+
+    $('#matrixPeriodLabel').textContent = 'Belum ada periode data';
+    return;
+  }
+
+  $('#matrixPeriodLabel').textContent =
+    `${fmtDate(dates[0])} – ${fmtDate(dates[dates.length - 1])} • ${dates.length} hari`;
+
+  matrixHead.innerHTML = matrixHeader(dates);
+
+  const matrixGroups = groups()
+    .filter((group) =>
+      !selectedPulau || group.npulau === selectedPulau
+    );
+
+  let html = '';
+
+  matrixGroups.forEach((pulauGroup) => {
+    const isCollapsed = collapsedPulau.has(pulauGroup.npulau);
+
+    html += `
+      <tr>
+        <td
+          colspan="${dates.length + 2}"
+          class="bg-forest-800 px-3 py-2 text-sm font-bold text-white"
+        >
+          <button
+            type="button"
+            class="mr-2 inline-grid h-6 w-6 place-items-center rounded bg-white/15"
+            data-toggle-pulau="${esc(pulauGroup.npulau)}"
+          >
+            ${isCollapsed ? '＋' : '−'}
+          </button>
+
+          ${esc(pulauGroup.npulau)}
+
+          <span class="ml-2 text-xs font-normal text-emerald-100">
+            ${isCollapsed ? 'Show All' : 'Hide'} ${pulauGroup.items.length} kawasan
+          </span>
+        </td>
+      </tr>
+    `;
+
+    if (!isCollapsed) {
+      pulauGroup.items.forEach((group) => {
+        html += `
+          <tr>
+            <td class="sticky left-0 z-[1] min-w-[145px] bg-white p-3 font-semibold">
+              ${esc(group.nupt)}
+            </td>
+
+            <td class="sticky left-[149px] z-[1] min-w-[190px] bg-white p-3 font-medium">
+              ${esc(group.nkws)}
+            </td>
+
+            ${dates.map((date) =>
+              matrixCell(group.byDate[date], group, date)
+            ).join('')}
+          </tr>
+        `;
+      });
+    }
+  });
+
+  matrixBody.innerHTML = html || `
+    <tr>
+      <td
+        colspan="${dates.length + 2}"
+        class="p-8 text-center text-slate-500"
+      >
+        Tidak ada laporan yang cocok dengan filter pulau.
+      </td>
+    </tr>
+  `;
+
+  /*
+    Listener tombol detail laporan.
+  */
+  $$('[data-detail]').forEach((element) => {
+    element.onclick = () => {
+      const report = reports.find(
+        (item) => String(item.id) === String(element.dataset.detail)
+      );
+
+      openDetail(report);
+    };
+  });
+
+  /*
+    Listener sel kosong untuk membuka form laporan baru.
+  */
+  $$('[data-new-date]').forEach((element) => {
+    element.onclick = () => {
+      openNew({
+        tanggal: element.dataset.newDate,
+        npulau: element.dataset.newPulau,
+        nupt: element.dataset.newNupt,
+        nkws: element.dataset.newNkws
+      });
+    };
+  });
+
+  /*
+    Listener collapse/expand kelompok pulau.
+  */
+  $$('[data-toggle-pulau]').forEach((element) => {
+    element.onclick = () => {
+      const pulau = element.dataset.togglePulau;
+
+      if (collapsedPulau.has(pulau)) {
+        collapsedPulau.delete(pulau);
+      } else {
+        collapsedPulau.add(pulau);
+      }
+
+      renderMatrix();
+    };
+  });
+}
+
+function shiftMatrix(dayOffset) {
   const allDates = getAllMatrixDates();
 
   if (!allDates.length) {
     return;
   }
 
-  const currentIndex = Math.max(0, allDates.indexOf(matrixStartDate));
-  const maxStartIndex = Math.max(0, allDates.length - MATRIX_WINDOW_DAYS);
+  const currentIndex = Math.max(
+    0,
+    allDates.indexOf(matrixStartDate)
+  );
+
+  const maxStartIndex = Math.max(
+    0,
+    allDates.length - MATRIX_WINDOW_DAYS
+  );
 
   const nextIndex = Math.max(
     0,
-    Math.min(maxStartIndex, currentIndex + days)
+    Math.min(maxStartIndex, currentIndex + dayOffset)
   );
 
   matrixStartDate = allDates[nextIndex];
@@ -366,19 +666,17 @@ function resetMatrix() {
   const now = new Date();
   now.setHours(12, 0, 0, 0);
 
-  const preferredStart = toISODateLocal(
+  const desiredStart = toISODateLocal(
     addDaysLocal(now, -(MATRIX_WINDOW_DAYS - 1))
   );
 
   matrixStartDate =
-    allDates.find((date) => date >= preferredStart) ||
+    allDates.find((date) => date >= desiredStart) ||
     allDates[Math.max(0, allDates.length - MATRIX_WINDOW_DAYS)];
 
   renderMatrix();
 }
-function matrixHeader(dates){return `<tr><th class="sticky left-0 z-10 min-w-[145px] bg-slate-100 p-3 font-bold">NUPT</th><th class="sticky left-[149px] z-10 min-w-[190px] bg-slate-100 p-3 font-bold">NKWS</th>${dates.map(d=>`<th class="min-w-[52px] bg-slate-100 p-2 text-center font-bold">${fmtDate(d)}</th>`).join('')}</tr>`}
-function matrixCell(r,g,date){if(r){const s=STATUS[r.status]||STATUS['Perlu Konfirmasi'];const symbol=r.status==='Perlu Konfirmasi'?'!':r.status==='False Hotspot'?'×':'';return `<td data-detail="${esc(r.id)}" class="matrix-cell ${s.cls} cursor-pointer text-center align-middle text-base font-black" title="${esc(r.status)} — klik detail">${symbol}</td>`}return `<td class="matrix-cell matrix-empty text-center align-middle"><button data-new-date="${date}" data-new-pulau="${esc(g.npulau)}" data-new-nupt="${esc(g.nupt)}" data-new-nkws="${esc(g.nkws)}" class="grid h-full w-full place-items-center text-xl font-light" title="Isi laporan">+</button></td>`}
-function renderMatrix(){const dates=visibleDates(),filter=$('#pulauFilter').value;$('#matrixPeriodLabel').textContent=`${fmtDate(dates[0])} – ${fmtDate(dates[dates.length-1])} • ${dates.length} hari`;$('#matrixHead').innerHTML=matrixHeader(dates);let html='';groups().filter(x=>!filter||x.npulau===filter).forEach(group=>{const collapsed=collapsedPulau.has(group.npulau);html+=`<tr><td colspan="${dates.length+2}" class="bg-forest-800 px-3 py-2 text-sm font-bold text-white"><button data-toggle-pulau="${group.npulau}" class="mr-2 inline-grid h-6 w-6 place-items-center rounded bg-white/15">${collapsed?'＋':'−'}</button>${group.npulau}<span class="ml-2 text-xs font-normal text-emerald-100">${collapsed?'Show All':'Hide'} ${group.items.length} kawasan</span></td></tr>`;if(!collapsed)group.items.forEach(g=>{html+=`<tr><td class="sticky left-0 z-[1] bg-white p-3 font-semibold">${esc(g.nupt)}</td><td class="sticky left-[149px] z-[1] bg-white p-3 font-medium">${esc(g.nkws)}</td>${dates.map(d=>matrixCell(g.byDate[d],g,d)).join('')}</tr>`})});$('#matrixBody').innerHTML=html||`<tr><td colspan="${dates.length+2}" class="p-8 text-center text-slate-500">Tidak ada laporan pada filter pulau ini.</td></tr>`;$$('[data-detail]').forEach(e=>e.onclick=()=>openDetail(reports.find(r=>String(r.id)===String(e.dataset.detail))));$$('[data-new-date]').forEach(e=>e.onclick=()=>openNew({tanggal:e.dataset.newDate,npulau:e.dataset.newPulau,nupt:e.dataset.newNupt,nkws:e.dataset.newNkws}));$$('[data-toggle-pulau]').forEach(e=>e.onclick=()=>{const p=e.dataset.togglePulau;collapsedPulau.has(p)?collapsedPulau.delete(p):collapsedPulau.add(p);renderMatrix()})}
+  
 function renderFilters(){const val=$('#pulauFilter').value;$('#pulauFilter').innerHTML='<option value="">Semua pulau</option>'+PULAU.map(p=>`<option ${p===val?'selected':''}>${p}</option>`).join('');const set=a=>[...new Set(a)].filter(Boolean).sort();const u=$('#mapUptFilter').value;$('#mapUptFilter').innerHTML='<option value="">Semua UPT</option>'+set(reports.map(r=>r.nupt)).map(x=>`<option ${x===u?'selected':''}>${esc(x)}</option>`).join('');const k=$('#mapKawasanFilter').value;$('#mapKawasanFilter').innerHTML='<option value="">Semua kawasan</option>'+set(reports.map(r=>r.nkws)).map(x=>`<option ${x===k?'selected':''}>${esc(x)}</option>`).join('')}
 function setupMap(){map=L.map('map').setView([-2.5,118],5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);reportLayer=L.layerGroup().addTo(map);hotspotLayer=L.layerGroup().addTo(map);HOTSPOTS.forEach(h=>L.circleMarker([h.lat,h.lon],{radius:8,color:'#92400e',fillColor:'#f59e0b',fillOpacity:.9,weight:2}).bindPopup(`<b>Hotspot SIPONGI (mock)</b><br>Confidence: ${h.confidence}<br>Wilayah: ${h.area}`).addTo(hotspotLayer))}
 function renderMap(){if(!map)return;reportLayer.clearLayers();const u=$('#mapUptFilter').value,k=$('#mapKawasanFilter').value,d=$('#mapDateFilter').value;reports.filter(r=>(!u||r.nupt===u)&&(!k||r.nkws===k)&&(!d||r.tanggal===d)&&Number.isFinite(+r.lat)&&Number.isFinite(+r.lon)).forEach(r=>{const s=STATUS[r.status]||STATUS['Perlu Konfirmasi'];L.circleMarker([+r.lat,+r.lon],{radius:9,color:'#fff',weight:2,fillColor:s.color,fillOpacity:1}).bindPopup(`<b>${esc(r.nkws)}</b><br>${esc(r.nupt)} • ${esc(r.npulau)}<br>${esc(r.tanggal)}<br>${statusBadge(r.status)}<br>Luas: ${esc(r.luas||0)} ha<br><button onclick="window.showReport('${r.id}')" style="margin-top:7px;padding:4px 8px;background:#174d31;color:#fff;border:0;border-radius:4px">Detail</button>`).addTo(reportLayer)})}window.showReport=id=>openDetail(reports.find(r=>String(r.id)===String(id)));
