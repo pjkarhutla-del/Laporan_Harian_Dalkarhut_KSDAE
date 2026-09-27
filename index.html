@@ -219,22 +219,76 @@ function parseRaw(){const text=$('#rawText').value;if(!text.trim())return toast(
 async function saveForm(e){e.preventDefault();const f=$('#reportForm'),btn=$('#saveBtn'),pts=[...$$('.point-row')].map(x=>({lat:+x.querySelector('.pt-lat').value,lon:+x.querySelector('.pt-lon').value,status:x.querySelector('.pt-status').value,luas:x.querySelector('.pt-luas').value||'0'}));if(pts.some(x=>!Number.isFinite(x.lat)||!Number.isFinite(x.lon)))return toast('Koordinat harus valid.',true);const base={tanggal:$('#tanggal').value,npulau:canonicalPulau($('#npulau').value),nupt:$('#nupt').value,nkws:$('#nkws').value,upaya:$('#upaya').value,rencana:$('#rencana').value,personel:$('#personel').value,kendala:$('#kendala').value,kebutuhan:$('#kebutuhan').value};btn.disabled=true;try{if(f.dataset.editId){const row=await updateReport(f.dataset.editId,{...base,...pts[0]});const i=reports.findIndex(r=>String(r.id)===String(row.id));reports[i]=row;toast('Laporan diperbarui.')}else{for(const p of pts){const row=await createReport({...base,...p});reports.push(row)}toast(`${pts.length} laporan disimpan.`)}resetForm();matrixStartDate=null;renderAll();setView('dashboard')}catch(err){console.error(err);toast('Gagal menyimpan: '+err.message,true)}finally{btn.disabled=false}}
 async function removeCurrent(){if(!selectedReport||!confirm('Hapus laporan ini?'))return;try{await deleteReport(selectedReport.id);reports=reports.filter(r=>String(r.id)!==String(selectedReport.id));closeModal();renderAll();toast('Laporan dihapus.')}catch(e){toast('Gagal menghapus: '+e.message,true)}}
 async function init() {
+  // 1. Inisialisasi Peta & Form Awal
   setupMap();
-
   $('#tanggal').value = today();
   $('#pointsContainer').innerHTML = pointRow();
 
+  // 2. Muat Data & Update Tampilan
   connectionLabel();
-
   await loadReports();
-
   matrixStartDate = null;
   renderAll();
 
-  // Event listener lainnya tetap di bawah ini
+  // 3. Event Listeners - Navigasi Tab
+  $$('.tab-button').forEach(btn => {
+    btn.onclick = () => setView(btn.dataset.view);
+  });
+
+  // 4. Event Listeners - Matriks & Filter
+  $('#pulauFilter').onchange = renderMatrix;
+  $('#expandAll').onclick = () => {
+    collapsedPulau.clear();
+    renderMatrix();
+  };
+  $('#collapseAll').onclick = () => {
+    PULAU.forEach(p => collapsedPulau.add(p));
+    renderMatrix();
+  };
+  $('#matrixPrev').onclick = () => shiftMatrix(-14);
+  $('#matrixNext').onclick = () => shiftMatrix(14);
+  $('#matrixToday').onclick = resetMatrix;
+
+  // 5. Event Listeners - Filter Peta
+  ['mapUptFilter', 'mapKawasanFilter', 'mapDateFilter'].forEach(id => {
+    $('#' + id).onchange = renderMap;
+  });
+
+  // 6. Event Listeners - Form & Dinamika Titik Koordinat
+  $('#addPointBtn').onclick = () => {
+    $('#pointsContainer').insertAdjacentHTML('beforeend', pointRow());
+  };
+  $('#pointsContainer').onclick = e => {
+    if (e.target.closest('.remove-point')) {
+      e.target.closest('.point-row').remove();
+    }
+  };
+  $('#npulau').onchange = () => {
+    $('#nupt').value = '';
+    $('#nkws').value = '';
+    populateSelects();
+  };
+  $('#nupt').onchange = () => {
+    $('#nkws').value = '';
+    populateSelects();
+  };
+  $('#parseBtn').onclick = parseRaw;
+  $('#reportForm').onsubmit = saveForm;
+  $('#cancelEditBtn').onclick = resetForm;
+
+  // 7. Event Listeners - Modal Detail Laporan
+  $$('.modal-close').forEach(btn => {
+    btn.onclick = closeModal;
+  });
+  $('#detailModal').onclick = e => {
+    if (e.target === $('#detailModal')) closeModal();
+  };
+  $('#modalEditBtn').onclick = () => openEdit(selectedReport);
+  $('#deleteBtn').onclick = removeCurrent;
 }
-$$('.tab-button').forEach(e=>e.onclick=()=>setView(e.dataset.view));$('#pulauFilter').onchange=renderMatrix;$('#expandAll').onclick=()=>{collapsedPulau.clear();renderMatrix()};$('#collapseAll').onclick=()=>{PULAU.forEach(p=>collapsedPulau.add(p));renderMatrix()};$('#matrixPrev').onclick=()=>shiftMatrix(-14);$('#matrixNext').onclick=()=>shiftMatrix(14);$('#matrixToday').onclick=resetMatrix;['mapUptFilter','mapKawasanFilter','mapDateFilter'].forEach(id=>$('#'+id).onchange=renderMap);$('#addPointBtn').onclick=()=>$('#pointsContainer').insertAdjacentHTML('beforeend',pointRow());$('#pointsContainer').onclick=e=>{if(e.target.closest('.remove-point'))e.target.closest('.point-row').remove()};$('#npulau').onchange=()=>{$('#nupt').value='';$('#nkws').value='';populateSelects()};$('#nupt').onchange=()=>{$('#nkws').value='';populateSelects()};$('#parseBtn').onclick=parseRaw;$('#reportForm').onsubmit=saveForm;$('#cancelEditBtn').onclick=resetForm;$$('.modal-close').forEach(e=>e.onclick=closeModal);$('#detailModal').onclick=e=>{if(e.target===$('#detailModal'))closeModal()};$('#modalEditBtn').onclick=()=>openEdit(selectedReport);$('#deleteBtn').onclick=removeCurrent}
-document.addEventListener('DOMContentLoaded',init);
+
+// Jalankan fungsi init saat dokumen selesai dimuat
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
