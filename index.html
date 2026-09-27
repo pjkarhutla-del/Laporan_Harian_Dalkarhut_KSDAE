@@ -98,73 +98,119 @@ async function loadReports() {
   const state = $('#connectionState');
 
   if (!supabaseClient) {
-    state.textContent = '● Supabase client belum tersedia';
-    state.className =
-      'rounded-full border border-red-300/30 bg-red-300/10 px-3 py-1.5 text-xs text-red-100';
+    reports = structuredClone(FALLBACK_REPORTS);
+    usingFallback = true;
+    connectionLabel();
 
-    reports = [];
+    console.warn('Supabase client belum tersedia. Mode demo aktif.');
     return;
   }
 
-  state.textContent = '● Memuat laporan dari Supabase…';
+  state.textContent = '● Memuat seluruh laporan dari Supabase…';
   state.className =
     'rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs text-amber-100';
 
-  try {
-    const { data, error } = await supabaseClient
-      .from('reports')
-      .select('id,tanggal,npulau,nupt,nkws,status,lat,lon')
-      .order('tanggal', { ascending: true });
+  const PAGE_SIZE = 1000;
+  let from = 0;
+  let allReports = [];
 
-    if (error) {
-      throw error;
+  try {
+    while (true) {
+      const { data, error } = await supabaseClient
+        .from('reports')
+        .select(`
+          id,
+          tanggal,
+          npulau,
+          nupt,
+          nkws,
+          status,
+          lat,
+          lon,
+          luas,
+          upaya,
+          rencana,
+          personel,
+          kendala,
+          kebutuhan,
+          laporan,
+          kawasan_id,
+          gakkum,
+          created_at,
+          updated_at
+        `)
+        /*
+          Urutan harus konsisten/stabil agar tidak ada baris lompat
+          atau dobel saat data dibaca per halaman.
+        */
+        .order('tanggal', { ascending: true })
+        .order('id', { ascending: true })
+        /*
+          range() menggunakan indeks 0-based dan batas akhir inklusif:
+          halaman 1: 0–999
+          halaman 2: 1000–1999
+        */
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (error) {
+        throw error;
+      }
+
+      const page = data || [];
+      allReports.push(...page);
+
+      console.log(
+        `Supabase: berhasil memuat baris ${from + 1}–${from + page.length}.`
+      );
+
+      state.textContent =
+        `● Memuat ${allReports.length} laporan dari Supabase…`;
+
+      /*
+        Jika hasil kurang dari PAGE_SIZE, tidak ada halaman berikutnya.
+      */
+      if (page.length < PAGE_SIZE) {
+        break;
+      }
+
+      from += PAGE_SIZE;
     }
 
-    console.log('DATA MENTAH REPORTS:', data);
-
-    reports = (data || []).map((row) => ({
+    reports = allReports.map((row) => ({
       ...row,
       npulau: canonicalPulau(row.npulau),
-      status: normalizeStatus(row.status),
-
-      // Nilai default agar dashboard tidak error
-      luas: row.luas ?? '0',
-      upaya: row.upaya ?? '',
-      rencana: row.rencana ?? '',
-      personel: row.personel ?? '',
-      kendala: row.kendala ?? '',
-      kebutuhan: row.kebutuhan ?? '',
-      laporan: row.laporan ?? ''
+      status: normalizeStatus(row.status)
     }));
-
-    console.table(
-      reports.map((row) => ({
-        id: row.id,
-        tanggal: row.tanggal,
-        npulau: row.npulau,
-        nupt: row.nupt,
-        nkws: row.nkws,
-        status: row.status
-      }))
-    );
 
     usingFallback = false;
 
-    state.textContent = `● Terhubung ke Supabase • ${reports.length} laporan`;
+    const latestDate = reports
+      .map((report) => report.tanggal)
+      .filter(Boolean)
+      .sort()
+      .at(-1);
+
+    state.textContent =
+      `● Terhubung ke Supabase • ${reports.length} laporan`;
+
     state.className =
       'rounded-full border border-emerald-400/30 bg-white/10 px-3 py-1.5 text-xs text-emerald-100';
 
+    console.log('Total laporan berhasil dimuat:', reports.length);
+    console.log('Tanggal terbaru laporan di browser:', latestDate);
+
   } catch (error) {
-    console.error('Gagal membaca reports:', error);
+    console.error('Gagal memuat reports dari Supabase:', error);
 
     reports = [];
+    usingFallback = false;
 
-    state.textContent = '● Query reports gagal';
+    state.textContent = '● Gagal memuat laporan dari Supabase';
     state.className =
       'rounded-full border border-red-300/30 bg-red-300/10 px-3 py-1.5 text-xs text-red-100';
 
     toast(
-      `Gagal membaca laporan: ${error.message || 'Lihat Console browser.'}`,
+      `Gagal membaca reports: ${error.message || 'Lihat Console browser.'}`,
       true
     );
   }
