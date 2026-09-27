@@ -27,6 +27,53 @@
       padding: 4px 7px;
       box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);
     }
+    /* Popup marker laporan pada peta Leaflet */
+    .siaga-leaflet-popup .leaflet-popup-content-wrapper {
+      border-radius: 12px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+    }
+    
+    .siaga-leaflet-popup .leaflet-popup-content {
+      width: 240px !important;
+      max-height: 205px;
+      margin: 14px 16px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    
+    .siaga-leaflet-popup .leaflet-popup-tip {
+      background: #ffffff;
+    }
+    
+    .siaga-map-popup {
+      min-width: 220px;
+      word-break: break-word;
+    }
+    
+    /*
+      Penting:
+      Tailwind tidak selalu tersedia/berlaku penuh untuk konten
+      HTML string yang dimasukkan oleh Leaflet. CSS ini menjamin
+      tombol detail tetap terlihat dan bisa diklik.
+    */
+    .siaga-map-popup button {
+      display: block;
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      background: #174d31;
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      padding: 9px 12px;
+    }
+    
+    .siaga-map-popup button:hover {
+      background: #103a26;
+    }
+    
   </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-800">
@@ -910,7 +957,7 @@ function resetMatrix() {
 }
   
 function renderFilters(){const val=$('#pulauFilter').value;$('#pulauFilter').innerHTML='<option value="">Semua pulau</option>'+PULAU.map(p=>`<option ${p===val?'selected':''}>${p}</option>`).join('');const set=a=>[...new Set(a)].filter(Boolean).sort();const u=$('#mapUptFilter').value;$('#mapUptFilter').innerHTML='<option value="">Semua UPT</option>'+set(reports.map(r=>r.nupt)).map(x=>`<option ${x===u?'selected':''}>${esc(x)}</option>`).join('');const k=$('#mapKawasanFilter').value;$('#mapKawasanFilter').innerHTML='<option value="">Semua kawasan</option>'+set(reports.map(r=>r.nkws)).map(x=>`<option ${x===k?'selected':''}>${esc(x)}</option>`).join('')}
-function setupMap(){map=L.map('map').setView([-2.5,118],5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);reportLayer=L.layerGroup().addTo(map);hotspotLayer=L.layerGroup().addTo(map);HOTSPOTS.forEach(h=>L.circleMarker([h.lat,h.lon],{radius:8,color:'#92400e',fillColor:'#f59e0b',fillOpacity:.9,weight:2}).bindPopup(`<b>Hotspot SIPONGI (mock)</b><br>Confidence: ${h.confidence}<br>Wilayah: ${h.area}`).addTo(hotspotLayer))}
+function setupMap(){map=L.map('map').setView([-2.5,118],5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);reportLayer=L.layerGroup().addTo(map);map.options.maxZoom=18;map.on('popupopen',e=>{const p=e.popup;setTimeout(()=>{if(p&&p.getLatLng())map.panInside(p.getLatLng(),{paddingTopLeft:[24,90],paddingBottomRight:[24,120],animate:true,duration:0.25})},60)});hotspotLayer=L.layerGroup().addTo(map);HOTSPOTS.forEach(h=>L.circleMarker([h.lat,h.lon],{radius:8,color:'#92400e',fillColor:'#f59e0b',fillOpacity:.9,weight:2}).bindPopup(`<b>Hotspot SIPONGI (mock)</b><br>Confidence: ${h.confidence}<br>Wilayah: ${h.area}`).addTo(hotspotLayer))}
 async function loadKawasanGeoJSON() {
   if (!map) {
     console.warn('Peta Leaflet belum siap. GeoJSON tidak dimuat.');
@@ -1063,7 +1110,128 @@ async function loadKawasanGeoJSON() {
     );
   }
 }
-function renderMap(){if(!map)return;reportLayer.clearLayers();const u=$('#mapUptFilter').value,k=$('#mapKawasanFilter').value,d=$('#mapDateFilter').value;reports.filter(r=>(!u||r.nupt===u)&&(!k||r.nkws===k)&&(!d||r.tanggal===d)&&Number.isFinite(+r.lat)&&Number.isFinite(+r.lon)).forEach(r=>{const s=STATUS[r.status]||STATUS['Perlu Konfirmasi'];L.circleMarker([+r.lat,+r.lon],{radius:9,color:'#fff',weight:2,fillColor:s.color,fillOpacity:1}).bindPopup(`<b>${esc(r.nkws)}</b><br>${esc(r.nupt)} • ${esc(r.npulau)}<br>${esc(r.tanggal)}<br>${statusBadge(r.status)}<br>Luas: ${esc(r.luas||0)} ha<br><button onclick="window.showReport('${r.id}')" style="margin-top:7px;padding:4px 8px;background:#174d31;color:#fff;border:0;border-radius:4px">Detail</button>`).addTo(reportLayer)})}window.showReport=id=>openDetail(reports.find(r=>String(r.id)===String(id)));
+
+function renderMap() {
+  if (!map) return;
+
+  reportLayer.clearLayers();
+
+  const u = $('#mapUptFilter').value;
+  const k = $('#mapKawasanFilter').value;
+  const d = $('#mapDateFilter').value;
+
+  const filteredReports = reports.filter(
+    (r) =>
+      (!u || r.nupt === u) &&
+      (!k || r.nkws === k) &&
+      (!d || r.tanggal === d) &&
+      Number.isFinite(+r.lat) &&
+      Number.isFinite(+r.lon)
+  );
+
+  filteredReports.forEach((r) => {
+    const s = STATUS[r.status] || STATUS['Perlu Konfirmasi'];
+
+    const popupContent = `
+      <b>${esc(r.nkws)}</b><br>
+      ${esc(r.nupt)} • ${esc(r.npulau)}<br>
+      ${esc(r.tanggal)}<br>
+      ${statusBadge(r.status)}<br>
+      Luas: ${esc(r.luas || 0)} ha<br>
+      <button 
+        onclick="window.showReport('${r.id}')" 
+        style="margin-top:7px; padding:4px 8px; background:#174d31; color:#fff; border:0; border-radius:4px; cursor:pointer;"
+      >
+        Detail
+      </button>
+    `;
+
+      L.circleMarker([+r.lat, +r.lon], {
+      radius: 9,
+      color: '#ffffff',
+      weight: 2,
+      fillColor: s.color,
+      fillOpacity: 1
+    })
+    .bindPopup(
+      `
+        <div class="siaga-map-popup">
+          <p class="text-xs font-bold uppercase tracking-wide text-forest-700">
+            Laporan Karhutla
+          </p>
+    
+          <h4 class="mt-1 text-sm font-bold text-slate-900">
+            ${esc(r.nkws)}
+          </h4>
+    
+          <p class="mt-1 text-xs text-slate-600">
+            ${esc(r.nupt)} • ${esc(r.npulau)}
+          </p>
+    
+          <div class="mt-3 space-y-1 text-xs text-slate-700">
+            <p>
+              <span class="font-semibold">Tanggal:</span>
+              ${esc(r.tanggal)}
+            </p>
+    
+            <p>
+              <span class="font-semibold">Status:</span>
+              ${esc(r.status)}
+            </p>
+    
+            <p>
+              <span class="font-semibold">Luas:</span>
+              ${esc(r.luas || 0)} ha
+            </p>
+          </div>
+    
+          <button
+            type="button"
+            onclick="window.showReport('${r.id}')"
+            class="mt-3 w-full rounded-lg bg-forest-700 px-3 py-2 text-xs font-bold text-white hover:bg-forest-800"
+          >
+            Lihat detail lengkap
+          </button>
+        </div>
+      `,
+      {
+        /*
+          Leaflet akan menggeser peta agar popup tidak terpotong.
+        */
+        autoPan: true,
+        keepInView: true,
+    
+        /*
+          Jarak aman popup dari sisi viewport peta.
+        */
+        autoPanPaddingTopLeft: [24, 80],
+        autoPanPaddingBottomRight: [24, 110],
+    
+        /*
+          Batasi lebar dan tinggi agar tidak melewati area peta.
+        */
+        maxWidth: 280,
+        minWidth: 220,
+        maxHeight: 240,
+    
+        /*
+          Offset agar popup terbuka sedikit lebih tinggi dari marker.
+        */
+        offset: [0, -8],
+    
+        closeButton: true,
+        className: 'siaga-leaflet-popup'
+      }
+    )
+    .addTo(reportLayer);
+  });
+}
+
+window.showReport = (id) => {
+  const report = reports.find((r) => String(r.id) === String(id));
+  if (report) openDetail(report);
+};
+  
 function renderAll(){renderSummary();renderStatus();renderFilters();renderMatrix();renderMap();populateSelects()}
 function openDetail(r){if(!r)return;selectedReport=r;$('#modalSub').textContent=`${r.tanggal} • ${r.npulau} • ${r.nupt} — ${r.nkws}`;$('#modalContent').innerHTML=`<div class="flex flex-wrap items-center justify-between gap-3">${statusBadge(r.status)}<span class="text-sm text-slate-500">ID: ${esc(r.id)}</span></div><div class="mt-5 grid gap-4 sm:grid-cols-2"><div class="rounded-xl bg-slate-50 p-4"><p class="text-xs font-bold uppercase text-slate-500">Koordinat & luas</p><p class="mt-1 font-semibold">${esc(r.lat)}, ${esc(r.lon)}</p><p class="text-sm text-slate-600">${esc(r.luas||0)} ha</p></div><div class="rounded-xl bg-slate-50 p-4"><p class="text-xs font-bold uppercase text-slate-500">Personel</p><p class="mt-1 font-semibold">${esc(r.personel||'Belum diisi')}</p></div><div class="sm:col-span-2"><p class="text-xs font-bold uppercase text-slate-500">Upaya</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.upaya||'—')}</p></div><div class="sm:col-span-2"><p class="text-xs font-bold uppercase text-slate-500">Rencana tindak lanjut</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.rencana||'—')}</p></div><div><p class="text-xs font-bold uppercase text-slate-500">Kendala</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.kendala||'—')}</p></div><div><p class="text-xs font-bold uppercase text-slate-500">Kebutuhan</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.kebutuhan||'—')}</p></div><div class="sm:col-span-2 rounded-xl border border-forest-100 bg-forest-50 p-4"><div class="flex flex-wrap items-center justify-between gap-3"><div><p class="text-xs font-bold uppercase text-forest-700">Laporan Lapangan</p><p class="mt-1 text-sm text-slate-600">${r.laporan ? 'Narasi laporan mentah tersedia untuk ditinjau.' : 'Belum ada narasi laporan yang tersimpan.'}</p></div>${r.laporan ? `<button type="button" class="read-report-btn rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800" data-report-text="${encodeURIComponent(r.laporan)}" data-report-title="${encodeURIComponent(`${r.nupt} — ${r.nkws}`)}">Baca selengkapnya</button>` : ''}</div>${r.laporan ? `<p class="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-slate-700">${esc(r.laporan)}</p>` : ''}</div></div>`;document.querySelectorAll('.read-report-btn').forEach(button => button.onclick = () => openFullReport(decodeURIComponent(button.dataset.reportTitle || ''), decodeURIComponent(button.dataset.reportText || '')));$('#detailModal').classList.remove('hidden');$('#detailModal').classList.add('flex')}
 function closeModal(){$('#detailModal').classList.add('hidden');$('#detailModal').classList.remove('flex')}
