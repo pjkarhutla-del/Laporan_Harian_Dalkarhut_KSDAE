@@ -54,7 +54,7 @@ const SUPABASE_URL = 'https://yeraezbxsvwryuilyghe.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_hs-c6YzPRKm_31ofdowClQ_Ke3PpQFo';
 
 const cleanSupabaseUrl = String(SUPABASE_URL || '').trim();
-const cleanSupabaseKey = String(SUPABASE_KEY || '').trim();
+const cleanSupabaseKey = String(SUPABASE_ANON_KEY || '').trim();
 
 const isConfigured =
   cleanSupabaseUrl.startsWith('https://') &&
