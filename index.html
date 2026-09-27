@@ -167,7 +167,7 @@
               <option value="">Semua regional</option>
             </select>
       
-            <!-- BLOK NAVIGASI TANGGAL (BARU) -->
+            <!-- BLOK NAVIGASI TANGGAL -->
             <select id="matrixRangeMode" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
               <option value="twoWeeks">Rentang 14 hari</option>
               <option value="all">Semua tanggal</option>
@@ -186,7 +186,6 @@
             </button>
       
             <span id="matrixPeriodLabel" class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600"></span>
-            <!-- END BLOK NAVIGASI TANGGAL -->
       
             <!-- Tombol Show All & Hide All -->
             <button id="expandAll" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Show All</button>
@@ -196,9 +195,6 @@
       
         <div class="scrollbar-thin overflow-x-auto">
           <table class="w-full min-w-[970px] border-separate border-spacing-1 text-left text-xs">
-            <select id="regionalFilter"></select>
-            <button id="expandAll"></button>
-            <button id="collapseAll"></button>
             <thead id="matrixHead"></thead>
             <tbody id="matrixBody"></tbody>
           </table>
@@ -316,7 +312,18 @@
       </div>
     </section>
 
-  <section id="view-guide" class="view hidden space-y-6"><div><p class="text-sm font-semibold text-forest-700">DOKUMENTASI TEKNIS</p><h2 class="text-2xl font-bold text-slate-900">Supabase, Data Backend & Deployment</h2><p class="mt-1 text-sm text-slate-500">Panduan konfigurasi database produksi, keamanan, dan publikasi frontend.</p></div><div class="grid gap-6 lg:grid-cols-2"><article class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200"><h3 class="text-lg font-bold">1. Skema tabel Supabase</h3><p class="mt-2 text-sm leading-6 text-slate-600">Buka Supabase SQL Editor dan jalankan skema berikut. Aktifkan Row Level Security (RLS) lalu buat policy sesuai peran admin/operator organisasi Anda.</p><pre class="scrollbar-thin mt-4 max-h-[480px] overflow-auto rounded-xl bg-slate-900 p-4 text-xs leading-5 text-emerald-200">create table public.reports (
+    <!-- GUIDE VIEW -->
+    <section id="view-guide" class="view hidden space-y-6">
+      <div>
+        <p class="text-sm font-semibold text-forest-700">DOKUMENTASI TEKNIS</p>
+        <h2 class="text-2xl font-bold text-slate-900">Supabase, Data Backend & Deployment</h2>
+        <p class="mt-1 text-sm text-slate-500">Panduan konfigurasi database produksi, keamanan, dan publikasi frontend.</p>
+      </div>
+      <div class="grid gap-6 lg:grid-cols-2">
+        <article class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+          <h3 class="text-lg font-bold">1. Skema tabel Supabase</h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">Buka Supabase SQL Editor dan jalankan skema berikut. Aktifkan Row Level Security (RLS) lalu buat policy sesuai peran admin/operator organisasi Anda.</p>
+          <pre class="scrollbar-thin mt-4 max-h-[480px] overflow-auto rounded-xl bg-slate-900 p-4 text-xs leading-5 text-emerald-200">create table public.reports (
   id uuid primary key default gen_random_uuid(),
   tanggal date not null,
   npulau text not null,
@@ -340,7 +347,7 @@
 
 alter table public.reports enable row level security;
 
--- Contoh saja: batasi operasi untuk pengguna terautentikasi.
+-- Contoh policy sederhana:
 create policy "authenticated can read reports"
 on public.reports for select to authenticated using (true);
 create policy "authenticated can insert reports"
@@ -348,11 +355,61 @@ on public.reports for insert to authenticated with check (true);
 create policy "authenticated can update reports"
 on public.reports for update to authenticated using (true);
 create policy "authenticated can delete reports"
-on public.reports for delete to authenticated using (true);</pre></article><article class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200"><h3 class="text-lg font-bold">2. Konfigurasi frontend</h3><ol class="mt-4 space-y-3 text-sm leading-6 text-slate-700"><li><b>1.</b> Buat project baru di Supabase dan salin Project URL serta anon/publishable key dari Project Settings → API.</li><li><b>2.</b> Masukkan nilainya pada konstanta <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code> di bagian konfigurasi skrip HTML.</li><li><b>3.</b> Jangan pernah menaruh <em>service_role key</em> pada HTML/frontend publik.</li><li><b>4.</b> Untuk penggunaan produksi, aktifkan Supabase Auth serta policy RLS berbasis peran agar hanya petugas berwenang dapat membuat, mengubah, dan menghapus laporan.</li><li><b>5.</b> Tambahkan tabel spasial/kawasan dan proses ETL administratif di backend bila peta batas kawasan diperlukan.</li></ol><div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900"><b>Perubahan pengelolaan data:</b> impor data historis CSV dan data spasial/GeoJSON tidak lagi tersedia dari UI ini. Admin harus memvalidasi, memigrasikan, dan mengimpor data tersebut secara manual langsung melalui database/backend yang dibangun (misalnya SQL Editor, pipeline ETL, atau dashboard internal yang terproteksi).</div></article><article class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 lg:col-span-2"><h3 class="text-lg font-bold">3. Deploy gratis</h3><div class="mt-4 grid gap-5 text-sm leading-6 text-slate-700 md:grid-cols-3"><div><h4 class="font-bold text-forest-800">GitHub Pages</h4><p>Simpan aplikasi sebagai <code>index.html</code>, push ke repository, lalu aktifkan Settings → Pages → Deploy from branch <code>main</code> / <code>root</code>. Pastikan URL Supabase diizinkan pada Authentication → URL Configuration.</p></div><div><h4 class="font-bold text-forest-800">Netlify</h4><p>Hubungkan repository GitHub atau upload folder berisi <code>index.html</code>. Netlify menerbitkan HTTPS otomatis. Tambahkan domain Netlify sebagai redirect/allowed URL di Supabase jika menggunakan Auth.</p></div><div><h4 class="font-bold text-forest-800">Vercel</h4><p>Import repository, gunakan preset static/Other, tanpa build command, kemudian Deploy. Setiap push ke branch produksi akan memicu deployment baru.</p></div></div></article></div></section>
-</main>
+on public.reports for delete to authenticated using (true);</pre>
+        </article>
+        <article class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+          <h3 class="text-lg font-bold">2. Konfigurasi frontend</h3>
+          <ol class="mt-4 space-y-3 text-sm leading-6 text-slate-700">
+            <li><b>1.</b> Buat project baru di Supabase dan salin Project URL serta anon/publishable key dari Project Settings → API.</li>
+            <li><b>2.</b> Masukkan nilainya pada konstanta <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code> di bagian konfigurasi skrip HTML.</li>
+            <li><b>3.</b> Jangan pernah menaruh <em>service_role key</em> pada HTML/frontend publik.</li>
+            <li><b>4.</b> Untuk penggunaan produksi, aktifkan Supabase Auth serta policy RLS berbasis peran agar hanya petugas berwenang dapat membuat, mengubah, dan menghapus laporan.</li>
+            <li><b>5.</b> Tambahkan tabel spasial/kawasan dan proses ETL administratif di backend bila peta batas kawasan diperlukan.</li>
+          </ol>
+          <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+            <b>Perubahan pengelolaan data:</b> impor data historis CSV dan data spasial/GeoJSON tidak lagi tersedia dari UI ini. Admin harus memvalidasi, memigrasikan, dan mengimpor data tersebut secara manual langsung melalui database/backend yang dibangun.
+          </div>
+        </article>
+        <article class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 lg:col-span-2">
+          <h3 class="text-lg font-bold">3. Deploy gratis</h3>
+          <div class="mt-4 grid gap-5 text-sm leading-6 text-slate-700 md:grid-cols-3">
+            <div>
+              <h4 class="font-bold text-forest-800">GitHub Pages</h4>
+              <p>Simpan aplikasi sebagai <code>index.html</code>, push ke repository, lalu aktifkan Settings → Pages → Deploy from branch <code>main</code> / <code>root</code>.</p>
+            </div>
+            <div>
+              <h4 class="font-bold text-forest-800">Netlify</h4>
+              <p>Hubungkan repository GitHub atau upload folder berisi <code>index.html</code>. Netlify menerbitkan HTTPS otomatis.</p>
+            </div>
+            <div>
+              <h4 class="font-bold text-forest-800">Vercel</h4>
+              <p>Import repository, gunakan preset static/Other, tanpa build command, kemudian Deploy.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
 
-<div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-bg"><div class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl"><div class="sticky top-0 flex items-center justify-between border-b bg-white px-6 py-4"><div><h3 class="text-lg font-bold">Detail Laporan Harian</h3><p id="modalSub" class="text-xs text-slate-500"></p></div><button class="modal-close grid h-9 w-9 place-items-center rounded-full text-xl hover:bg-slate-100">×</button></div><div id="modalContent" class="p-6"></div><div class="flex flex-wrap justify-end gap-3 border-t px-6 py-4"><button id="deleteBtn" class="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100">Hapus laporan</button><button class="modal-close rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">Tutup</button><button id="modalEditBtn" class="rounded-lg bg-forest-700 px-4 py-2 text-sm font-semibold text-white">Edit Laporan</button></div></div></div>
-<div id="toast" class="fixed bottom-5 right-5 z-[60] hidden max-w-sm rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-xl"></div>
+  <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-bg">
+    <div class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+      <div class="sticky top-0 flex items-center justify-between border-b bg-white px-6 py-4">
+        <div>
+          <h3 class="text-lg font-bold">Detail Laporan Harian</h3>
+          <p id="modalSub" class="text-xs text-slate-500"></p>
+        </div>
+        <button class="modal-close grid h-9 w-9 place-items-center rounded-full text-xl hover:bg-slate-100">×</button>
+      </div>
+      <div id="modalContent" class="p-6"></div>
+      <div class="flex flex-wrap justify-end gap-3 border-t px-6 py-4">
+        <button id="deleteBtn" class="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100">Hapus laporan</button>
+        <button class="modal-close rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">Tutup</button>
+        <button id="modalEditBtn" class="rounded-lg bg-forest-700 px-4 py-2 text-sm font-semibold text-white">Edit Laporan</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-5 right-5 z-[60] hidden max-w-sm rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-xl"></div>
 
 <script>
 /* ==========================================================================
@@ -396,9 +453,9 @@ const FALLBACK_REPORTS = [
   { id: 'f002', tanggal: '2026-09-26', npulau: 'SUMATERA',   nupt: 'BKSDA SUMSEL',  nkws: 'TN Sembilang',                    status: 'Sudah Padam',       lat: -2.180, lon: 104.870, luas: 7.5, upaya: 'Pendinginan perimeter dan validasi lapangan.', rencana: 'Patroli pencegahan harian.', personel: '14 personel', kendala: 'Pasang surut air.', kebutuhan: 'Logistik patroli' },
   { id: 'f003', tanggal: '2026-09-27', npulau: 'KALIMANTAN', nupt: 'BKSDA KALTENG', nkws: 'TN Sebangau',                     status: 'Proses Groundcheck', lat: -2.321, lon: 113.921, luas: 12,  upaya: 'Tim menuju indikasi hotspot menggunakan jalur kanal.', rencana: 'Konfirmasi titik dan pemadaman bila api terverifikasi.', personel: '18 personel', kendala: 'Jarak titik 8 km dari pos.', kebutuhan: 'Perahu dan radio HT' },
   { id: 'f004', tanggal: '2026-09-25', npulau: 'KALIMANTAN', nupt: 'BKSDA KALBAR',  nkws: 'TN Danau Sentarum',              status: 'False Hotspot',     lat: 0.880,  lon: 112.100, luas: 0,   upaya: 'Verifikasi citra dan groundcheck oleh MPA.', rencana: 'Tutup laporan setelah validasi.', personel: '8 personel', kendala: 'Tutup awan pada citra.', kebutuhan: 'Tidak ada' },
-  { id: 'f005', tanggal: '2026-09-27', npulau: 'JABALNUSRA',  nupt: 'BBKSDA JATIM',  nkws: 'TN Baluran',                      status: 'Perlu Konfirmasi',  lat: -7.850, lon: 114.380, luas: 3,   upaya: 'Koordinasi awal dengan resort dan masyarakat.', rencana: 'Groundcheck pagi hari berikutnya.', personel: '10 personel', kendala: 'Laporan awal tanpa foto.', kebutuhan: 'Kendaraan patroli' },
+  { id: 'f005', tanggal: '2026-09-27', npulau: 'BALI NUSRA',  nupt: 'BBKSDA JATIM',  nkws: 'TN Baluran',                      status: 'Perlu Konfirmasi',  lat: -7.850, lon: 114.380, luas: 3,   upaya: 'Koordinasi awal dengan resort dan masyarakat.', rencana: 'Groundcheck pagi hari berikutnya.', personel: '10 personel', kendala: 'Laporan awal tanpa foto.', kebutuhan: 'Kendaraan patroli' },
   { id: 'f006', tanggal: '2026-09-24', npulau: 'SULAWESI',   nupt: 'BKSDA SULSEL',  nkws: 'TN Bantimurung Bulusaraung',      status: 'Sudah Padam',       lat: -4.930, lon: 119.700, luas: 4.2, upaya: 'Pemadaman manual dan pendinginan.', rencana: 'Patroli dua kali sehari.', personel: '12 personel', kendala: 'Medan berbatu.', kebutuhan: 'Air minum personel' },
-  { id: 'f007', tanggal: '2026-09-27', npulau: 'MALUKU-PAPUA', nupt: 'BBKSDA PAPUA', nkws: 'CA Pegunungan Cycloop',          status: 'Upaya Pemadaman',   lat: -2.530, lon: 140.520, luas: 9,   upaya: 'Pemadaman darat oleh MPA dan petugas resort.', rencana: 'Perluasan sekat dan pemantauan malam.', personel: '16 personel', kendala: 'Sumber air jauh.', kebutuhan: 'Selang dan tangki air' }
+  { id: 'f007', tanggal: '2026-09-27', npulau: 'PAPUA',      nupt: 'BBKSDA PAPUA', nkws: 'CA Pegunungan Cycloop',          status: 'Upaya Pemadaman',   lat: -2.530, lon: 140.520, luas: 9,   upaya: 'Pemadaman darat oleh MPA dan petugas resort.', rencana: 'Perluasan sekat dan pemantauan malam.', personel: '16 personel', kendala: 'Sumber air jauh.', kebutuhan: 'Selang dan tangki air' }
 ];
 
 const HOTSPOTS = [
@@ -821,7 +878,7 @@ function renderMatrix() {
   }
 
   $$('[data-detail-id]').forEach(e => e.onclick = () => openDetail(reports.find(r => String(r.id) === e.dataset.detailId)));
-  $$('[data-new-date]').forEach(e => e.onclick = () => openNewReport({     tanggal: e.dataset.newDate,     npulau: e.dataset.newRegional,     nupt: e.dataset.newNupt,     nkws: e.dataset.newNkws   }));$$
+  $$('[data-new-date]').forEach(e => e.onclick = () => openNewReport({      tanggal: e.dataset.newDate,      npulau: e.dataset.newRegional,      nupt: e.dataset.newNupt,      nkws: e.dataset.newNkws    }));$$
 ('[data-toggle-region]').forEach(e => e.onclick = () => {
     const x = e.dataset.toggleRegion;
     collapsedRegions.has(x) ? collapsedRegions.delete(x) : collapsedRegions.add(x);
@@ -1029,8 +1086,8 @@ function populateSelects(preset = {}) {
   if (!ks.length) ks.push('Pilih / ketik melalui data backend');
   const k = $('#nkws').value || preset.nkws || ks[0];
   $('#nkws').innerHTML = ks.map(x => `<option ${x === k ? 'selected' : ''}>${esc(x)}</option>`).join('');
-  optionEnsure($('#nkws'), preset.nkws); }  function setView(name) {   $$('.view').forEach(e => e.classList.add('hidden'));
-  if ($('#view-' + name)) $('#view-' + name).classList.remove('hidden');   $$('.tab-button').forEach(e => e.classList.toggle('active', e.dataset.view === name));
+  optionEnsure($('#nkws'), preset.nkws);  }  function setView(name) {      $$('.view').forEach(e => e.classList.add('hidden'));
+  if ($('#view-' + name)) $('#view-' + name).classList.remove('hidden');      $$('.tab-button').forEach(e => e.classList.toggle('active', e.dataset.view === name));
 
   if (name === 'dashboard' && map) {
     setTimeout(() => map.invalidateSize(), 120);
@@ -1103,8 +1160,7 @@ function openEdit(r) {
    ========================================================================== */
 function parseIndonesianDate(text) {
   const months = { januari: 1, februari: 2, maret: 3, april: 4, mei: 5, juni: 6, juli: 7, agustus: 8, september: 9, oktober: 10, november: 11, desember: 12 };
-  // Menggunakan Unicode \u0027 untuk menggantikan petik tunggal agar syntax highlighter tidak terkecoh
-  let m = text.match(/(?:senin|selasa|rabu|kamis|jumat|jum[\u0027\u2019]?at|sabtu|minggu)?\s*,?\s*(\d{1,2})\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(20\d{2})/i);
+  let m = text.match(/(?:senin|selasa|rabu|kamis|jumat|jum['’]?at|sabtu|minggu)?\s*,?\s*(\d{1,2})\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(20\d{2})/i);
   if (m) return `${m[3]}-${String(months[m[2].toLowerCase()]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
   m = text.match(/\b(\d{1,2})[\/.-](\d{1,2})[\/.-](20\d{2}|\d{2})\b/);
   if (m) {
@@ -1166,7 +1222,6 @@ function sectionText(text, labels, nextLabels) {
   const all = labels.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   const next = nextLabels.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   for (let i = 0; i < lines.length; i++) {
-    // Escaping double-backslash untuk string RegEx agar tidak memicu error
     const re = new RegExp('^\\s*(?:[-•*]\\s*)?(?:' + all + ')\\s*[:\\-–]\\s*(.*)$', 'i');
     const hit = lines[i].match(re);
     if (hit) {
@@ -1224,7 +1279,7 @@ function parseRaw() {
    ========================================================================== */
 async function saveForm(event) {
   event.preventDefault();
-  const btn = $('#saveBtn'), form = $('#reportForm');   const points = [...$$('.point-row')].map(e => ({
+  const btn = $('#saveBtn'), form = $('#reportForm');      const points = [...$$('.point-row')].map(e => ({
     lat: +e.querySelector('.pt-lat').value,
     lon: +e.querySelector('.pt-lon').value,
     status: e.querySelector('.pt-status').value,
@@ -1296,7 +1351,7 @@ async function removeCurrent() {
 async function init() {
   setupMap();
   if ($('#tanggal')) $('#tanggal').value = today();
-  if ($('#pointsContainer')) $('#pointsContainer').innerHTML = pointRow();   connectionLabel();   await loadReports();   renderAll();    // Navigation Tabs & Filter Events   $$('.tab-button').forEach(b => b.onclick = () => setView(b.dataset.view));
+  if ($('#pointsContainer')) $('#pointsContainer').innerHTML = pointRow();      connectionLabel();      await loadReports();      renderAll();        // Navigation Tabs & Filter Events      $$('.tab-button').forEach(b => b.onclick = () => setView(b.dataset.view));
   if ($('#regionalFilter')) $('#regionalFilter').onchange = renderMatrix;
   if ($('#expandAll')) $('#expandAll').onclick = () => { collapsedRegions.clear(); renderMatrix(); };
   if ($('#collapseAll')) $('#collapseAll').onclick = () => { groups().forEach(g => collapsedRegions.add(g.regional)); renderMatrix(); };
@@ -1318,7 +1373,7 @@ async function init() {
     if ($('#parserNotes')) $('#parserNotes').textContent = 'Parser menggunakan pola teks (regex) di browser. Hasil harus selalu diverifikasi petugas sebelum disimpan.';
   };
   if ($('#reportForm')) $('#reportForm').onsubmit = saveForm;
-  if ($('#cancelEditBtn')) $('#cancelEditBtn').onclick = resetForm;   $$('.modal-close').forEach(x => x.onclick = closeModal);
+  if ($('#cancelEditBtn')) $('#cancelEditBtn').onclick = resetForm;      $$('.modal-close').forEach(x => x.onclick = closeModal);
   if ($('#detailModal')) $('#detailModal').onclick = e => { if (e.target === $('#detailModal')) closeModal(); };
   if ($('#modalEditBtn')) $('#modalEditBtn').onclick = () => openEdit(selectedReport);
   if ($('#deleteBtn')) $('#deleteBtn').onclick = removeCurrent;
