@@ -95,96 +95,78 @@ function normalizeStatus(v=''){const x=String(v).toLowerCase();if(/false|bukan t
 function connectionLabel(){const e=$('#connectionState');if(usingFallback){e.textContent='● Mode demo lokal — Supabase belum aktif';e.className='rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs text-amber-100'}else{e.textContent='● Terhubung ke Supabase';e.className='rounded-full border border-emerald-400/30 bg-white/10 px-3 py-1.5 text-xs text-emerald-100'}}
 
 async function loadReports() {
-  const state = document.querySelector('#connectionState');
+  const state = $('#connectionState');
 
-  // 1. Supabase belum dikonfigurasi
   if (!supabaseClient) {
-    reports = structuredClone(FALLBACK_REPORTS);
-    usingFallback = true;
-    connectionLabel();
+    state.textContent = '● Supabase client belum tersedia';
+    state.className =
+      'rounded-full border border-red-300/30 bg-red-300/10 px-3 py-1.5 text-xs text-red-100';
 
-    console.warn('Supabase client belum dibuat. Periksa URL dan key.');
+    reports = [];
     return;
   }
 
-  // 2. Tampilkan status saat request dimulai
-  state.textContent = '● Menghubungkan ke Supabase…';
+  state.textContent = '● Memuat laporan dari Supabase…';
   state.className =
     'rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs text-amber-100';
 
   try {
-    // Timeout 15 detik.
-    // Jika browser Anda tidak mendukung AbortSignal.timeout,
-    // gunakan helper timeoutQuery di bagian berikut.
-    const controller = new AbortController();
-
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, 15000);
-
     const { data, error } = await supabaseClient
       .from('reports')
-      .select(`
-        id,
-        tanggal,
-        npulau,
-        nupt,
-        nkws,
-        status,
-        lat,
-        lon,
-        luas,
-        upaya,
-        rencana,
-        personel,
-        kendala,
-        kebutuhan,
-        kawasan_id,
-        gakkum,
-        laporan,
-        created_at,
-        updated_at
-      `)
-      .order('tanggal', { ascending: true })
-      .order('created_at', { ascending: true })
-      .abortSignal(controller.signal);
-
-    clearTimeout(timeoutId);
+      .select('id,tanggal,npulau,nupt,nkws,status,lat,lon')
+      .order('tanggal', { ascending: true });
 
     if (error) {
       throw error;
     }
 
+    console.log('DATA MENTAH REPORTS:', data);
+
     reports = (data || []).map((row) => ({
       ...row,
       npulau: canonicalPulau(row.npulau),
-      status: normalizeStatus(row.status)
+      status: normalizeStatus(row.status),
+
+      // Nilai default agar dashboard tidak error
+      luas: row.luas ?? '0',
+      upaya: row.upaya ?? '',
+      rencana: row.rencana ?? '',
+      personel: row.personel ?? '',
+      kendala: row.kendala ?? '',
+      kebutuhan: row.kebutuhan ?? '',
+      laporan: row.laporan ?? ''
     }));
 
-    usingFallback = false;
-    connectionLabel();
-
-    console.info(
-      `Supabase berhasil dimuat. Total: ${reports.length} laporan.`,
-      reports
+    console.table(
+      reports.map((row) => ({
+        id: row.id,
+        tanggal: row.tanggal,
+        npulau: row.npulau,
+        nupt: row.nupt,
+        nkws: row.nkws,
+        status: row.status
+      }))
     );
-  } catch (error) {
-    console.error('Gagal memuat reports dari Supabase:', error);
 
-    // Jangan otomatis menampilkan data dummy jika konfigurasi sebenarnya sudah benar.
-    reports = [];
     usingFallback = false;
 
-    state.textContent = '● Koneksi/data Supabase gagal dimuat';
+    state.textContent = `● Terhubung ke Supabase • ${reports.length} laporan`;
+    state.className =
+      'rounded-full border border-emerald-400/30 bg-white/10 px-3 py-1.5 text-xs text-emerald-100';
+
+  } catch (error) {
+    console.error('Gagal membaca reports:', error);
+
+    reports = [];
+
+    state.textContent = '● Query reports gagal';
     state.className =
       'rounded-full border border-red-300/30 bg-red-300/10 px-3 py-1.5 text-xs text-red-100';
 
-    const message =
-      error?.name === 'AbortError'
-        ? 'Koneksi Supabase melewati batas 15 detik. Periksa project, jaringan, atau status project.'
-        : `Gagal membaca reports: ${error?.message || 'Lihat Console browser.'}`;
-
-    toast(message, true);
+    toast(
+      `Gagal membaca laporan: ${error.message || 'Lihat Console browser.'}`,
+      true
+    );
   }
 }
   
