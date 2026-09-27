@@ -195,15 +195,162 @@ function statusBadge(status){const s=STATUS[status]||STATUS['Perlu Konfirmasi'];
 function renderSummary(){const n=s=>reports.filter(r=>r.status===s).length,total=reports.length,upaya=n('Upaya Pemadaman'),padam=n('Sudah Padam'),ground=n('Proses Groundcheck'),confirm=n('Perlu Konfirmasi'),falseHot=n('False Hotspot'),success=total?Math.round(padam*100/total):0;$('#summaryCards').innerHTML=`<article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><p class="text-sm font-medium text-slate-500">Total Laporan Kejadian</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-slate-900">${total}</p><span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">${falseHot} false hotspot</span></div><p class="mt-3 text-xs text-slate-500">Akumulasi seluruh laporan Karhutla.</p></article><article class="rounded-2xl border border-red-100 bg-red-50 p-5 shadow-sm"><p class="text-sm font-medium text-red-700">Upaya Pemadaman Aktif</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-red-700">${upaya}</p><span class="rounded-full bg-red-600 px-2 py-1 text-xs font-bold text-white">♨ Prioritas</span></div><p class="mt-3 text-xs text-red-700">Kejadian memerlukan tindakan pemadaman.</p></article><article class="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm"><p class="text-sm font-medium text-blue-700">Sudah Padam</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-blue-700">${padam}</p><span class="rounded-full bg-blue-600 px-2 py-1 text-xs font-bold text-white">${success}%</span></div><p class="mt-3 text-xs text-blue-700">Persentase dari total laporan kejadian.</p></article><article class="rounded-2xl border border-amber-100 bg-amber-50 p-5 shadow-sm"><p class="text-sm font-medium text-amber-800">Groundcheck & Konfirmasi</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-amber-800">${ground+confirm}</p><span class="rounded-full bg-amber-500 px-2 py-1 text-xs font-bold text-white">${ground} + ${confirm}</span></div><p class="mt-3 text-xs text-amber-800">${ground} groundcheck • ${confirm} perlu konfirmasi.</p></article><article class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm"><p class="text-sm font-medium text-emerald-800">Hotspot SIPONGI</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-emerald-800">${HOTSPOTS.length}</p><span class="rounded-full bg-emerald-600 px-2 py-1 text-xs font-bold text-white">Mock API</span></div><p class="mt-3 text-xs text-emerald-800">${HOTSPOTS.filter(x=>x.confidence==='High').length} High • ${HOTSPOTS.filter(x=>x.confidence==='Medium').length} Medium.</p></article>`;$('#lastUpdate').textContent='Pembaruan tampilan: '+new Date().toLocaleString('id-ID')}
 function renderStatus(){const counts=Object.fromEntries(Object.keys(STATUS).map(s=>[s,reports.filter(r=>r.status===s).length])),total=reports.length||1;$('#statusLegend').innerHTML=Object.entries(STATUS).map(([k,v])=>`<span class="inline-flex items-center gap-1 rounded-full ${v.badge} px-2 py-1 text-xs font-bold text-white">${v.icon} ${k}</span>`).join('');$('#segmentedBar').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div title="${k}: ${counts[k]}" style="width:${counts[k]*100/total}%;background-color:${v.color}"></div>`).join('');$('#statusBreakdown').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div class="rounded-lg bg-slate-50 p-3"><div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-600">${k}</span><b>${counts[k]}</b></div><div class="mt-2 h-1.5 rounded" style="background-color:${v.color}"></div></div>`).join('')}
 function groups(){const bucket=Object.fromEntries(PULAU.map(p=>[p,{}]));reports.forEach(r=>{const p=canonicalPulau(r.npulau);if(!bucket[p])return;const key=`${r.nupt}|${r.nkws}`;if(!bucket[p][key])bucket[p][key]={npulau:p,nupt:r.nupt,nkws:r.nkws,byDate:{}};const old=bucket[p][key].byDate[r.tanggal];if(!old||String(r.created_at||r.id)>String(old.created_at||old.id))bucket[p][key].byDate[r.tanggal]=r});return PULAU.map(p=>({npulau:p,items:Object.values(bucket[p]).sort((a,b)=>a.nupt.localeCompare(b.nupt)||a.nkws.localeCompare(b.nkws))})).filter(x=>x.items.length)}
-function toLocalISO(d){const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)}
-function addDays(date,n){const d=new Date(date);d.setDate(d.getDate()+n);return d}
-function getAllMatrixDates(){const valid=reports.map(r=>r.tanggal).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d));const now=new Date();const minData=valid.length?new Date(Math.min(...valid.map(d=>new Date(d+'T12:00:00').getTime()))):addDays(now,-30);const maxData=valid.length?new Date(Math.max(...valid.map(d=>new Date(d+'T12:00:00').getTime()))):addDays(now,7);const start=new Date(Math.min(addDays(now,-30).getTime(),minData.getTime()));const end=new Date(Math.max(addDays(now,7).getTime(),maxData.getTime()));const dates=[];for(let d=new Date(start);d<=end;d=addDays(d,1))dates.push(toLocalISO(d));return dates}
-function visibleDates(){const all=getAllMatrixDates();if(!matrixStartDate)matrixStartDate=all[0];let start=all.indexOf(matrixStartDate);if(start<0){start=0;matrixStartDate=all[0]}return all.slice(start,start+14)}
+const MATRIX_WINDOW_DAYS = 14;
+
+/*
+  Menghasilkan YYYY-MM-DD berdasarkan zona waktu lokal browser.
+  Aman untuk input type="date" dan kolom PostgreSQL bertipe date.
+*/
+function toISODateLocal(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateOnly(value) {
+  /*
+    Jangan gunakan new Date('YYYY-MM-DD') tanpa T12:00:00
+    untuk logika matriks, karena browser dapat menginterpretasikan
+    date-only sebagai UTC dan menyebabkan pergeseran hari.
+  */
+  const [year, month, day] = String(value).slice(0, 10).split('-').map(Number);
+
+  return new Date(year, month - 1, day, 12, 0, 0);
+}
+
+function addDaysLocal(date, amount) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+
+  return next;
+}
+
+function getAllMatrixDates() {
+  const validDates = reports
+    .map((report) => String(report.tanggal || '').slice(0, 10))
+    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date));
+
+  const now = new Date();
+  now.setHours(12, 0, 0, 0);
+
+  /*
+    Minimal H-30 hingga H+7 dari hari ini.
+    Jika ada laporan lebih lama atau lebih baru,
+    rentang diperluas agar semua laporan tetap tercakup.
+  */
+  const minimumDate = addDaysLocal(now, -30);
+  const maximumDate = addDaysLocal(now, 7);
+
+  const oldestReportDate = validDates.length
+    ? validDates
+        .map(parseDateOnly)
+        .reduce((oldest, current) => current < oldest ? current : oldest)
+    : minimumDate;
+
+  const newestReportDate = validDates.length
+    ? validDates
+        .map(parseDateOnly)
+        .reduce((newest, current) => current > newest ? current : newest)
+    : maximumDate;
+
+  const startDate = oldestReportDate < minimumDate
+    ? oldestReportDate
+    : minimumDate;
+
+  const endDate = newestReportDate > maximumDate
+    ? newestReportDate
+    : maximumDate;
+
+  const dates = [];
+
+  for (
+    let cursor = new Date(startDate);
+    cursor <= endDate;
+    cursor = addDaysLocal(cursor, 1)
+  ) {
+    dates.push(toISODateLocal(cursor));
+  }
+
+  return dates;
+}
+
+function getVisibleMatrixDates() {
+  const allDates = getAllMatrixDates();
+
+  if (!allDates.length) {
+    return [];
+  }
+
+  /*
+    Jika belum ada posisi matriks, mulai pada 14 hari sebelum hari ini.
+    Bukan mulai pada tanggal laporan tertua.
+  */
+  if (!matrixStartDate || !allDates.includes(matrixStartDate)) {
+    const now = new Date();
+    now.setHours(12, 0, 0, 0);
+
+    const preferredStart = toISODateLocal(addDaysLocal(now, -13));
+
+    matrixStartDate =
+      allDates.find((date) => date >= preferredStart) ||
+      allDates[Math.max(0, allDates.length - MATRIX_WINDOW_DAYS)];
+  }
+
+  let startIndex = allDates.indexOf(matrixStartDate);
+
+  if (startIndex < 0) {
+    startIndex = Math.max(0, allDates.length - MATRIX_WINDOW_DAYS);
+    matrixStartDate = allDates[startIndex];
+  }
+
+  return allDates.slice(startIndex, startIndex + MATRIX_WINDOW_DAYS);
+}
+
+function shiftMatrix(days) {
+  const allDates = getAllMatrixDates();
+
+  if (!allDates.length) {
+    return;
+  }
+
+  const currentIndex = Math.max(0, allDates.indexOf(matrixStartDate));
+  const maxStartIndex = Math.max(0, allDates.length - MATRIX_WINDOW_DAYS);
+
+  const nextIndex = Math.max(
+    0,
+    Math.min(maxStartIndex, currentIndex + days)
+  );
+
+  matrixStartDate = allDates[nextIndex];
+
+  renderMatrix();
+}
+
+function resetMatrix() {
+  const allDates = getAllMatrixDates();
+
+  if (!allDates.length) {
+    return;
+  }
+
+  const now = new Date();
+  now.setHours(12, 0, 0, 0);
+
+  const preferredStart = toISODateLocal(
+    addDaysLocal(now, -(MATRIX_WINDOW_DAYS - 1))
+  );
+
+  matrixStartDate =
+    allDates.find((date) => date >= preferredStart) ||
+    allDates[Math.max(0, allDates.length - MATRIX_WINDOW_DAYS)];
+
+  renderMatrix();
+}
 function matrixHeader(dates){return `<tr><th class="sticky left-0 z-10 min-w-[145px] bg-slate-100 p-3 font-bold">NUPT</th><th class="sticky left-[149px] z-10 min-w-[190px] bg-slate-100 p-3 font-bold">NKWS</th>${dates.map(d=>`<th class="min-w-[52px] bg-slate-100 p-2 text-center font-bold">${fmtDate(d)}</th>`).join('')}</tr>`}
 function matrixCell(r,g,date){if(r){const s=STATUS[r.status]||STATUS['Perlu Konfirmasi'];const symbol=r.status==='Perlu Konfirmasi'?'!':r.status==='False Hotspot'?'×':'';return `<td data-detail="${esc(r.id)}" class="matrix-cell ${s.cls} cursor-pointer text-center align-middle text-base font-black" title="${esc(r.status)} — klik detail">${symbol}</td>`}return `<td class="matrix-cell matrix-empty text-center align-middle"><button data-new-date="${date}" data-new-pulau="${esc(g.npulau)}" data-new-nupt="${esc(g.nupt)}" data-new-nkws="${esc(g.nkws)}" class="grid h-full w-full place-items-center text-xl font-light" title="Isi laporan">+</button></td>`}
 function renderMatrix(){const dates=visibleDates(),filter=$('#pulauFilter').value;$('#matrixPeriodLabel').textContent=`${fmtDate(dates[0])} – ${fmtDate(dates[dates.length-1])} • ${dates.length} hari`;$('#matrixHead').innerHTML=matrixHeader(dates);let html='';groups().filter(x=>!filter||x.npulau===filter).forEach(group=>{const collapsed=collapsedPulau.has(group.npulau);html+=`<tr><td colspan="${dates.length+2}" class="bg-forest-800 px-3 py-2 text-sm font-bold text-white"><button data-toggle-pulau="${group.npulau}" class="mr-2 inline-grid h-6 w-6 place-items-center rounded bg-white/15">${collapsed?'＋':'−'}</button>${group.npulau}<span class="ml-2 text-xs font-normal text-emerald-100">${collapsed?'Show All':'Hide'} ${group.items.length} kawasan</span></td></tr>`;if(!collapsed)group.items.forEach(g=>{html+=`<tr><td class="sticky left-0 z-[1] bg-white p-3 font-semibold">${esc(g.nupt)}</td><td class="sticky left-[149px] z-[1] bg-white p-3 font-medium">${esc(g.nkws)}</td>${dates.map(d=>matrixCell(g.byDate[d],g,d)).join('')}</tr>`})});$('#matrixBody').innerHTML=html||`<tr><td colspan="${dates.length+2}" class="p-8 text-center text-slate-500">Tidak ada laporan pada filter pulau ini.</td></tr>`;$$('[data-detail]').forEach(e=>e.onclick=()=>openDetail(reports.find(r=>String(r.id)===String(e.dataset.detail))));$$('[data-new-date]').forEach(e=>e.onclick=()=>openNew({tanggal:e.dataset.newDate,npulau:e.dataset.newPulau,nupt:e.dataset.newNupt,nkws:e.dataset.newNkws}));$$('[data-toggle-pulau]').forEach(e=>e.onclick=()=>{const p=e.dataset.togglePulau;collapsedPulau.has(p)?collapsedPulau.delete(p):collapsedPulau.add(p);renderMatrix()})}
-function shiftMatrix(n){const all=getAllMatrixDates(),idx=Math.max(0,all.indexOf(matrixStartDate));const next=Math.max(0,Math.min(Math.max(0,all.length-14),idx+n));matrixStartDate=all[next];renderMatrix()}
-function resetMatrix(){const all=getAllMatrixDates(),target=toLocalISO(addDays(new Date(),-30));matrixStartDate=all.find(d=>d>=target)||all[0];renderMatrix()}
 function renderFilters(){const val=$('#pulauFilter').value;$('#pulauFilter').innerHTML='<option value="">Semua pulau</option>'+PULAU.map(p=>`<option ${p===val?'selected':''}>${p}</option>`).join('');const set=a=>[...new Set(a)].filter(Boolean).sort();const u=$('#mapUptFilter').value;$('#mapUptFilter').innerHTML='<option value="">Semua UPT</option>'+set(reports.map(r=>r.nupt)).map(x=>`<option ${x===u?'selected':''}>${esc(x)}</option>`).join('');const k=$('#mapKawasanFilter').value;$('#mapKawasanFilter').innerHTML='<option value="">Semua kawasan</option>'+set(reports.map(r=>r.nkws)).map(x=>`<option ${x===k?'selected':''}>${esc(x)}</option>`).join('')}
 function setupMap(){map=L.map('map').setView([-2.5,118],5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);reportLayer=L.layerGroup().addTo(map);hotspotLayer=L.layerGroup().addTo(map);HOTSPOTS.forEach(h=>L.circleMarker([h.lat,h.lon],{radius:8,color:'#92400e',fillColor:'#f59e0b',fillOpacity:.9,weight:2}).bindPopup(`<b>Hotspot SIPONGI (mock)</b><br>Confidence: ${h.confidence}<br>Wilayah: ${h.area}`).addTo(hotspotLayer))}
 function renderMap(){if(!map)return;reportLayer.clearLayers();const u=$('#mapUptFilter').value,k=$('#mapKawasanFilter').value,d=$('#mapDateFilter').value;reports.filter(r=>(!u||r.nupt===u)&&(!k||r.nkws===k)&&(!d||r.tanggal===d)&&Number.isFinite(+r.lat)&&Number.isFinite(+r.lon)).forEach(r=>{const s=STATUS[r.status]||STATUS['Perlu Konfirmasi'];L.circleMarker([+r.lat,+r.lon],{radius:9,color:'#fff',weight:2,fillColor:s.color,fillOpacity:1}).bindPopup(`<b>${esc(r.nkws)}</b><br>${esc(r.nupt)} • ${esc(r.npulau)}<br>${esc(r.tanggal)}<br>${statusBadge(r.status)}<br>Luas: ${esc(r.luas||0)} ha<br><button onclick="window.showReport('${r.id}')" style="margin-top:7px;padding:4px 8px;background:#174d31;color:#fff;border:0;border-radius:4px">Detail</button>`).addTo(reportLayer)})}window.showReport=id=>openDetail(reports.find(r=>String(r.id)===String(id)));
