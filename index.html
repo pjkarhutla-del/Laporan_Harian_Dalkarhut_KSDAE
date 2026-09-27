@@ -97,7 +97,11 @@ const FALLBACK_REPORTS=[
 {id:'f7',tanggal:'2026-09-28',npulau:'PAPUA',nupt:'BBKSDA PAPUA',nkws:'CA Pegunungan Cycloop',status:'Sudah Padam',lat:-2.53,lon:140.52,luas:'9',upaya:'Pendinginan dan patroli.',rencana:'Patroli tiga hari.',personel:'16 personel',kendala:'Sumber air jauh.',kebutuhan:'Tangki air'}];
 const HOTSPOTS=[{lat:.49,lon:101.44,confidence:'High',area:'Riau'},{lat:-2.28,lon:113.8,confidence:'High',area:'Kalimantan Tengah'},{lat:-7.9,lon:114.3,confidence:'Medium',area:'Jawa Timur'},{lat:-2.6,lon:140.6,confidence:'Medium',area:'Papua'}];
 let reports=[],map,reportLayer,hotspotLayer,selectedReport=null,collapsedPulau=new Set(),usingFallback=!isConfigured,matrixStartDate=null;
-
+let kawasanMaster = [];
+let map;
+let reportLayer;
+let hotspotLayer;
+  
 const KAWASAN_GEOJSON_URL = 'https://raw.githubusercontent.com/pjkarhutla-del/Laporan_Harian_Dalkarhut_KSDAE/main/kawasan.geojson';
 let kawasanGeoJsonLayer = null;
   
@@ -229,7 +233,69 @@ async function loadReports() {
     );
   }
 }
-  
+async function loadKawasanMaster() {
+  if (!supabaseClient) {
+    /*
+      Mode demo: bangun master kawasan dari laporan dummy.
+    */
+    kawasanMaster = reports.map((report, index) => ({
+      id: index + 1,
+      npulau: canonicalPulau(report.npulau),
+      nupt: report.nupt,
+      nkws: report.nkws
+    }));
+
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('kawasan')
+      .select(`
+        id,
+        npulau,
+        nupt,
+        nkws
+      `)
+      .order('npulau', { ascending: true })
+      .order('nupt', { ascending: true })
+      .order('nkws', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    kawasanMaster = (data || [])
+      .filter((item) => item.nupt && item.nkws)
+      .map((item) => ({
+        ...item,
+        npulau: canonicalPulau(item.npulau)
+      }));
+
+    console.log(
+      `Master kawasan berhasil dimuat: ${kawasanMaster.length} kawasan.`,
+      kawasanMaster
+    );
+
+  } catch (error) {
+    console.error('Gagal memuat tabel kawasan:', error);
+
+    /*
+      Fallback agar form tetap memiliki pilihan dari reports.
+    */
+    kawasanMaster = reports.map((report, index) => ({
+      id: report.kawasan_id || index + 1,
+      npulau: canonicalPulau(report.npulau),
+      nupt: report.nupt,
+      nkws: report.nkws
+    }));
+
+    toast(
+      `Gagal memuat master kawasan: ${error.message}`,
+      true
+    );
+  }
+}  
 async function createReport(row){if(!supabaseClient){const x={...row,id:'local-'+Date.now()};reports.push(x);return x}const {data,error}=await supabaseClient.from('reports').insert(row).select().single();if(error)throw error;return {...data,npulau:canonicalPulau(data.npulau),status:normalizeStatus(data.status)}}
 async function updateReport(id,row){if(!supabaseClient){const i=reports.findIndex(r=>String(r.id)===String(id));reports[i]={...reports[i],...row};return reports[i]}const {data,error}=await supabaseClient.from('reports').update(row).eq('id',id).select().single();if(error)throw error;return {...data,npulau:canonicalPulau(data.npulau),status:normalizeStatus(data.status)}}
 async function deleteReport(id){if(!supabaseClient){reports=reports.filter(r=>String(r.id)!==String(id));return}const {error}=await supabaseClient.from('reports').delete().eq('id',id);if(error)throw error}
@@ -852,7 +918,128 @@ function closeModal(){$('#detailModal').classList.add('hidden');$('#detailModal'
 function openFullReport(t,c){const m=$('#fullReportModal');$('#fullReportTitle').textContent=t||'Detail laporan';$('#fullReportContent').textContent=c||'Tidak ada narasi laporan yang tersedia.';m.classList.remove('hidden');m.classList.add('flex')}function closeFullReport(){const m=$('#fullReportModal');m.classList.add('hidden');m.classList.remove('flex')}
 function pointRow(v={}){return `<div class="point-row grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-4"><label class="text-xs font-semibold">Lintang<input required step="any" type="number" class="pt-lat mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm" value="${esc(v.lat??'')}" placeholder="-2.321"></label><label class="text-xs font-semibold">Bujur<input required step="any" type="number" class="pt-lon mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm" value="${esc(v.lon??'')}" placeholder="113.921"></label><label class="text-xs font-semibold">Status<select class="pt-status mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm">${Object.keys(STATUS).map(s=>`<option ${s===(v.status||'Upaya Pemadaman')?'selected':''}>${s}</option>`).join('')}</select></label><label class="text-xs font-semibold">Luas (ha)<div class="mt-1 flex gap-1"><input required min="0" step=".01" type="number" class="pt-luas w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm" value="${esc(v.luas??'')}" placeholder="0"><button type="button" class="remove-point rounded-lg px-2 text-red-600">×</button></div></label></div>`}
 function ensureOpt(el,v){if(v&&!([...el.options].some(o=>o.value===v)))el.insertAdjacentHTML('beforeend',`<option value="${esc(v)}">${esc(v)}</option>`);if(v)el.value=v}
-function populateSelects(p={}){const reg=$('#npulau').value||p.npulau||PULAU[0];$('#npulau').innerHTML=PULAU.map(x=>`<option ${x===reg?'selected':''}>${x}</option>`).join('');ensureOpt($('#npulau'),canonicalPulau(p.npulau));const us=[...new Set(reports.filter(r=>r.npulau===$('#npulau').value).map(r=>r.nupt))].filter(Boolean);if(!us.length)us.push('Belum ada UPT');const u=$('#nupt').value||p.nupt||us[0];$('#nupt').innerHTML=us.map(x=>`<option ${x===u?'selected':''}>${esc(x)}</option>`).join('');ensureOpt($('#nupt'),p.nupt);const ks=[...new Set(reports.filter(r=>r.npulau===$('#npulau').value&&r.nupt===$('#nupt').value).map(r=>r.nkws))].filter(Boolean);if(!ks.length)ks.push('Belum ada kawasan');const k=$('#nkws').value||p.nkws||ks[0];$('#nkws').innerHTML=ks.map(x=>`<option ${x===k?'selected':''}>${esc(x)}</option>`).join('');ensureOpt($('#nkws'),p.nkws)}
+
+function uniqueSorted(values) {
+  return [...new Set(values.filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'id'));
+}
+
+function addOptionIfMissing(select, value, label = value) {
+  if (!value) {
+    return;
+  }
+
+  const exists = [...select.options].some(
+    (option) => option.value === String(value)
+  );
+
+  if (!exists) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    select.appendChild(option);
+  }
+
+  select.value = value;
+}
+
+function populateSelects(preset = {}) {
+  const pulauSelect = $('#npulau');
+  const uptSelect = $('#nupt');
+  const kawasanSelect = $('#nkws');
+
+  /*
+    Gunakan master kawasan terlebih dulu.
+    Jika master kosong, baru fallback ke data reports.
+  */
+  const source = kawasanMaster.length
+    ? kawasanMaster
+    : reports.map((report) => ({
+        id: report.kawasan_id || null,
+        npulau: canonicalPulau(report.npulau),
+        nupt: report.nupt,
+        nkws: report.nkws
+      }));
+
+  const selectedPulau =
+    preset.npulau ||
+    pulauSelect.value ||
+    PULAU[0];
+
+  const availablePulau = uniqueSorted(
+    source.map((item) => canonicalPulau(item.npulau))
+  );
+
+  pulauSelect.innerHTML = availablePulau
+    .map((pulau) => `
+      <option value="${esc(pulau)}">
+        ${esc(pulau)}
+      </option>
+    `)
+    .join('');
+
+  addOptionIfMissing(
+    pulauSelect,
+    canonicalPulau(selectedPulau)
+  );
+
+  const selectedUpt =
+    preset.nupt ||
+    uptSelect.value ||
+    '';
+
+  const filteredByPulau = source.filter(
+    (item) => canonicalPulau(item.npulau) === pulauSelect.value
+  );
+
+  const availableUpt = uniqueSorted(
+    filteredByPulau.map((item) => item.nupt)
+  );
+
+  uptSelect.innerHTML = availableUpt.length
+    ? availableUpt
+        .map((nupt) => `
+          <option value="${esc(nupt)}">
+            ${esc(nupt)}
+          </option>
+        `)
+        .join('')
+    : '<option value="">Belum ada UPT untuk pulau ini</option>';
+
+  if (selectedUpt) {
+    addOptionIfMissing(uptSelect, selectedUpt);
+  }
+
+  const selectedKawasan =
+    preset.nkws ||
+    kawasanSelect.value ||
+    '';
+
+  const filteredByUpt = source.filter(
+    (item) =>
+      canonicalPulau(item.npulau) === pulauSelect.value &&
+      item.nupt === uptSelect.value
+  );
+
+  const availableKawasan = uniqueSorted(
+    filteredByUpt.map((item) => item.nkws)
+  );
+
+  kawasanSelect.innerHTML = availableKawasan.length
+    ? availableKawasan
+        .map((nkws) => `
+          <option value="${esc(nkws)}">
+            ${esc(nkws)}
+          </option>
+        `)
+        .join('')
+    : '<option value="">Belum ada kawasan untuk UPT ini</option>';
+
+  if (selectedKawasan) {
+    addOptionIfMissing(kawasanSelect, selectedKawasan);
+  }
+}
+  
 function setView(v){$$('.view').forEach(x=>x.classList.add('hidden'));$('#view-'+v).classList.remove('hidden');$$('.tab-button').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='dashboard')setTimeout(()=>map.invalidateSize(),120)}
 function resetForm(){const f=$('#reportForm');f.reset();delete f.dataset.editId;$('#editPill').classList.add('hidden');$('#cancelEditBtn').classList.add('hidden');$('#saveBtn').textContent='Simpan laporan ke database';$('#tanggal').value=today();$('#pointsContainer').innerHTML=pointRow();populateSelects()}
 function openNew(p){setView('report');resetForm();$('#tanggal').value=p.tanggal;populateSelects(p);ensureOpt($('#npulau'),p.npulau);populateSelects(p);ensureOpt($('#nupt'),p.nupt);populateSelects(p);ensureOpt($('#nkws'),p.nkws);toast(`Form disiapkan untuk ${p.nkws} pada ${p.tanggal}.`)}
@@ -868,6 +1055,8 @@ async function init() {
   $('#pointsContainer').innerHTML = pointRow();
   connectionLabel();
   await loadReports();
+  await loadKawasanMaster();
+  
   matrixStartDate = null;
   renderAll();
   };
@@ -927,7 +1116,19 @@ async function init() {
   };
   $('#modalEditBtn').onclick = () => openEdit(selectedReport);
   $('#deleteBtn').onclick = removeCurrent;
+
+  $('#npulau').onchange = () => {
+  $('#nupt').value = '';
+  $('#nkws').value = '';
+
+    populateSelects();
+  };
   
+  $('#nupt').onchange = () => {
+    $('#nkws').value = '';
+  
+    populateSelects();
+  };
   // --- TAMBAHAN SKRIP FULL REPORT & ESCAPE KEY ---
   $$('.full-report-close').forEach(button => {
     button.onclick = closeFullReport;
