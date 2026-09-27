@@ -363,7 +363,6 @@ const SUPABASE_ANON_KEY = 'sb_publishable_hs-c6YzPRKm_31ofdowClQ_Ke3PpQFo';
 const isConfigured = SUPABASE_URL.startsWith('https://') && !SUPABASE_ANON_KEY.startsWith('PASTE_');
 const supabaseClient = isConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-// KONSTANTA STATUS (Instruksi Poin 3: Patch diletakkan SETELAH bagian ini)
 const STATUS = {
   'Upaya Pemadaman':   { cls: 'status-upaya',       badge: 'bg-red-600',    icon: '♨', color: '#dc2626' },
   'Proses Groundcheck': { cls: 'status-groundcheck', badge: 'bg-amber-500',  icon: '⌖', color: '#eab308' },
@@ -373,7 +372,7 @@ const STATUS = {
 };
 
 /* ==========================================================================
-   2. PATCH MATRIKS: KONSTANTA, KAMUS REGIONAL & STATE (Poin 1 & 3)
+   2. PATCH MATRIKS: KONSTANTA, KAMUS REGIONAL & STATE
    ========================================================================== */
 const NPULAU_OPTIONS = [
   'SUMATERA',
@@ -386,7 +385,7 @@ const NPULAU_OPTIONS = [
 ];
 
 const MATRIX_WINDOW_DAYS = 14;
-let matrixMode = 'twoWeeks'; // 'twoWeeks' | 'all'
+let matrixMode = 'twoWeeks'; 
 let matrixStartDate = getStartOfDay(new Date());
 matrixStartDate.setDate(matrixStartDate.getDate() - (MATRIX_WINDOW_DAYS - 1));
 
@@ -464,6 +463,7 @@ function regionalSortIndex(regional) {
 
 function toast(message, good = true) {
   const e = $('#toast');
+  if (!e) return;
   e.textContent = message;
   e.className = `fixed bottom-5 right-5 z-[60] max-w-sm rounded-xl px-4 py-3 text-sm font-medium text-white shadow-xl ${good ? 'bg-slate-900' : 'bg-red-700'}`;
   setTimeout(() => e.classList.add('hidden'), 3600);
@@ -480,6 +480,7 @@ function normalizeStatus(value = '') {
 
 function connectionLabel() {
   const e = $('#connectionState');
+  if (!e) return;
   if (usingFallback) {
     e.textContent = '● Mode demo lokal — konfigurasi Supabase belum diisi';
     e.className = 'rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs text-amber-100';
@@ -560,46 +561,50 @@ function renderSummary() {
   const pct = total ? Math.round((done * 100) / total) : 0;
   const high = HOTSPOTS.filter(x => x.confidence === 'High').length;
 
-  $('#summaryCards').innerHTML = `
-    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <p class="text-sm font-medium text-slate-500">Total Kejadian</p>
-      <div class="mt-3 flex items-end justify-between">
-        <p class="text-3xl font-bold">${total}</p>
-        <span class="rounded-full bg-red-50 px-2 py-1 text-xs font-bold text-red-700">${active} berjalan</span>
-      </div>
-      <p class="mt-3 text-xs text-slate-500">${done} sudah padam/selesai</p>
-    </div>
-    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <p class="text-sm font-medium text-slate-500">Capaian Pemadaman</p>
-      <div class="mt-2 flex items-center gap-4">
-        <div class="grid h-16 w-16 place-items-center rounded-full" style="background:conic-gradient(#2563eb ${pct * 3.6}deg,#e2e8f0 0)">
-          <div class="grid h-11 w-11 place-items-center rounded-full bg-white text-sm font-bold">${pct}%</div>
+  if ($('#summaryCards')) {
+    $('#summaryCards').innerHTML = `
+      <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <p class="text-sm font-medium text-slate-500">Total Kejadian</p>
+        <div class="mt-3 flex items-end justify-between">
+          <p class="text-3xl font-bold">${total}</p>
+          <span class="rounded-full bg-red-50 px-2 py-1 text-xs font-bold text-red-700">${active} berjalan</span>
         </div>
-        <div>
-          <p class="font-bold text-blue-700">${pct}% padam</p>
-          <p class="text-xs text-slate-500">Dari seluruh laporan</p>
+        <p class="mt-3 text-xs text-slate-500">${done} sudah padam/selesai</p>
+      </div>
+      <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <p class="text-sm font-medium text-slate-500">Capaian Pemadaman</p>
+        <div class="mt-2 flex items-center gap-4">
+          <div class="grid h-16 w-16 place-items-center rounded-full" style="background:conic-gradient(#2563eb ${pct * 3.6}deg,#e2e8f0 0)">
+            <div class="grid h-11 w-11 place-items-center rounded-full bg-white text-sm font-bold">${pct}%</div>
+          </div>
+          <div>
+            <p class="font-bold text-blue-700">${pct}% padam</p>
+            <p class="text-xs text-slate-500">Dari seluruh laporan</p>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <p class="text-sm font-medium text-slate-500">Belum Ada Kabar</p>
-      <div class="mt-3 flex items-end justify-between">
-        <p class="text-3xl font-bold">${confirm}</p>
-        <span class="rounded-full bg-purple-50 px-2 py-1 text-xs font-bold text-purple-700">Perlu konfirmasi</span>
+      <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <p class="text-sm font-medium text-slate-500">Belum Ada Kabar</p>
+        <div class="mt-3 flex items-end justify-between">
+          <p class="text-3xl font-bold">${confirm}</p>
+          <span class="rounded-full bg-purple-50 px-2 py-1 text-xs font-bold text-purple-700">Perlu konfirmasi</span>
+        </div>
+        <p class="mt-3 text-xs text-slate-500">Menunggu validasi petugas</p>
       </div>
-      <p class="mt-3 text-xs text-slate-500">Menunggu validasi petugas</p>
-    </div>
-    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <p class="text-sm font-medium text-slate-500">Hotspot SIPONGI</p>
-      <div class="mt-3 flex items-end justify-between">
-        <p class="text-3xl font-bold">${HOTSPOTS.length}</p>
-        <span class="rounded-full bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700">Mock API</span>
+      <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <p class="text-sm font-medium text-slate-500">Hotspot SIPONGI</p>
+        <div class="mt-3 flex items-end justify-between">
+          <p class="text-3xl font-bold">${HOTSPOTS.length}</p>
+          <span class="rounded-full bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700">Mock API</span>
+        </div>
+        <p class="mt-3 text-xs text-slate-500"><b>${high} High</b> confidence aktif</p>
       </div>
-      <p class="mt-3 text-xs text-slate-500"><b>${high} High</b> confidence aktif</p>
-    </div>
-  `;
+    `;
+  }
 
-  $('#lastUpdate').textContent = 'Tampilan diperbarui: ' + new Date().toLocaleString('id-ID');
+  if ($('#lastUpdate')) {
+    $('#lastUpdate').textContent = 'Tampilan diperbarui: ' + new Date().toLocaleString('id-ID');
+  }
 }
 
 function renderStatus() {
@@ -608,28 +613,34 @@ function renderStatus() {
   );
   const total = reports.length || 1;
 
-  $('#statusLegend').innerHTML = Object.entries(STATUS)
-    .map(([k, v]) => `<span class="inline-flex items-center gap-1 rounded-full ${v.badge} px-2 py-1 text-xs font-bold text-white">${v.icon} ${k}</span>`)
-    .join('');
+  if ($('#statusLegend')) {
+    $('#statusLegend').innerHTML = Object.entries(STATUS)
+      .map(([k, v]) => `<span class="inline-flex items-center gap-1 rounded-full ${v.badge} px-2 py-1 text-xs font-bold text-white">${v.icon} ${k}</span>`)
+      .join('');
+  }
 
-  $('#segmentedBar').innerHTML = Object.entries(STATUS)
-    .map(([k, v]) => `<div style="width:${(counts[k] * 100) / total}%;background:${v.color}" title="${k}: ${counts[k]}"></div>`)
-    .join('');
+  if ($('#segmentedBar')) {
+    $('#segmentedBar').innerHTML = Object.entries(STATUS)
+      .map(([k, v]) => `<div style="width:${(counts[k] * 100) / total}%;background:${v.color}" title="${k}: ${counts[k]}"></div>`)
+      .join('');
+  }
 
-  $('#statusBreakdown').innerHTML = Object.entries(STATUS)
-    .map(([k, v]) => `
-      <div class="rounded-lg bg-slate-50 p-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-slate-600">${k}</span>
-          <b>${counts[k]}</b>
+  if ($('#statusBreakdown')) {
+    $('#statusBreakdown').innerHTML = Object.entries(STATUS)
+      .map(([k, v]) => `
+        <div class="rounded-lg bg-slate-50 p-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-600">${k}</span>
+            <b>${counts[k]}</b>
+          </div>
+          <div class="mt-2 h-1.5 rounded" style="background:${v.color}"></div>
         </div>
-        <div class="mt-2 h-1.5 rounded" style="background:${v.color}"></div>
-      </div>
-    `).join('');
+      `).join('');
+  }
 }
 
 /* ==========================================================================
-   6. FUNGSI MATRIKS BARU (Poin 2: Menggantikan fungsi lama)
+   6. FUNGSI MATRIKS
    ========================================================================== */
 function getAllReportDates() {
   return [...new Set(
@@ -701,7 +712,7 @@ function groups() {
 }
 
 function getVisibleGroups() {
-  const selectedRegional = $('#regionalFilter').value;
+  const selectedRegional = $('#regionalFilter') ? $('#regionalFilter').value : '';
   return groups().filter(group => !selectedRegional || group.regional === selectedRegional);
 }
 
@@ -748,14 +759,11 @@ function statusCell(report, group, date) {
 function renderMatrix() {
   const dates = getMatrixDates();
   const visibleGroups = getVisibleGroups();
-  const regionalsToRender = NPULAU_OPTIONS.filter(regional =>
-    !$('#regionalFilter').value \vert{}\vert{} regional === $('#regionalFilter').value
-  );
+  const currentFilter = $('#regionalFilter') ? $('#regionalFilter').value : '';
+  const regionalsToRender = NPULAU_OPTIONS.filter(regional => !currentFilter || regional === currentFilter);
 
-  $('#matrixHead').innerHTML = header(dates);
-  if ($('#matrixPeriodLabel')) {
-    $('#matrixPeriodLabel').textContent = getMatrixPeriodLabel(dates);
-  }
+  if ($('#matrixHead')) $('#matrixHead').innerHTML = header(dates);
+  if ($('#matrixPeriodLabel')) $('#matrixPeriodLabel').textContent = getMatrixPeriodLabel(dates);
 
   let html = '';
 
@@ -804,11 +812,13 @@ function renderMatrix() {
     });
   });
 
-  $('#matrixBody').innerHTML = html || `
-    <tr>
-      <td colspan="${dates.length + 2}" class="p-8 text-center text-slate-500">Tidak ada data sesuai filter.</td>
-    </tr>
-  `;
+  if ($('#matrixBody')) {
+    $('#matrixBody').innerHTML = html || `
+      <tr>
+        <td colspan="${dates.length + 2}" class="p-8 text-center text-slate-500">Tidak ada data sesuai filter.</td>
+      </tr>
+    `;
+  }
 
   $$('[data-detail-id]').forEach(e => e.onclick = () => openDetail(reports.find(r => String(r.id) === e.dataset.detailId)));
   $$('[data-new-date]').forEach(e => e.onclick = () => openNewReport({     tanggal: e.dataset.newDate,     npulau: e.dataset.newRegional,     nupt: e.dataset.newNupt,     nkws: e.dataset.newNkws   }));$$
@@ -819,7 +829,6 @@ function renderMatrix() {
   });
 }
 
-// Poin 4: Fungsi bindMatrixControls() khusus kontrol/event matriks
 function bindMatrixControls() {
   if ($('#matrixRangeMode')) {
     $('#matrixRangeMode').onchange = e => {
@@ -839,25 +848,32 @@ function bindMatrixControls() {
 }
 
 /* ==========================================================================
-   7. RENDER FILTER & PETA (Poin 2 & Poin 5)
+   7. RENDER FILTER & PETA
    ========================================================================== */
 function renderFilters() {
   const set = (a) => [...new Set(a)].filter(Boolean).sort();
 
-  const keep = $('#regionalFilter').value;
-  $('#regionalFilter').innerHTML = '<option value="">Semua regional</option>' +
-    set(reports.map(r => r.npulau)).map(x => `<option ${x === keep ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  if ($('#regionalFilter')) {
+    const keep = $('#regionalFilter').value;
+    $('#regionalFilter').innerHTML = '<option value="">Semua regional</option>' +
+      set(reports.map(r => r.npulau)).map(x => `<option ${x === keep ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  }
 
-  const u = $('#mapUptFilter').value;
-  $('#mapUptFilter').innerHTML = '<option value="">Semua UPT</option>' +
-    set(reports.map(r => r.nupt)).map(x => `<option ${x === u ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  if ($('#mapUptFilter')) {
+    const u = $('#mapUptFilter').value;
+    $('#mapUptFilter').innerHTML = '<option value="">Semua UPT</option>' +
+      set(reports.map(r => r.nupt)).map(x => `<option ${x === u ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  }
 
-  const k = $('#mapKawasanFilter').value;
-  $('#mapKawasanFilter').innerHTML = '<option value="">Semua kawasan</option>' +
-    set(reports.map(r => r.nkws)).map(x => `<option ${x === k ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  if ($('#mapKawasanFilter')) {
+    const k = $('#mapKawasanFilter').value;
+    $('#mapKawasanFilter').innerHTML = '<option value="">Semua kawasan</option>' +
+      set(reports.map(r => r.nkws)).map(x => `<option ${x === k ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  }
 }
 
 function setupMap() {
+  if (!$('#map') || typeof L === 'undefined') return;
   map = L.map('map').setView([-2.5, 118], 5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18,
@@ -878,9 +894,9 @@ function renderMap() {
   if (!map) return;
   reportLayer.clearLayers();
 
-  const u = $('#mapUptFilter').value;
-  const k = $('#mapKawasanFilter').value;
-  const d = $('#mapDateFilter').value;
+  const u = $('#mapUptFilter') ? $('#mapUptFilter').value : '';
+  const k = $('#mapKawasanFilter') ? $('#mapKawasanFilter').value : '';
+  const d = $('#mapDateFilter') ? $('#mapDateFilter').value : '';
 
   reports
     .filter(r => (!u || r.nupt === u) && (!k || r.nkws === k) && (!d || r.tanggal === d) && Number.isFinite(+r.lat) && Number.isFinite(+r.lon))
@@ -898,7 +914,6 @@ function renderMap() {
 
 window.showReport = id => openDetail(reports.find(r => String(r.id) === String(id)));
 
-// Poin 5: renderAll() tetap memanggil renderFilters() & renderMatrix()
 function renderAll() {
   renderSummary();
   renderStatus();
@@ -912,49 +927,52 @@ function renderAll() {
    8. MODAL DETAIL & FORM MANAGEMENT
    ========================================================================== */
 function openDetail(r) {
-  if (!r) return;
+  if (!r || !$('#detailModal')) return;
   selectedReport = r;
-  $('#modalSub').textContent = `${r.tanggal} • ${r.npulau} • ${r.nupt} — ${r.nkws}`;
+  if ($('#modalSub')) $('#modalSub').textContent = `${r.tanggal} • ${r.npulau} • ${r.nupt} — ${r.nkws}`;
 
-  $('#modalContent').innerHTML = `
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      ${statusBadge(r.status)}
-      <span class="text-sm text-slate-500">ID: ${esc(r.id)}</span>
-    </div>
-    <div class="mt-5 grid gap-4 sm:grid-cols-2">
-      <div class="rounded-xl bg-slate-50 p-4">
-        <p class="text-xs font-bold uppercase text-slate-500">Titik koordinat & luas</p>
-        <p class="mt-1 font-semibold">${esc(r.lat)}, ${esc(r.lon)}</p>
-        <p class="text-sm text-slate-600">${esc(r.luas || 0)} ha</p>
+  if ($('#modalContent')) {
+    $('#modalContent').innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        ${statusBadge(r.status)}
+        <span class="text-sm text-slate-500">ID: ${esc(r.id)}</span>
       </div>
-      <div class="rounded-xl bg-slate-50 p-4">
-        <p class="text-xs font-bold uppercase text-slate-500">Personel</p>
-        <p class="mt-1 font-semibold">${esc(r.personel || 'Belum diisi')}</p>
+      <div class="mt-5 grid gap-4 sm:grid-cols-2">
+        <div class="rounded-xl bg-slate-50 p-4">
+          <p class="text-xs font-bold uppercase text-slate-500">Titik koordinat & luas</p>
+          <p class="mt-1 font-semibold">${esc(r.lat)}, ${esc(r.lon)}</p>
+          <p class="text-sm text-slate-600">${esc(r.luas || 0)} ha</p>
+        </div>
+        <div class="rounded-xl bg-slate-50 p-4">
+          <p class="text-xs font-bold uppercase text-slate-500">Personel</p>
+          <p class="mt-1 font-semibold">${esc(r.personel || 'Belum diisi')}</p>
+        </div>
+        <div class="sm:col-span-2">
+          <p class="text-xs font-bold uppercase text-slate-500">Upaya yang sudah dilakukan</p>
+          <p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.upaya || '—')}</p>
+        </div>
+        <div class="sm:col-span-2">
+          <p class="text-xs font-bold uppercase text-slate-500">Rencana tindak lanjut</p>
+          <p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.rencana || '—')}</p>
+        </div>
+        <div>
+          <p class="text-xs font-bold uppercase text-slate-500">Kendala</p>
+          <p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.kendala || '—')}</p>
+        </div>
+        <div>
+          <p class="text-xs font-bold uppercase text-slate-500">Kebutuhan</p>
+          <p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.kebutuhan || '—')}</p>
+        </div>
       </div>
-      <div class="sm:col-span-2">
-        <p class="text-xs font-bold uppercase text-slate-500">Upaya yang sudah dilakukan</p>
-        <p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.upaya || '—')}</p>
-      </div>
-      <div class="sm:col-span-2">
-        <p class="text-xs font-bold uppercase text-slate-500">Rencana tindak lanjut</p>
-        <p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.rencana || '—')}</p>
-      </div>
-      <div>
-        <p class="text-xs font-bold uppercase text-slate-500">Kendala</p>
-        <p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.kendala || '—')}</p>
-      </div>
-      <div>
-        <p class="text-xs font-bold uppercase text-slate-500">Kebutuhan</p>
-        <p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.kebutuhan || '—')}</p>
-      </div>
-    </div>
-  `;
+    `;
+  }
 
   $('#detailModal').classList.remove('hidden');
   $('#detailModal').classList.add('flex');
 }
 
 function closeModal() {
+  if (!$('#detailModal')) return;
   $('#detailModal').classList.add('hidden');
   $('#detailModal').classList.remove('flex');
 }
@@ -984,7 +1002,7 @@ function pointRow(v = {}) {
 }
 
 function optionEnsure(select, value) {
-  if (!value) return;
+  if (!select || !value) return;
   if (![...select.options].some(o => o.value === value)) {
     select.insertAdjacentHTML('beforeend', `<option value="${esc(value)}">${esc(value)}</option>`);
   }
@@ -992,6 +1010,7 @@ function optionEnsure(select, value) {
 }
 
 function populateSelects(preset = {}) {
+  if (!$('#npulau')) return;
   const regs = [...new Set(reports.map(r => r.npulau))].filter(Boolean).sort();
   if (!regs.length) {
     regs.push('SUMATERA', 'KALIMANTAN', 'JAWA', 'BALI NUSRA', 'SULAWESI', 'MALUKU', 'PAPUA');
@@ -1011,7 +1030,7 @@ function populateSelects(preset = {}) {
   const k = $('#nkws').value || preset.nkws || ks[0];
   $('#nkws').innerHTML = ks.map(x => `<option ${x === k ? 'selected' : ''}>${esc(x)}</option>`).join('');
   optionEnsure($('#nkws'), preset.nkws); }  function setView(name) {   $$('.view').forEach(e => e.classList.add('hidden'));
-  $('#view-' + name).classList.remove('hidden');   $$('.tab-button').forEach(e => e.classList.toggle('active', e.dataset.view === name));
+  if ($('#view-' + name)) $('#view-' + name).classList.remove('hidden');   $$('.tab-button').forEach(e => e.classList.toggle('active', e.dataset.view === name));
 
   if (name === 'dashboard' && map) {
     setTimeout(() => map.invalidateSize(), 120);
@@ -1020,20 +1039,21 @@ function populateSelects(preset = {}) {
 
 function resetForm() {
   const f = $('#reportForm');
+  if (!f) return;
   f.reset();
   delete f.dataset.editId;
-  $('#editPill').classList.add('hidden');
-  $('#cancelEditBtn').classList.add('hidden');
-  $('#saveBtn').textContent = 'Simpan laporan ke database';
-  $('#tanggal').value = today();
-  $('#pointsContainer').innerHTML = pointRow();
+  if ($('#editPill')) $('#editPill').classList.add('hidden');
+  if ($('#cancelEditBtn')) $('#cancelEditBtn').classList.add('hidden');
+  if ($('#saveBtn')) $('#saveBtn').textContent = 'Simpan laporan ke database';
+  if ($('#tanggal')) $('#tanggal').value = today();
+  if ($('#pointsContainer')) $('#pointsContainer').innerHTML = pointRow();
   populateSelects();
 }
 
 function openNewReport(preset) {
   setView('report');
   resetForm();
-  $('#tanggal').value = preset.tanggal || today();
+  if ($('#tanggal')) $('#tanggal').value = preset.tanggal || today();
 
   populateSelects(preset);
   optionEnsure($('#npulau'), preset.npulau);
@@ -1042,7 +1062,7 @@ function openNewReport(preset) {
   populateSelects(preset);
   optionEnsure($('#nkws'), preset.nkws);
 
-  $('#rawText').value = '';
+  if ($('#rawText')) $('#rawText').value = '';
   toast(`Form siap untuk ${preset.nkws} pada ${preset.tanggal}.`);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1053,12 +1073,13 @@ function openEdit(r) {
   setView('report');
 
   const f = $('#reportForm');
+  if (!f) return;
   f.dataset.editId = r.id;
 
-  $('#editPill').classList.remove('hidden');
-  $('#cancelEditBtn').classList.remove('hidden');
-  $('#saveBtn').textContent = 'Simpan perubahan ke database';
-  $('#tanggal').value = r.tanggal;
+  if ($('#editPill')) $('#editPill').classList.remove('hidden');
+  if ($('#cancelEditBtn')) $('#cancelEditBtn').classList.remove('hidden');
+  if ($('#saveBtn')) $('#saveBtn').textContent = 'Simpan perubahan ke database';
+  if ($('#tanggal')) $('#tanggal').value = r.tanggal;
 
   populateSelects(r);
   optionEnsure($('#npulau'), r.npulau);
@@ -1067,22 +1088,23 @@ function openEdit(r) {
   populateSelects(r);
   optionEnsure($('#nkws'), r.nkws);
 
-  $('#upaya').value = r.upaya || '';
-  $('#rencana').value = r.rencana || '';
-  $('#personel').value = r.personel || '';
-  $('#kendala').value = r.kendala || '';
-  $('#kebutuhan').value = r.kebutuhan || '';
-  $('#pointsContainer').innerHTML = pointRow(r);
+  if ($('#upaya')) $('#upaya').value = r.upaya || '';
+  if ($('#rencana')) $('#rencana').value = r.rencana || '';
+  if ($('#personel')) $('#personel').value = r.personel || '';
+  if ($('#kendala')) $('#kendala').value = r.kendala || '';
+  if ($('#kebutuhan')) $('#kebutuhan').value = r.kebutuhan || '';
+  if ($('#pointsContainer')) $('#pointsContainer').innerHTML = pointRow(r);
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ==========================================================================
-   9. PARSER TEXT OTOMATIS
+   9. PARSER TEXT OTOMATIS (RegEx & Penulisan Disesuaikan)
    ========================================================================== */
 function parseIndonesianDate(text) {
   const months = { januari: 1, februari: 2, maret: 3, april: 4, mei: 5, juni: 6, juli: 7, agustus: 8, september: 9, oktober: 10, november: 11, desember: 12 };
-  let m = text.match(/(?:senin|selasa|rabu|kamis|jumat|jum['’]?at|sabtu|minggu)?\s*,?\s*(\d{1,2})\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(20\d{2})/i);
+  // Menggunakan Unicode \u0027 untuk menggantikan petik tunggal agar syntax highlighter tidak terkecoh
+  let m = text.match(/(?:senin|selasa|rabu|kamis|jumat|jum[\u0027\u2019]?at|sabtu|minggu)?\s*,?\s*(\d{1,2})\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(20\d{2})/i);
   if (m) return `${m[3]}-${String(months[m[2].toLowerCase()]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
   m = text.match(/\b(\d{1,2})[\/.-](\d{1,2})[\/.-](20\d{2}|\d{2})\b/);
   if (m) {
@@ -1144,12 +1166,13 @@ function sectionText(text, labels, nextLabels) {
   const all = labels.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   const next = nextLabels.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   for (let i = 0; i < lines.length; i++) {
-    const re = new RegExp('^\\s*(?:[-•*]\\s*)?(?:' + all + ')\\s*[:\-–]\s*(.*)$', 'i');
+    // Escaping double-backslash untuk string RegEx agar tidak memicu error
+    const re = new RegExp('^\\s*(?:[-•*]\\s*)?(?:' + all + ')\\s*[:\\-–]\\s*(.*)$', 'i');
     const hit = lines[i].match(re);
     if (hit) {
       let out = [hit[1].trim()];
       for (let j = i + 1; j < lines.length; j++) {
-        if (new RegExp('^\\s*(?:[-•*]\\s*)?(?:' + next + ')\\s*[:\-–]', 'i').test(lines[j])) break;
+        if (new RegExp('^\\s*(?:[-•*]\\s*)?(?:' + next + ')\\s*[:\\-–]', 'i').test(lines[j])) break;
         if (lines[j].trim()) out.push(lines[j].trim());
       }
       return out.join(' ');
@@ -1172,17 +1195,18 @@ function smartParse(text) {
 }
 
 function parseRaw() {
+  if (!$('#rawText')) return;
   const text = $('#rawText').value.trim();
   if (!text) return toast('Tempel teks laporan terlebih dahulu.', false);
   const x = smartParse(text);
-  $('#tanggal').value = x.tanggal;
+  if ($('#tanggal')) $('#tanggal').value = x.tanggal;
   const points = x.coords.length ? x.coords : [{ lat: '', lon: '', status: x.status, luas: x.luas || '' }];
-  $('#pointsContainer').innerHTML = points.map((p, i) => pointRow({ ...p, status: x.status, luas: i === 0 ? (x.luas || '') : '' })).join('');
-  $('#upaya').value = x.upaya \vert{}\vert{} $('#upaya').value;
-  $('#rencana').value = x.rencana \vert{}\vert{} $('#rencana').value;
-  $('#personel').value = x.personel \vert{}\vert{} $('#personel').value;
-  $('#kendala').value = x.kendala \vert{}\vert{} $('#kendala').value;
-  $('#kebutuhan').value = x.kebutuhan \vert{}\vert{} $('#kebutuhan').value;
+  if ($('#pointsContainer')) $('#pointsContainer').innerHTML = points.map((p, i) => pointRow({ ...p, status: x.status, luas: i === 0 ? (x.luas || '') : '' })).join('');
+  if ($('#upaya')) $('#upaya').value = x.upaya \vert{}\vert{} $('#upaya').value;
+  if ($('#rencana')) $('#rencana').value = x.rencana \vert{}\vert{} $('#rencana').value;
+  if ($('#personel')) $('#personel').value = x.personel \vert{}\vert{} $('#personel').value;
+  if ($('#kendala')) $('#kendala').value = x.kendala \vert{}\vert{} $('#kendala').value;
+  if ($('#kebutuhan')) $('#kebutuhan').value = x.kebutuhan \vert{}\vert{} $('#kebutuhan').value;
 
   const notes = [];
   notes.push(`Tanggal: ${x.tanggal}`);
@@ -1191,7 +1215,7 @@ function parseRaw() {
   if (x.hectares.values.length) notes.push(`Luas terdeteksi: ${x.luas} ha`);
   if (x.personel) notes.push(x.personel);
 
-  $('#parserNotes').innerHTML = `<b>Ekstraksi selesai.</b> ${notes.join(' • ')}. Verifikasi semua nilai sebelum simpan.`;
+  if ($('#parserNotes')) $('#parserNotes').innerHTML = `<b>Ekstraksi selesai.</b> ${notes.join(' • ')}. Verifikasi semua nilai sebelum simpan.`;
   toast('Parser selesai mengisi form; verifikasi hasil sebelum menyimpan.');
 }
 
@@ -1267,34 +1291,37 @@ async function removeCurrent() {
 }
 
 /* ==========================================================================
-   11. INISIALISASI APLIKASI (Poin 4: init)
+   11. INISIALISASI APLIKASI
    ========================================================================== */
 async function init() {
   setupMap();
-  $('#tanggal').value = today();
-  $('#pointsContainer').innerHTML = pointRow();   connectionLabel();   await loadReports();   renderAll();    // Navigation Tabs & Filter Events   $$('.tab-button').forEach(b => b.onclick = () => setView(b.dataset.view));$('#regionalFilter').onchange = renderMatrix;
-  $('#expandAll').onclick = () => { collapsedRegions.clear(); renderMatrix(); };
-  $('#collapseAll').onclick = () => { groups().forEach(g => collapsedRegions.add(g.regional)); renderMatrix(); };
-  ['mapUptFilter', 'mapKawasanFilter', 'mapDateFilter'].forEach(id => $('#' + id).onchange = renderMap);
+  if ($('#tanggal')) $('#tanggal').value = today();
+  if ($('#pointsContainer')) $('#pointsContainer').innerHTML = pointRow();   connectionLabel();   await loadReports();   renderAll();    // Navigation Tabs & Filter Events   $$('.tab-button').forEach(b => b.onclick = () => setView(b.dataset.view));
+  if ($('#regionalFilter')) $('#regionalFilter').onchange = renderMatrix;
+  if ($('#expandAll')) $('#expandAll').onclick = () => { collapsedRegions.clear(); renderMatrix(); };
+  if ($('#collapseAll')) $('#collapseAll').onclick = () => { groups().forEach(g => collapsedRegions.add(g.regional)); renderMatrix(); };
+  ['mapUptFilter', 'mapKawasanFilter', 'mapDateFilter'].forEach(id => {
+    if ($('#' + id)) $('#' + id).onchange = renderMap;
+  });
 
-  // Instruksi Poin 4: Memanggil bindMatrixControls() di dalam init()
+  // Bind Kontrol Matriks
   bindMatrixControls();
 
   // Form & Modal Events
-  $('#addPointBtn').onclick = () => $('#pointsContainer').insertAdjacentHTML('beforeend', pointRow());
-  $('#pointsContainer').onclick = e => { if (e.target.closest('.remove-point')) e.target.closest('.point-row').remove(); };
-  $('#npulau').onchange = () => { $('#nupt').value = ''; $('#nkws').value = ''; populateSelects(); };
-  $('#nupt').onchange = () => { $('#nkws').value = ''; populateSelects(); };
-  $('#parseBtn').onclick = parseRaw;
-  $('#clearRawBtn').onclick = () => {
-    $('#rawText').value = '';
-    $('#parserNotes').textContent = 'Parser menggunakan pola teks (regex) di browser. Hasil harus selalu diverifikasi petugas sebelum disimpan.';
+  if ($('#addPointBtn')) $('#addPointBtn').onclick = () => $('#pointsContainer').insertAdjacentHTML('beforeend', pointRow());
+  if ($('#pointsContainer')) $('#pointsContainer').onclick = e => { if (e.target.closest('.remove-point')) e.target.closest('.point-row').remove(); };
+  if ($('#npulau')) $('#npulau').onchange = () => { $('#nupt').value = ''; $('#nkws').value = ''; populateSelects(); };
+  if ($('#nupt')) $('#nupt').onchange = () => { $('#nkws').value = ''; populateSelects(); };
+  if ($('#parseBtn')) $('#parseBtn').onclick = parseRaw;
+  if ($('#clearRawBtn')) $('#clearRawBtn').onclick = () => {
+    if ($('#rawText')) $('#rawText').value = '';
+    if ($('#parserNotes')) $('#parserNotes').textContent = 'Parser menggunakan pola teks (regex) di browser. Hasil harus selalu diverifikasi petugas sebelum disimpan.';
   };
-  $('#reportForm').onsubmit = saveForm;
-  $('#cancelEditBtn').onclick = resetForm;   $$('.modal-close').forEach(x => x.onclick = closeModal);
-  $('#detailModal').onclick = e => { if (e.target === $('#detailModal')) closeModal(); };
-  $('#modalEditBtn').onclick = () => openEdit(selectedReport);
-  $('#deleteBtn').onclick = removeCurrent;
+  if ($('#reportForm')) $('#reportForm').onsubmit = saveForm;
+  if ($('#cancelEditBtn')) $('#cancelEditBtn').onclick = resetForm;   $$('.modal-close').forEach(x => x.onclick = closeModal);
+  if ($('#detailModal')) $('#detailModal').onclick = e => { if (e.target === $('#detailModal')) closeModal(); };
+  if ($('#modalEditBtn')) $('#modalEditBtn').onclick = () => openEdit(selectedReport);
+  if ($('#deleteBtn')) $('#deleteBtn').onclick = removeCurrent;
 }
 
 document.addEventListener('DOMContentLoaded', init);
