@@ -870,25 +870,15 @@ async function removeCurrent(){if(!selectedReport||!confirm('Hapus laporan ini?'
 async function init() {
   // 1. Inisialisasi Peta & Form Awal
   setupMap();
-
-  /*
-    Muat batas kawasan setelah objek peta Leaflet tersedia.
-    Tidak perlu menunggu data reports selesai.
-  */
   loadKawasanGeoJSON();
-
   $('#tanggal').value = today();
   $('#pointsContainer').innerHTML = pointRow();
-
   connectionLabel();
-
   await loadReports();
-
   matrixStartDate = null;
   renderAll();
-
-  // event listener lainnya tetap di bawah ini
-  }
+  };
+  
   // 3. Event Listeners - Navigasi Tab
   $$('.tab-button').forEach(btn => {
     btn.onclick = () => setView(btn.dataset.view);
