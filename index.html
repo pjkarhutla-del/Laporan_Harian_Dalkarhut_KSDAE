@@ -1045,6 +1045,35 @@ const fmtDate=d=>new Intl.DateTimeFormat('id-ID',{day:'2-digit',month:'short'}).
 function toast(m,bad=false){const e=$('#toast');e.textContent=m;e.className=`fixed bottom-5 right-5 z-[60] max-w-sm rounded-xl px-4 py-3 text-sm font-medium text-white shadow-xl ${bad?'bg-red-700':'bg-slate-900'}`;setTimeout(()=>e.classList.add('hidden'),3500)}
 function canonicalPulau(v=''){const x=String(v).trim().toUpperCase().replace(/[-_]+/g,' ').replace(/\s+/g,' ');if(/SUMATERA|ACEH|RIAU|JAMBI|BENGKULU|LAMPUNG|SUMUT|SUMSEL|SUMBAR/.test(x))return 'SUMATERA';if(/KALIMANTAN|KALBAR|KALTENG|KALSEL|KALTIM|KALTARA/.test(x))return 'KALIMANTAN';if(/JAWA|JABAR|JATENG|JATIM|BANTEN|DKI|YOGYA/.test(x))return 'JAWA';if(/BALI|NUSRA|NTB|NTT|JABALNUSRA/.test(x))return 'BALI NUSRA';if(/SULAWESI|SULSEL|SULBAR|SULTENG|SULTRA|SULUT|GORONTALO/.test(x))return 'SULAWESI';if(/MALUKU/.test(x)&&!/PAPUA/.test(x))return 'MALUKU';if(/PAPUA/.test(x))return 'PAPUA';return 'LAINNYA'}
 function normalizeStatus(v=''){const x=String(v).toLowerCase();if(/false|bukan titik|bukan api/.test(x))return 'False Hotspot';if(/sudah padam|telah padam|pendinginan selesai/.test(x))return 'Sudah Padam';if(/ground\s*check|groundcheck|cek lapangan|verifikasi lapangan/.test(x))return 'Proses Groundcheck';if(/konfirmasi|belum.*status|menunggu.*(info|verifikasi)/.test(x))return 'Perlu Konfirmasi';return 'Upaya Pemadaman'}
+function changeDetailSort(group, key) {
+  const state = detailSortState[group];
+
+  if (!state) {
+    console.warn(`Group sort tidak dikenal: ${group}`);
+    return;
+  }
+
+  if (state.key === key) {
+    state.direction = state.direction === 'asc'
+      ? 'desc'
+      : 'asc';
+  } else {
+    state.key = key;
+
+    /*
+      Kolom hari/tanggal tampil default dari besar atau terbaru.
+      Nama/status dimulai secara alfabetis.
+    */
+    state.direction =
+      key === 'jumlah_hari' ||
+      key === 'jumlah_hari_terlambat' ||
+      key === 'sejak_tanggal'
+        ? 'desc'
+        : 'asc';
+  }
+
+  renderOperationalDetails();
+}
 function normalizeMatchText(value = '') {
   return String(value)
     .trim()
@@ -1052,30 +1081,56 @@ function normalizeMatchText(value = '') {
     .replace(/\s+/g, ' ');
 }
 
-function findKawasanMaster(nupt, nkwsValue) {
+function findKawasanMaster(nuptValue, nkwsValue) {
+  const rawNupt = String(nuptValue || '').trim();
+  const rawNkws = String(nkwsValue || '').trim();
+
   /*
-    Jika value pada dropdown NKWS adalah ID kawasan.
+    Kasus 1:
+    #nkws adalah dropdown dengan value = kawasan.id.
+    Contoh: <option value="12">TN Tesso Nilo</option>
   */
-  const matchById = kawasanMaster.find(
-    (item) => String(item.id) === String(nkwsValue)
+  const byId = kawasanMaster.find(
+    (item) => String(item.id) === rawNkws
   );
 
-  if (matchById) {
-    return matchById;
+  if (byId) {
+    return byId;
   }
 
   /*
-    Fallback jika value dropdown/field NKWS masih berupa nama kawasan.
+    Kasus 2:
+    #nkws.value adalah teks nama kawasan.
+    Contoh: value="TN Tesso Nilo"
   */
-  const targetNupt = normalizeMatchText(nupt);
-  const targetNkws = normalizeMatchText(nkwsValue);
+  const normalizedNupt = normalizeMatchText(rawNupt);
+  const normalizedNkws = normalizeMatchText(rawNkws);
 
-  return kawasanMaster.find((item) => {
+  const byNuptAndNkws = kawasanMaster.find((item) => {
     return (
-      normalizeMatchText(item.nupt) === targetNupt &&
-      normalizeMatchText(item.nkws) === targetNkws
+      normalizeMatchText(item.nupt) === normalizedNupt &&
+      normalizeMatchText(item.nkws) === normalizedNkws
     );
-  }) || null;
+  });
+
+  if (byNuptAndNkws) {
+    return byNuptAndNkws;
+  }
+
+  /*
+    Kasus 3:
+    Bila NUPT form ternyata berbeda format, tetap cari dari NKWS saja.
+    Aman hanya jika nama NKWS unik dalam master.
+  */
+  const sameNkws = kawasanMaster.filter((item) => {
+    return normalizeMatchText(item.nkws) === normalizedNkws;
+  });
+
+  if (sameNkws.length === 1) {
+    return sameNkws[0];
+  }
+
+  return null;
 }
   
 /* ============================================================
@@ -4274,7 +4329,14 @@ async function saveForm(event) {
     nupt: $('#nupt').value,
     nkws: $('#nkws').value
   });
+  console.log('Nilai form NUPT:', $('#nupt').value);
+  console.log('Nilai form NKWS:', $('#nkws').value);
+  console.log('Master kawasan:', kawasanMaster);
   
+  console.log(
+    'Kawasan hasil pencarian:',
+    selectedKawasan
+  );
   if (!selectedKawasan) {
     toast(
       'Kawasan tidak ditemukan di master kawasan. Pilih NUPT dan NKWS dari daftar yang tersedia.',
@@ -4761,11 +4823,30 @@ function updateActiveExtinctionSortIcons() {
 // Jalankan fungsi init saat dokumen selesai dimuat
 document.addEventListener('DOMContentLoaded', init);
 
+document.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-detail-sort-group]');
+
+  if (!button) {
+    return;
+  }
+
+  const group = button.dataset.detailSortGroup;
+  const key = button.dataset.detailSortKey;
+
+  if (!group || !key) {
+    return;
+  }
+
+  changeDetailSort(group, key);
+});
+  
 async function init() {
   try {
     bindActiveExtinctionSort();
 
     await loadKawasanMaster();
+    console.table(kawasanMaster);
+    
     await loadReports();
 
     renderAll();
