@@ -3123,11 +3123,6 @@ function renderMap() {
     marker.addTo(reportLayer);
   });
 }
-
-window.showReport = (id) => {
-  const report = reports.find((r) => String(r.id) === String(id));
-  if (report) openDetail(report);
-};
   
 function renderAll() {
   renderSummary();
@@ -3969,21 +3964,8 @@ async function init() {
   });
 
   // 5. Event Listeners - Filter Peta
-  [
-    'mapUptFilter',
-    'mapKawasanFilter',
-    'mapDateFilter'
-  ].forEach((id) => {
-    const element = document.getElementById(id);
-  
-    if (!element) {
-      console.warn(
-        `Filter peta #${id} tidak ditemukan di HTML. Event renderMap dilewati.`
-      );
-      return;
-    }
-  
-    element.addEventListener('change', renderMap);
+  ['mapUptFilter', 'mapKawasanFilter', 'mapDateFilter'].forEach(id => {
+    $('#' + id).onchange = renderMap;
   });
 
   // 6. Event Listeners - Form & Dinamika Titik Koordinat
