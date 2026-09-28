@@ -930,6 +930,219 @@ const fmtDate=d=>new Intl.DateTimeFormat('id-ID',{day:'2-digit',month:'short'}).
 function toast(m,bad=false){const e=$('#toast');e.textContent=m;e.className=`fixed bottom-5 right-5 z-[60] max-w-sm rounded-xl px-4 py-3 text-sm font-medium text-white shadow-xl ${bad?'bg-red-700':'bg-slate-900'}`;setTimeout(()=>e.classList.add('hidden'),3500)}
 function canonicalPulau(v=''){const x=String(v).trim().toUpperCase().replace(/[-_]+/g,' ').replace(/\s+/g,' ');if(/SUMATERA|ACEH|RIAU|JAMBI|BENGKULU|LAMPUNG|SUMUT|SUMSEL|SUMBAR/.test(x))return 'SUMATERA';if(/KALIMANTAN|KALBAR|KALTENG|KALSEL|KALTIM|KALTARA/.test(x))return 'KALIMANTAN';if(/JAWA|JABAR|JATENG|JATIM|BANTEN|DKI|YOGYA/.test(x))return 'JAWA';if(/BALI|NUSRA|NTB|NTT|JABALNUSRA/.test(x))return 'BALI NUSRA';if(/SULAWESI|SULSEL|SULBAR|SULTENG|SULTRA|SULUT|GORONTALO/.test(x))return 'SULAWESI';if(/MALUKU/.test(x)&&!/PAPUA/.test(x))return 'MALUKU';if(/PAPUA/.test(x))return 'PAPUA';return 'LAINNYA'}
 function normalizeStatus(v=''){const x=String(v).toLowerCase();if(/false|bukan titik|bukan api/.test(x))return 'False Hotspot';if(/sudah padam|telah padam|pendinginan selesai/.test(x))return 'Sudah Padam';if(/ground\s*check|groundcheck|cek lapangan|verifikasi lapangan/.test(x))return 'Proses Groundcheck';if(/konfirmasi|belum.*status|menunggu.*(info|verifikasi)/.test(x))return 'Perlu Konfirmasi';return 'Upaya Pemadaman'}
+
+/* ============================================================
+   PEMADAMAN AKTIF — HANYA GELOMBANG TERAKHIR BELUM PADAM
+   ============================================================ */
+
+function normalizeStatusForChain(value = '') {
+  const text = String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
+  if (/sudah padam|telah padam|api padam|padam total/.test(text)) {
+    return 'Sudah Padam';
+  }
+
+  if (/upaya pemadaman|proses pemadaman|pemadaman aktif|pemadaman masih|pemadaman/.test(text)) {
+    return 'Upaya Pemadaman';
+  }
+
+  if (/ground ?check|cek lapangan|verifikasi lapangan/.test(text)) {
+    return 'Proses Groundcheck';
+  }
+
+  if (/konfirmasi|belum ada kabar|menunggu informasi/.test(text)) {
+    return 'Perlu Konfirmasi';
+  }
+
+  if (/false|bukan titik api|bukan api/.test(text)) {
+    return 'False Hotspot';
+  }
+
+  return String(value).trim();
+}
+
+function parseDateOnlyLocal(value) {
+  const date = String(value ?? '').slice(0, 10);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return null;
+  }
+
+  const [year, month, day] = date.split('-').map(Number);
+
+  /* Pukul 12:00 lokal untuk menghindari pergeseran timezone UTC/WIB. */
+  return new Date(year, month - 1, day, 12, 0, 0, 0);
+}
+
+function toDateOnlyLocal(value) {
+  const date = value instanceof Date ? value : parseDateOnlyLocal(value);
+
+  if (!date || Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0')
+  ].join('-');
+}
+
+function daysInclusive(startDate, endDate) {
+  const start = parseDateOnlyLocal(startDate);
+  const end = parseDateOnlyLocal(endDate);
+
+  if (!start || !end) {
+    return 0;
+  }
+
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+
+  return Math.max(
+    0,
+    Math.floor((end.getTime() - start.getTime()) / millisecondsPerDay) + 1
+  );
+}
+
+function getKawasanKey(report) {
+  /* Utamakan kawasan_id bila sudah terisi dari master kawasan. */
+  if (
+    report.kawasan_id !== null &&
+    report.kawasan_id !== undefined &&
+    String(report.kawasan_id).trim() !== ''
+  ) {
+    return `kawasan:${report.kawasan_id}`;
+  }
+
+  /* Fallback untuk hasil migrasi yang belum memiliki kawasan_id. */
+  return [report.npulau, report.nupt, report.nkws]
+    .map((value) => String(value ?? '').trim().toUpperCase())
+    .join('|');
+}
+
+function compareReportsChronologically(a, b) {
+  const dateA = String(a.tanggal ?? '').slice(0, 10);
+  const dateB = String(b.tanggal ?? '').slice(0, 10);
+
+  return (
+    dateA.localeCompare(dateB) ||
+    String(a.updated_at ?? a.created_at ?? '').localeCompare(
+      String(b.updated_at ?? b.created_at ?? '')
+    ) ||
+    String(a.report_uuid ?? a.id ?? '').localeCompare(
+      String(b.report_uuid ?? b.id ?? '')
+    )
+  );
+}
+
+/**
+ * Mengembalikan hanya kawasan dengan gelombang Upaya Pemadaman terakhir
+ * yang belum diikuti status Sudah Padam.
+ *
+ * @param {Array} sourceReports Array laporan dari Supabase/state aplikasi.
+ * @param {Date|string|null} referenceDate Opsional. Jika null, durasi
+ *   berhenti pada tanggal laporan upaya terakhir. Bila ingin sampai hari
+ *   ini, panggil dengan `new Date()`.
+ */
+function getActiveExtinctionReports(sourceReports = reports, referenceDate = null) {
+  const byKawasan = new Map();
+
+  sourceReports.forEach((report) => {
+    const date = String(report.tanggal ?? '').slice(0, 10);
+
+    if (!parseDateOnlyLocal(date)) {
+      return;
+    }
+
+    const key = getKawasanKey(report);
+
+    if (!byKawasan.has(key)) {
+      byKawasan.set(key, []);
+    }
+
+    byKawasan.get(key).push({
+      ...report,
+      tanggal: date,
+      normalized_status: normalizeStatusForChain(report.status)
+    });
+  });
+
+  const activeLocations = [];
+
+  byKawasan.forEach((locationReports, kawasanKey) => {
+    const sortedReports = [...locationReports].sort(compareReportsChronologically);
+
+    let activeWave = null;
+
+    sortedReports.forEach((report) => {
+      const status = report.normalized_status;
+
+      /*
+        Setiap Upaya Pemadaman membuka gelombang bila belum aktif.
+        Bila sudah aktif, tanggal laporan terakhir gelombang diperbarui.
+      */
+      if (status === 'Upaya Pemadaman') {
+        if (!activeWave) {
+          activeWave = {
+            sejak_tanggal: report.tanggal,
+            tanggal_laporan_terakhir: report.tanggal,
+            reports: [report]
+          };
+        } else {
+          activeWave.tanggal_laporan_terakhir = report.tanggal;
+          activeWave.reports.push(report);
+        }
+
+        return;
+      }
+
+      /*
+        Sudah Padam menutup/menghapus gelombang aktif sebelumnya.
+        Jika ada Upaya baru setelah ini, gelombang baru dimulai dari nol.
+      */
+      if (status === 'Sudah Padam') {
+        activeWave = null;
+      }
+    });
+
+    /* Tidak ada gelombang aktif tersisa = jangan masuk daftar. */
+    if (!activeWave) {
+      return;
+    }
+
+    const latestReport = activeWave.reports[activeWave.reports.length - 1];
+
+    /*
+      Default: durasi sampai tanggal laporan Upaya terakhir.
+      Untuk durasi berjalan hingga hari ini, panggil fungsi dengan new Date().
+    */
+    const endDate = referenceDate
+      ? toDateOnlyLocal(referenceDate)
+      : activeWave.tanggal_laporan_terakhir;
+
+    activeLocations.push({
+      kawasan_key: kawasanKey,
+      kawasan_id: latestReport.kawasan_id ?? null,
+      npulau: latestReport.npulau ?? '',
+      nupt: latestReport.nupt ?? '',
+      nkws: latestReport.nkws ?? '',
+      sejak_tanggal: activeWave.sejak_tanggal,
+      tanggal_laporan_terakhir: activeWave.tanggal_laporan_terakhir,
+      jumlah_hari: daysInclusive(activeWave.sejak_tanggal, endDate),
+      jumlah_laporan_upaya: activeWave.reports.length,
+      report_uuid_terakhir: latestReport.report_uuid ?? latestReport.id ?? null
+    });
+  });
+
+  return activeLocations.sort((a, b) =>
+    b.jumlah_hari - a.jumlah_hari ||
+    String(a.nkws).localeCompare(String(b.nkws), 'id')
+  );
+}
+  
 function connectionLabel(){const e=$('#connectionState');if(usingFallback){e.textContent='● Mode demo lokal — Supabase belum aktif';e.className='rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs text-amber-100'}else{e.textContent='● Terhubung ke Supabase';e.className='rounded-full border border-emerald-400/30 bg-white/10 px-3 py-1.5 text-xs text-emerald-100'}}
 
 /* ============================================================
@@ -2136,7 +2349,7 @@ function calculateCardStats(sourceReports = reports) {
   
 function renderSummary() {
   const stats = calculateCardStats(reports);
-
+  const activeExtinctionItems = getActiveExtinctionReports(reports, null);
   const hotspotHigh = HOTSPOTS.filter(
     (hotspot) => hotspot.confidence === 'High'
   ).length;
@@ -2193,7 +2406,7 @@ function renderSummary() {
 
       <div class="mt-3 flex items-end justify-between">
         <p class="text-3xl font-bold text-red-700">
-          ${stats.upayaPemadamanAktif}
+          ${activeExtinctionItems.length}
         </p>
 
         <span class="rounded-full bg-red-600 px-2 py-1 text-xs font-bold text-white">
@@ -2282,7 +2495,7 @@ function renderOperationalDetails() {
     return;
   }
 
-  const activeRaw = getActiveExtinctionDetails(reports);
+  const activeRaw = getActiveExtinctionReports(reports, new Date());
   const pendingRaw = getPendingUpdateDetails(reports);
 
   const activeItems = sortDetailsData(
@@ -4154,6 +4367,72 @@ async function init() {
     }
   });
 
+function runActiveExtinctionUnitTest() {
+  const testReports = [
+    /* A: Upaya lalu padam => tidak aktif. */
+    { kawasan_id: 1, nupt: 'UPT A', nkws: 'Kawasan A', tanggal: '2026-09-01', status: 'Upaya Pemadaman' },
+    { kawasan_id: 1, nupt: 'UPT A', nkws: 'Kawasan A', tanggal: '2026-09-05', status: 'Upaya Pemadaman' },
+    { kawasan_id: 1, nupt: 'UPT A', nkws: 'Kawasan A', tanggal: '2026-09-06', status: 'Sudah Padam' },
+
+    /* B: Wave pertama padam, wave kedua masih upaya => aktif 10–12 = 3 hari. */
+    { kawasan_id: 2, nupt: 'UPT B', nkws: 'Kawasan B', tanggal: '2026-09-01', status: 'Upaya Pemadaman' },
+    { kawasan_id: 2, nupt: 'UPT B', nkws: 'Kawasan B', tanggal: '2026-09-04', status: 'Upaya Pemadaman' },
+    { kawasan_id: 2, nupt: 'UPT B', nkws: 'Kawasan B', tanggal: '2026-09-06', status: 'Sudah Padam' },
+    { kawasan_id: 2, nupt: 'UPT B', nkws: 'Kawasan B', tanggal: '2026-09-10', status: 'Upaya Pemadaman' },
+    { kawasan_id: 2, nupt: 'UPT B', nkws: 'Kawasan B', tanggal: '2026-09-12', status: 'Upaya Pemadaman' },
+
+    /* C: Kedua wave ditutup padam => tidak aktif. */
+    { kawasan_id: 3, nupt: 'UPT C', nkws: 'Kawasan C', tanggal: '2026-09-01', status: 'Upaya Pemadaman' },
+    { kawasan_id: 3, nupt: 'UPT C', nkws: 'Kawasan C', tanggal: '2026-09-04', status: 'Upaya Pemadaman' },
+    { kawasan_id: 3, nupt: 'UPT C', nkws: 'Kawasan C', tanggal: '2026-09-06', status: 'Sudah Padam' },
+    { kawasan_id: 3, nupt: 'UPT C', nkws: 'Kawasan C', tanggal: '2026-09-10', status: 'Upaya Pemadaman' },
+    { kawasan_id: 3, nupt: 'UPT C', nkws: 'Kawasan C', tanggal: '2026-09-12', status: 'Upaya Pemadaman' },
+    { kawasan_id: 3, nupt: 'UPT C', nkws: 'Kawasan C', tanggal: '2026-09-13', status: 'Sudah Padam' },
+
+    /* D: Wave lama padam, wave baru 17–20 => hanya 4 hari. */
+    { kawasan_id: 4, nupt: 'UPT D', nkws: 'Kawasan D', tanggal: '2026-09-08', status: 'Upaya Pemadaman' },
+    { kawasan_id: 4, nupt: 'UPT D', nkws: 'Kawasan D', tanggal: '2026-09-10', status: 'Upaya Pemadaman' },
+    { kawasan_id: 4, nupt: 'UPT D', nkws: 'Kawasan D', tanggal: '2026-09-11', status: 'Sudah Padam' },
+    { kawasan_id: 4, nupt: 'UPT D', nkws: 'Kawasan D', tanggal: '2026-09-17', status: 'Upaya Pemadaman' },
+    { kawasan_id: 4, nupt: 'UPT D', nkws: 'Kawasan D', tanggal: '2026-09-20', status: 'Upaya Pemadaman' }
+  ];
+
+  const active = getActiveExtinctionReports(testReports, null);
+
+  console.table(active);
+
+  console.assert(active.length === 2, 'Expected 2 active kawasan');
+
+  console.assert(
+    active.some((item) =>
+      item.nkws === 'Kawasan B' &&
+      item.sejak_tanggal === '2026-09-10' &&
+      item.jumlah_hari === 3
+    ),
+    'Scenario B gagal: Kawasan B harus aktif selama 3 hari'
+  );
+
+  console.assert(
+    active.some((item) =>
+      item.nkws === 'Kawasan D' &&
+      item.sejak_tanggal === '2026-09-17' &&
+      item.jumlah_hari === 4
+    ),
+    'Scenario D gagal: Kawasan D harus aktif selama 4 hari'
+  );
+
+  console.assert(
+    !active.some((item) => item.nkws === 'Kawasan A'),
+    'Scenario A gagal: Kawasan A tidak boleh aktif setelah Sudah Padam'
+  );
+
+  console.assert(
+    !active.some((item) => item.nkws === 'Kawasan C'),
+    'Scenario C gagal: Kawasan C tidak boleh aktif setelah gelombang kedua padam'
+  );
+
+  console.info('Unit test Pemadaman Aktif selesai. Jika tidak ada Assertion failed, logika benar.');
+}
 // Jalankan fungsi init saat dokumen selesai dimuat
 document.addEventListener('DOMContentLoaded', init);
 </script>
