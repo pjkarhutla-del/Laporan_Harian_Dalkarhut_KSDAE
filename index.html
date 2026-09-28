@@ -2697,7 +2697,45 @@ function renderSummary() {
   $('#lastUpdate').textContent =
     `Pembaruan tampilan: ${new Date().toLocaleString('id-ID')}`;
 }
- 
+
+function sortActiveExtinctionItems(items) {
+  const { key, direction } = activeExtinctionSort;
+  const multiplier = direction === 'asc' ? 1 : -1;
+
+  return [...items].sort((a, b) => {
+    let result = 0;
+
+    if (key === 'jumlah_hari') {
+      result = Number(a.jumlah_hari || 0) - Number(b.jumlah_hari || 0);
+    } else if (key === 'sejak_tanggal') {
+      result = String(a.sejak_tanggal || '').localeCompare(
+        String(b.sejak_tanggal || '')
+      );
+    } else if (key === 'status_terakhir') {
+      result = String(a.status_terakhir || '').localeCompare(
+        String(b.status_terakhir || ''),
+        'id'
+      );
+    } else {
+      /*
+        Default: urutkan NKWS, lalu NUPT sebagai pembeda.
+      */
+      result =
+        String(a.nkws || '').localeCompare(String(b.nkws || ''), 'id') ||
+        String(a.nupt || '').localeCompare(String(b.nupt || ''), 'id');
+    }
+
+    /*
+      Jika nilainya sama, tampilkan yang durasinya lebih lama lebih dulu.
+    */
+    if (result === 0 && key !== 'jumlah_hari') {
+      result = Number(b.jumlah_hari || 0) - Number(a.jumlah_hari || 0);
+    }
+
+    return result * multiplier;
+  });
+}
+  
 function renderOperationalDetails() {
   const activeCount = $('#activeExtinctionCount');
   const activeBody = $('#activeExtinctionBody');
@@ -2710,6 +2748,7 @@ function renderOperationalDetails() {
   }
 
   const activeRaw = getActiveExtinctionReports(reports, null);
+  const activeItems = sortActiveExtinctionItems(activeRaw);  
   const pendingRaw = getPendingUpdateDetails(reports);
 
   const activeItems = sortDetailsData(
@@ -4663,15 +4702,65 @@ function runActiveOperationalWaveTest() {
 
   console.info('Test gelombang operasional selesai. Tidak ada Assertion failed = lulus.');
 }
+  
+function bindActiveExtinctionSort() {
+  document.querySelectorAll('[data-active-sort]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const key = button.dataset.activeSort;
+
+      if (activeExtinctionSort.key === key) {
+        activeExtinctionSort.direction =
+          activeExtinctionSort.direction === 'asc'
+            ? 'desc'
+            : 'asc';
+      } else {
+        activeExtinctionSort.key = key;
+
+        /*
+          Durasi dan tanggal umumnya lebih nyaman dari terbesar/terbaru.
+          Nama dan status dimulai dari A–Z.
+        */
+        activeExtinctionSort.direction =
+          key === 'jumlah_hari' || key === 'sejak_tanggal'
+            ? 'desc'
+            : 'asc';
+      }
+
+      updateActiveExtinctionSortIcons();
+      renderOperationalDetails();
+    });
+  });
+}
+
+function updateActiveExtinctionSortIcons() {
+  document
+    .querySelectorAll('[data-active-sort-icon]')
+    .forEach((icon) => {
+      const key = icon.dataset.activeSortIcon;
+
+      if (key !== activeExtinctionSort.key) {
+        icon.textContent = '↕';
+        return;
+      }
+
+      icon.textContent =
+        activeExtinctionSort.direction === 'asc'
+          ? '↑'
+          : '↓';
+    });
+}
 // Jalankan fungsi init saat dokumen selesai dimuat
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
   try {
+    bindActiveExtinctionSort();
+
     await loadKawasanMaster();
     await loadReports();
 
     renderAll();
+    updateActiveExtinctionSortIcons();
   } catch (error) {
     console.error(error);
     toast(error.message, true);
