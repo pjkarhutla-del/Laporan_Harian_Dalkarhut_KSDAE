@@ -73,87 +73,160 @@
     .siaga-map-popup button:hover {
       background: #103a26;
     }
-    /* ==========================================================
-   MATRIX: freeze kolom tanggal/header saat halaman discroll
-   ========================================================== */
+   /* ============================================================
+   SIAGA KARHUTLA — MATRIX FREEZE PANE
+   Sticky berlaku relatif ke .matrix-scroll-container, bukan
+   terhadap viewport/browser.
+   ============================================================ */
 
-    /*
-      Header tanggal menempel di bagian atas viewport.
-      Nilai top mengikuti tinggi header aplikasi yang sticky.
-      Header SIAGA kira-kira 105–115px; sesuaikan bila perlu.
-    */
-    #matrixHead th {
+    .matrix-scroll-container {
+      /* Tinggi area matriks di desktop; container ini menangani scroll X dan Y. */
+      max-height: min(68vh, 680px);
+      overflow: auto;
+      position: relative;
+      isolation: isolate;
+      overscroll-behavior: contain;
+    }
+    
+    .matrix-table {
+      /* collapse lebih stabil untuk sticky cell daripada border-spacing. */
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: auto;
+    }
+    
+    .matrix-table th,
+    .matrix-table td {
+      border-right: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .matrix-table thead th {
+      /* Freeze row header/tanggal di sisi atas container. */
       position: sticky;
-      top: 108px;
+      top: 0;
       z-index: 20;
+    
+      /* Wajib solid agar isi tabel di bawah tidak tembus. */
       background-color: #f1f5f9;
-      box-shadow: 0 2px 0 rgba(148, 163, 184, 0.45);
+      background-clip: padding-box;
+      box-shadow: inset 0 -1px 0 #cbd5e1;
+    
+      height: 48px;
+      vertical-align: middle;
+      white-space: nowrap;
     }
     
-    /*
-      Dua header kiri juga sticky horizontal.
-      Saat sticky vertikal + horizontal bertemu, z-index harus paling tinggi.
-    */
-    #matrixHead th:first-child {
+    /* Kolom kiri body: freeze horizontal. */
+    .matrix-table .matrix-col-nupt {
+      position: sticky;
       left: 0;
-      z-index: 30;
-      background-color: #e2e8f0;
+      z-index: 10;
+      min-width: 150px;
+      width: 150px;
+      background-color: #ffffff;
+      background-clip: padding-box;
+      box-shadow: 1px 0 0 #cbd5e1;
     }
     
-    #matrixHead th:nth-child(2) {
-      left: 149px;
-      z-index: 30;
-      background-color: #e2e8f0;
+    .matrix-table .matrix-col-nkws {
+      position: sticky;
+      left: 150px;
+      z-index: 10;
+      min-width: 220px;
+      width: 220px;
+      background-color: #ffffff;
+      background-clip: padding-box;
+      box-shadow: 1px 0 0 #cbd5e1;
     }
     
-    /*
-      Pastikan header tidak berubah transparan ketika sel matriks
-      bergerak di bawahnya.
-    */
-    #matrixHead th {
+    /* Sel header pada perpotongan top + left harus paling depan. */
+    .matrix-table thead .matrix-header-nupt {
+      position: sticky;
+      top: 0;
+      left: 0;
+      z-index: 40;
+      min-width: 150px;
+      width: 150px;
+      background-color: #e2e8f0;
+      background-clip: padding-box;
+      box-shadow: inset 0 -1px 0 #94a3b8, 1px 0 0 #94a3b8;
+    }
+    
+    .matrix-table thead .matrix-header-nkws {
+      position: sticky;
+      top: 0;
+      left: 150px;
+      z-index: 40;
+      min-width: 220px;
+      width: 220px;
+      background-color: #e2e8f0;
+      background-clip: padding-box;
+      box-shadow: inset 0 -1px 0 #94a3b8, 1px 0 0 #94a3b8;
+    }
+    
+    /* Header tanggal hanya freeze vertikal, tetap ikut saat scroll horizontal. */
+    .matrix-table thead .matrix-header-date {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      min-width: 54px;
+      width: 54px;
+      background-color: #f1f5f9;
       background-clip: padding-box;
     }
-
-    #matrixHead .matrix-header-date {
-      position: sticky;
-      top: 108px;
-      z-index: 20;
-      background-color: #f1f5f9;
-      box-shadow: 0 2px 0 rgba(148, 163, 184, 0.45);
+    
+    /* Header kelompok pulau: ikut scroll vertikal seperti baris biasa. */
+    .matrix-region-row td {
+      background-color: #103a26;
+      color: #ffffff;
+      border-color: #174d31;
     }
     
-    #matrixHead .matrix-header-nupt {
-      position: sticky;
-      top: 108px;
-      left: 0;
-      z-index: 30;
-      background-color: #e2e8f0;
-      box-shadow: 0 2px 0 rgba(148, 163, 184, 0.45);
+    /* Pastikan warna status tetap solid, tidak tertimpa background sticky/body. */
+    .matrix-table .status-upaya { background-color: #dc2626 !important; color: #ffffff !important; }
+    .matrix-table .status-groundcheck { background-color: #eab308 !important; color: #3d2700 !important; }
+    .matrix-table .status-padam { background-color: #2563eb !important; color: #ffffff !important; }
+    .matrix-table .status-konfirmasi { background-color: #9333ea !important; color: #ffffff !important; }
+    .matrix-table .status-false { background-color: #6b7280 !important; color: #ffffff !important; }
+    
+    .matrix-table .matrix-empty {
+      background-color: #f8fafc;
+      color: #17603c;
     }
     
-    #matrixHead .matrix-header-nkws {
-      position: sticky;
-      top: 108px;
-      left: 149px;
-      z-index: 30;
-      background-color: #e2e8f0;
-      box-shadow: 0 2px 0 rgba(148, 163, 184, 0.45);
+    .matrix-table .matrix-empty:hover {
+      background-color: #d8f2e1;
     }
     
+    /* Lebar dan tinggi sel tanggal konsisten. */
+    .matrix-table .matrix-cell {
+      min-width: 54px;
+      width: 54px;
+      height: 44px;
+      padding: 0;
+      text-align: center;
+      vertical-align: middle;
+    }
+    
+    /* Responsif: area scroll tetap nyaman pada layar kecil. */
     @media (max-width: 640px) {
-      #matrixHead .matrix-header-date,
-      #matrixHead .matrix-header-nupt,
-      #matrixHead .matrix-header-nkws {
-        top: 125px;
+      .matrix-scroll-container {
+        max-height: 62vh;
       }
-    }
-    .matrix-scroll-x {
-      /*
-        Tetap memungkinkan scroll tanggal ke kiri-kanan,
-        tetapi jangan membuat scroll vertikal internal.
-      */
-      overflow-x: auto;
-      overflow-y: visible;
+    
+      .matrix-table .matrix-col-nupt,
+      .matrix-table thead .matrix-header-nupt {
+        min-width: 125px;
+        width: 125px;
+      }
+    
+      .matrix-table .matrix-col-nkws,
+      .matrix-table thead .matrix-header-nkws {
+        left: 125px;
+        min-width: 180px;
+        width: 180px;
+      }
     }
   </style>
 </head>
@@ -170,7 +243,7 @@
   <div class="flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p class="text-sm font-semibold text-forest-700">DASHBOARD OPERASIONAL</p><h2 class="text-2xl font-bold text-slate-900">Ringkasan Pengendalian Karhutla</h2><p class="mt-1 text-sm text-slate-500">Akumulasi laporan kejadian, kondisi penanganan, dan titik hotspot SIPONGI.</p></div><p id="lastUpdate" class="rounded-lg bg-white px-3 py-2 text-xs text-slate-500 shadow-sm"></p></div>
   <div id="summaryCards" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"></div>
   <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Status Terakhir</h3><p class="text-xs text-slate-500">Warna status konsisten pada kartu, matriks, peta, dan formulir.</p></div><div id="statusLegend" class="flex flex-wrap gap-2"></div></div><div id="segmentedBar" class="flex h-5 overflow-hidden rounded-full bg-slate-100"></div><div id="statusBreakdown" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"></div></section>
-  <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-col justify-between gap-3 xl:flex-row xl:items-end"><div><h3 class="font-bold text-slate-900">Matriks Kawasan × Tanggal</h3><p class="text-xs text-slate-500">Dikelompokkan tegas menurut pulau. Klik sel berwarna untuk detail; klik <b>+</b> pada sel kosong untuk mengisi laporan.</p></div><div class="flex flex-wrap items-center gap-2"><select id="pulauFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua pulau</option></select><button id="expandAll" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Show All</button><button id="collapseAll" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Hide All</button></div></div><div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-forest-50 p-3"><div><p class="text-xs font-bold uppercase tracking-wide text-forest-700">Rentang matriks</p><p id="matrixPeriodLabel" class="mt-0.5 text-sm font-semibold text-forest-900"></p></div><div class="flex flex-wrap gap-2"><button id="matrixPrev" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">← Sebelumnya</button><button id="matrixToday" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Hari ini</button><button id="matrixNext" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">Berikutnya →</button></div></div><div class="matrix-scroll-x scrollbar-thin overflow-x-auto overflow-y-visible rounded-xl border border-slate-200"><table class="w-max min-w-full border-separate border-spacing-1 text-left text-xs"><thead id="matrixHead"></thead><tbody id="matrixBody"></tbody></table></div><p class="mt-3 text-xs text-slate-500">Gunakan scrollbar horizontal untuk melihat seluruh tanggal. Rentang otomatis memuat keseluruhan tanggal laporan; navigasi periode menggeser jendela 14 hari.</p></section>
+  <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-col justify-between gap-3 xl:flex-row xl:items-end"><div><h3 class="font-bold text-slate-900">Matriks Kawasan × Tanggal</h3><p class="text-xs text-slate-500">Dikelompokkan tegas menurut pulau. Klik sel berwarna untuk detail; klik <b>+</b> pada sel kosong untuk mengisi laporan.</p></div><div class="flex flex-wrap items-center gap-2"><select id="pulauFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua pulau</option></select><button id="expandAll" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Show All</button><button id="collapseAll" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Hide All</button></div></div><div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-forest-50 p-3"><div><p class="text-xs font-bold uppercase tracking-wide text-forest-700">Rentang matriks</p><p id="matrixPeriodLabel" class="mt-0.5 text-sm font-semibold text-forest-900"></p></div><div class="flex flex-wrap gap-2"><button id="matrixPrev" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">← Sebelumnya</button><button id="matrixToday" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Hari ini</button><button id="matrixNext" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">Berikutnya →</button></div></div><div id="matrixScrollContainer" class="matrix-scroll-container scrollbar-thin rounded-xl border border-slate-200 bg-white" aria-label="Matriks kawasan dan tanggal" tabindex="0"><table id="matrixTable" class="matrix-table w-max min-w-full text-left text-xs"><thead id="matrixHead"></thead><tbody id="matrixBody"></tbody></table></div><p class="mt-3 text-xs text-slate-500">Gunakan scrollbar horizontal untuk melihat seluruh tanggal. Rentang otomatis memuat keseluruhan tanggal laporan; navigasi periode menggeser jendela 14 hari.</p></section>
   <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-end"><div><h3 class="font-bold text-slate-900">Peta Kejadian & Hotspot</h3><p class="text-xs text-slate-500">Marker laporan berasal dari tabel Supabase <code>reports</code>; hotspot masih data simulasi SIPONGI.</p></div><div class="flex flex-wrap gap-2"><select id="mapUptFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua UPT</option></select><select id="mapKawasanFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua kawasan</option></select><input id="mapDateFilter" type="date" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></div></div><div id="map" class="overflow-hidden rounded-xl border border-slate-200"></div><p class="mt-3 text-xs text-slate-500"><span class="font-semibold text-red-600">●</span> Laporan kejadian &nbsp; <span class="font-semibold text-amber-500">●</span> Hotspot SIPONGI mock.</p></section>
 </section>
 
@@ -781,32 +854,24 @@ function getVisibleMatrixDates() {
 function matrixHeader(dates) {
   return `
     <tr>
-      <th
-        class="matrix-header-nupt sticky left-0 min-w-[145px] p-3 font-bold"
-      >
+      <th class="matrix-header-nupt p-3 font-bold">
         NUPT
       </th>
 
-      <th
-        class="matrix-header-nkws sticky left-[149px] min-w-[190px] p-3 font-bold"
-      >
+      <th class="matrix-header-nkws p-3 font-bold">
         NKWS
       </th>
 
       ${dates.map((date) => `
-        <th
-          class="matrix-header-date min-w-[52px] p-2 text-center font-bold"
-        >
+        <th class="matrix-header-date p-2 text-center font-bold">
           ${fmtDate(date)}
         </th>
       `).join('')}
     </tr>
   `;
 }
+  
 function matrixCell(report, group, date) {
-  /*
-    Bila ada laporan: warna berasal langsung dari STATUS.
-  */
   if (report) {
     const config = STATUS[report.status] || STATUS['Perlu Konfirmasi'];
 
@@ -819,7 +884,7 @@ function matrixCell(report, group, date) {
 
     return `
       <td
-        class="matrix-cell ${config.cls} cursor-pointer text-center align-middle text-base font-black"
+        class="matrix-cell ${config.cls} cursor-pointer text-base font-black"
         data-detail="${esc(report.id)}"
         title="${esc(report.status)} — klik untuk detail"
       >
@@ -828,11 +893,8 @@ function matrixCell(report, group, date) {
     `;
   }
 
-  /*
-    Bila kosong: tombol + membuka form dengan tanggal/kawasan terisi.
-  */
   return `
-    <td class="matrix-cell matrix-empty text-center align-middle">
+    <td class="matrix-cell matrix-empty">
       <button
         type="button"
         class="grid h-full w-full place-items-center text-xl font-light"
@@ -895,11 +957,8 @@ function renderMatrix() {
     const isCollapsed = collapsedPulau.has(pulauGroup.npulau);
 
     html += `
-      <tr>
-        <td
-          colspan="${dates.length + 2}"
-          class="bg-forest-800 px-3 py-2 text-sm font-bold text-white"
-        >
+      <tr class="matrix-region-row">
+        <td colspan="${dates.length + 2}" class="px-3 py-2 text-sm font-bold">
           <button
             type="button"
             class="mr-2 inline-grid h-6 w-6 place-items-center rounded bg-white/15"
@@ -907,9 +966,7 @@ function renderMatrix() {
           >
             ${isCollapsed ? '＋' : '−'}
           </button>
-
           ${esc(pulauGroup.npulau)}
-
           <span class="ml-2 text-xs font-normal text-emerald-100">
             ${isCollapsed ? 'Show All' : 'Hide'} ${pulauGroup.items.length} kawasan
           </span>
@@ -918,24 +975,24 @@ function renderMatrix() {
     `;
 
     if (!isCollapsed) {
-      pulauGroup.items.forEach((group) => {
-        html += `
-          <tr>
-            <td class="sticky left-0 z-[1] min-w-[145px] bg-white p-3 font-semibold">
-              ${esc(group.nupt)}
-            </td>
-
-            <td class="sticky left-[149px] z-[1] min-w-[190px] bg-white p-3 font-medium">
-              ${esc(group.nkws)}
-            </td>
-
-            ${dates.map((date) =>
-              matrixCell(group.byDate[date], group, date)
-            ).join('')}
-          </tr>
-        `;
-      });
-    }
+    pulauGroup.items.forEach((group) => {
+      html += `
+        <tr>
+          <td class="matrix-col-nupt p-3 font-semibold text-slate-700">
+            ${esc(group.nupt)}
+          </td>
+  
+          <td class="matrix-col-nkws p-3 font-medium text-slate-800">
+            ${esc(group.nkws)}
+          </td>
+  
+          ${dates.map((date) =>
+            matrixCell(group.byDate[date], group, date)
+          ).join('')}
+        </tr>
+      `;
+    });
+  }
   });
 
   matrixBody.innerHTML = html || `
@@ -1603,7 +1660,16 @@ async function init() {
       closeFullReport();
     }
   });
-
+  window.addEventListener('resize', () => {
+    /* Tidak merender ulang data; hanya menjaga browser menghitung layout sticky. */
+    const matrixContainer = $('#matrixScrollContainer');
+  
+    if (matrixContainer) {
+      matrixContainer.style.display = 'none';
+      void matrixContainer.offsetHeight;
+      matrixContainer.style.display = '';
+    }
+  });
 
 // Jalankan fungsi init saat dokumen selesai dimuat
 document.addEventListener('DOMContentLoaded', init);
