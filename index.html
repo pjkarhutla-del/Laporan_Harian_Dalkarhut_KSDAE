@@ -4195,18 +4195,7 @@ async function saveForm(event) {
     );
     return;
   }
-  const selectedKawasan = findKawasanMaster(
-    $('#nupt').value,
-    $('#nkws').value
-  );
-  
-  if (!selectedKawasan) {
-    toast(
-      'Kawasan tidak ditemukan di master kawasan. Pastikan NUPT dan NKWS sesuai data master.',
-      true
-    );
-    return;
-  }
+
   const basePayload = {
   tanggal: $('#tanggal').value,
 
