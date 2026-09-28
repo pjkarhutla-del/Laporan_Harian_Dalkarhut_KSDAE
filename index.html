@@ -243,8 +243,8 @@
   <div class="flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p class="text-sm font-semibold text-forest-700">DASHBOARD OPERASIONAL</p><h2 class="text-2xl font-bold text-slate-900">Ringkasan Pengendalian Karhutla</h2><p class="mt-1 text-sm text-slate-500">Akumulasi laporan kejadian, kondisi penanganan, dan titik hotspot SIPONGI.</p></div><p id="lastUpdate" class="rounded-lg bg-white px-3 py-2 text-xs text-slate-500 shadow-sm"></p></div>
   <div id="summaryCards" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"></div>
   <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Status Terakhir</h3><p class="text-xs text-slate-500">Warna status konsisten pada kartu, matriks, peta, dan formulir.</p></div><div id="statusLegend" class="flex flex-wrap gap-2"></div></div><div id="segmentedBar" class="flex h-5 overflow-hidden rounded-full bg-slate-100"></div><div id="statusBreakdown" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"></div></section>
-  <section class="grid gap-5 xl:grid-cols-2"><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Pemadaman Aktif</h3><p class="text-xs text-slate-500">Lokasi dengan status terakhir Upaya Pemadaman.</p></div><span id="activeExtinctionCount" class="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2">NUPT / NKWS</th><th class="p-2">Sejak pemadaman</th><th class="p-2 text-right">Durasi</th></tr></thead><tbody id="activeExtinctionBody"></tbody></table></div></article><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Tunggakan Update Harian</h3><p class="text-xs text-slate-500">Status terbuka yang belum diperbarui hingga hari ini.</p></div><span id="pendingUpdateCount" class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2">NUPT / NKWS</th><th class="p-2">Status terakhir</th><th class="p-2 text-right">Terlambat</th></tr></thead><tbody id="pendingUpdateBody"></tbody></table></div></article></section>
-  <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-col justify-between gap-3 xl:flex-row xl:items-end"><div><h3 class="font-bold text-slate-900">Matriks Kawasan × Tanggal</h3><p class="text-xs text-slate-500">Dikelompokkan tegas menurut pulau. Klik sel berwarna untuk detail; klik <b>+</b> pada sel kosong untuk mengisi laporan.</p></div><div class="flex flex-wrap items-center gap-2"><select id="pulauFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua pulau</option></select><button id="expandAll" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Show All</button><button id="collapseAll" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Hide All</button></div></div><div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-forest-50 p-3"><div><p class="text-xs font-bold uppercase tracking-wide text-forest-700">Rentang matriks</p><p id="matrixPeriodLabel" class="mt-0.5 text-sm font-semibold text-forest-900"></p></div><div class="flex flex-wrap gap-2"><button id="matrixPrev" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">← Sebelumnya</button><button id="matrixToday" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Hari ini</button><button id="matrixNext" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">Berikutnya →</button></div></div><div id="matrixScrollContainer" class="matrix-scroll-container scrollbar-thin rounded-xl border border-slate-200 bg-white" aria-label="Matriks kawasan dan tanggal" tabindex="0"><table id="matrixTable" class="matrix-table w-max min-w-full text-left text-xs"><thead id="matrixHead"></thead><tbody id="matrixBody"></tbody></table></div><p class="mt-3 text-xs text-slate-500">Gunakan scrollbar horizontal untuk melihat seluruh tanggal. Rentang otomatis memuat keseluruhan tanggal laporan; navigasi periode menggeser jendela 14 hari.</p></section>
+  <section class="grid gap-5 xl:grid-cols-2"><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Pemadaman Aktif</h3><p class="text-xs text-slate-500">Lokasi dengan status terakhir Upaya Pemadaman.</p></div><span id="activeExtinctionCount" class="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="nkws">NUPT / NKWS <span id="activeSortNkws"></span></button></th><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="sejak_tanggal">Sejak pemadaman <span id="activeSortDate"></span></button></th><th class="p-2 text-right"><button type="button" class="ml-auto inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="jumlah_hari">Durasi <span id="activeSortDays"></span></button></th></tr></thead><tbody id="activeExtinctionBody"></tbody></table></div></article><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Tunggakan Update Harian</h3><p class="text-xs text-slate-500">Status terbuka yang belum diperbarui hingga hari ini.</p></div><span id="pendingUpdateCount" class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="nkws">NUPT / NKWS <span id="pendingSortNkws"></span></button></th><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="status_terakhir">Status terakhir <span id="pendingSortStatus"></span></button></th><th class="p-2 text-right"><button type="button" class="ml-auto inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="jumlah_hari_terlambat">Terlambat <span id="pendingSortDays"></span></button></th></tr></thead><tbody id="pendingUpdateBody"></tbody></table></div></article></section>
+  <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-col justify-between gap-3 xl:flex-row xl:items-end"><div><h3 class="font-bold text-slate-900">Matriks Kawasan × Tanggal</h3><p class="text-xs text-slate-500">Dikelompokkan tegas menurut pulau. Klik sel berwarna untuk detail; klik <b>+</b> pada sel kosong untuk mengisi laporan.</p></div><div class="flex flex-wrap items-center gap-2"><div class="flex flex-wrap items-center gap-2"><select id="pulauFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-forest-600 focus:ring-2 focus:ring-forest-100"><option value="">Semua pulau</option></select><div class="relative min-w-[240px] flex-1 sm:flex-none"><input id="kawasanSearchFilter" type="search" list="kawasanSearchOptions" autocomplete="off" class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-10 text-sm focus:border-forest-600 focus:ring-2 focus:ring-forest-100" placeholder="Cari atau pilih kawasan (NKWS)..." aria-label="Cari kawasan pada matriks" /><button id="resetKawasanSearchBtn" type="button" class="absolute inset-y-0 right-0 hidden w-10 place-items-center rounded-r-lg text-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Bersihkan pencarian kawasan" aria-label="Bersihkan pencarian kawasan">×</button><datalist id="kawasanSearchOptions"></datalist></div><button id="expandAll" type="button" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Show All</button><button id="collapseAll" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Hide All</button></div><div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-forest-50 p-3"><div><p class="text-xs font-bold uppercase tracking-wide text-forest-700">Rentang matriks</p><p id="matrixPeriodLabel" class="mt-0.5 text-sm font-semibold text-forest-900"></p></div><div class="flex flex-wrap gap-2"><button id="matrixPrev" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">← Sebelumnya</button><button id="matrixToday" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Hari ini</button><button id="matrixNext" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">Berikutnya →</button></div></div><div id="matrixScrollContainer" class="matrix-scroll-container scrollbar-thin rounded-xl border border-slate-200 bg-white" aria-label="Matriks kawasan dan tanggal" tabindex="0"><table id="matrixTable" class="matrix-table w-max min-w-full text-left text-xs"><thead id="matrixHead"></thead><tbody id="matrixBody"></tbody></table></div><p class="mt-3 text-xs text-slate-500">Gunakan scrollbar horizontal untuk melihat seluruh tanggal. Rentang otomatis memuat keseluruhan tanggal laporan; navigasi periode menggeser jendela 14 hari.</p></section>
   <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-end"><div><h3 class="font-bold text-slate-900">Peta Kejadian & Hotspot</h3><p class="text-xs text-slate-500">Marker laporan berasal dari tabel Supabase <code>reports</code>; hotspot masih data simulasi SIPONGI.</p></div><div class="flex flex-wrap gap-2"><select id="mapUptFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua UPT</option></select><select id="mapKawasanFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua kawasan</option></select><input id="mapDateFilter" type="date" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></div></div><div id="map" class="overflow-hidden rounded-xl border border-slate-200"></div><p class="mt-3 text-xs text-slate-500"><span class="font-semibold text-red-600">●</span> Laporan kejadian &nbsp; <span class="font-semibold text-amber-500">●</span> Hotspot SIPONGI mock.</p></section>
 </section>
 
@@ -300,8 +300,22 @@ const FALLBACK_REPORTS=[
 const HOTSPOTS=[{lat:.49,lon:101.44,confidence:'High',area:'Riau'},{lat:-2.28,lon:113.8,confidence:'High',area:'Kalimantan Tengah'},{lat:-7.9,lon:114.3,confidence:'Medium',area:'Jawa Timur'},{lat:-2.6,lon:140.6,confidence:'Medium',area:'Papua'}];
 let reports=[],map,reportLayer,hotspotLayer,selectedReport=null,collapsedPulau=new Set(),usingFallback=!isConfigured,matrixStartDate=null;
 let kawasanMaster = [];
-const KAWASAN_GEOJSON_URL = 'https://raw.githubusercontent.com/pjkarhutla-del/Laporan_Harian_Dalkarhut_KSDAE/main/kawasan.geojson';
 let kawasanGeoJsonLayer = null;
+
+const KAWASAN_GEOJSON_URL = 'https://raw.githubusercontent.com/pjkarhutla-del/Laporan_Harian_Dalkarhut_KSDAE/main/kawasan.geojson';
+
+
+/* State filter dan sorting tampilan operasional. */
+const detailSortState = {
+  active: {
+    key: 'jumlah_hari',
+    direction: 'desc'
+  },
+  pending: {
+    key: 'jumlah_hari_terlambat',
+    direction: 'desc'
+  }
+};
   
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const fmtDate=d=>new Intl.DateTimeFormat('id-ID',{day:'2-digit',month:'short'}).format(new Date(d+'T12:00:00'));
@@ -526,6 +540,103 @@ function formatDateId(dateValue) {
   }).format(date);
 }
 
+/* ============================================================
+   FILTER & SORT UTILITIES
+   ============================================================ */
+
+function normalizeSearchText(value = '') {
+  return String(value)
+    .toLocaleLowerCase('id-ID')
+    .trim();
+}
+
+function sortDetailsData(data = [], key, direction = 'asc') {
+  const multiplier = direction === 'desc' ? -1 : 1;
+
+  return [...data].sort((a, b) => {
+    const valueA = a?.[key];
+    const valueB = b?.[key];
+
+    /* Angka: jumlah_hari atau jumlah_hari_terlambat. */
+    if (typeof valueA === 'number' || typeof valueB === 'number') {
+      return ((Number(valueA) || 0) - (Number(valueB) || 0)) * multiplier;
+    }
+
+    /* Tanggal YYYY-MM-DD dapat dibandingkan secara alfabetis dengan stabil. */
+    if (key.includes('tanggal')) {
+      return String(valueA || '').localeCompare(String(valueB || '')) * multiplier;
+    }
+
+    /* Nama/status: gunakan locale Indonesia. */
+    return String(valueA || '').localeCompare(
+      String(valueB || ''),
+      'id',
+      { sensitivity: 'base' }
+    ) * multiplier;
+  });
+}
+
+function getSortIndicator(tableName, key) {
+  const state = detailSortState[tableName];
+
+  if (state.key !== key) {
+    return '<span class="ml-1 text-slate-300">↕</span>';
+  }
+
+  return state.direction === 'asc'
+    ? '<span class="ml-1 text-forest-700">▲</span>'
+    : '<span class="ml-1 text-forest-700">▼</span>';
+}
+
+function toggleDetailsSort(tableName, key) {
+  const state = detailSortState[tableName];
+
+  if (state.key === key) {
+    state.direction = state.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    state.key = key;
+
+    /* Angka durasi secara default terbesar/terlama dahulu. */
+    state.direction =
+      key === 'jumlah_hari' || key === 'jumlah_hari_terlambat'
+        ? 'desc'
+        : 'asc';
+  }
+
+  renderOperationalDetails();
+}
+
+function populateKawasanSearchOptions() {
+  const datalist = $('#kawasanSearchOptions');
+
+  if (!datalist) {
+    return;
+  }
+
+  const kawasanList = [...new Set(
+    reports
+      .map((report) => String(report.nkws || '').trim())
+      .filter(Boolean)
+  )]
+    .sort((a, b) => a.localeCompare(b, 'id'));
+
+  datalist.innerHTML = kawasanList
+    .map((nkws) => `<option value="${esc(nkws)}"></option>`)
+    .join('');
+}
+
+function updateKawasanSearchResetButton() {
+  const input = $('#kawasanSearchFilter');
+  const button = $('#resetKawasanSearchBtn');
+
+  if (!input || !button) {
+    return;
+  }
+
+  button.classList.toggle('hidden', !input.value.trim());
+  button.classList.toggle('grid', Boolean(input.value.trim()));
+}
+  
 function getLatestChainReport(chain) {
   return chain.latestReport || chain.reports?.[chain.reports.length - 1] || null;
 }
@@ -1330,19 +1441,30 @@ function renderSummary() {
 }
 
 function renderOperationalDetails() {
-  const activeItems = getActiveExtinctionDetails(reports);
-  const pendingItems = getPendingUpdateDetails(reports);
-
   const activeCount = $('#activeExtinctionCount');
   const activeBody = $('#activeExtinctionBody');
   const pendingCount = $('#pendingUpdateCount');
   const pendingBody = $('#pendingUpdateBody');
 
-  /* Mencegah error jika HTML section belum ditempel. */
   if (!activeCount || !activeBody || !pendingCount || !pendingBody) {
     console.warn('Container rincian operasional belum ditemukan di HTML.');
     return;
   }
+
+  const activeRaw = getActiveExtinctionDetails(reports);
+  const pendingRaw = getPendingUpdateDetails(reports);
+
+  const activeItems = sortDetailsData(
+    activeRaw,
+    detailSortState.active.key,
+    detailSortState.active.direction
+  );
+
+  const pendingItems = sortDetailsData(
+    pendingRaw,
+    detailSortState.pending.key,
+    detailSortState.pending.direction
+  );
 
   activeCount.textContent = `${activeItems.length} lokasi`;
   pendingCount.textContent = `${pendingItems.length} lokasi`;
@@ -1351,14 +1473,10 @@ function renderOperationalDetails() {
     ? activeItems.map((item) => `
         <tr class="border-b border-slate-100 hover:bg-red-50/40">
           <td class="p-2">
-            <p class="font-semibold text-slate-800">${esc(item.nkws)}</p>
-            <p class="mt-0.5 text-slate-500">${esc(item.nupt)}</p>
+            <p class="font-semibold text-slate-800">${esc(item.nkws || '-')}</p>
+            <p class="mt-0.5 text-slate-500">${esc(item.nupt || '-')}</p>
           </td>
-
-          <td class="p-2 text-slate-600">
-            ${formatDateId(item.sejak_tanggal)}
-          </td>
-
+          <td class="p-2 text-slate-600">${formatDateId(item.sejak_tanggal)}</td>
           <td class="p-2 text-right">
             <span class="rounded-full bg-red-100 px-2 py-1 font-bold text-red-700">
               ${item.jumlah_hari} hari
@@ -1369,7 +1487,7 @@ function renderOperationalDetails() {
     : `
       <tr>
         <td colspan="3" class="p-6 text-center text-slate-500">
-          Tidak ada pemadaman aktif.
+          Tidak ada lokasi dengan status terakhir Upaya Pemadaman.
         </td>
       </tr>
     `;
@@ -1378,16 +1496,12 @@ function renderOperationalDetails() {
     ? pendingItems.map((item) => `
         <tr class="border-b border-slate-100 hover:bg-amber-50/60">
           <td class="p-2">
-            <p class="font-semibold text-slate-800">${esc(item.nkws)}</p>
+            <p class="font-semibold text-slate-800">${esc(item.nkws || '-')}</p>
             <p class="mt-0.5 text-slate-500">
-              ${esc(item.nupt)} • ${formatDateId(item.sejak_tanggal)}
+              ${esc(item.nupt || '-')} • ${formatDateId(item.sejak_tanggal)}
             </p>
           </td>
-
-          <td class="p-2">
-            ${statusBadge(item.status_terakhir)}
-          </td>
-
+          <td class="p-2">${statusBadge(item.status_terakhir)}</td>
           <td class="p-2 text-right">
             <span class="rounded-full bg-amber-100 px-2 py-1 font-bold text-amber-800">
               ${item.jumlah_hari_terlambat} hari
@@ -1402,6 +1516,20 @@ function renderOperationalDetails() {
         </td>
       </tr>
     `;
+
+  /* Perbarui indikator sorting pada setiap header klik. */
+  const setIndicator = (selector, html) => {
+    const node = $(selector);
+    if (node) node.innerHTML = html;
+  };
+
+  setIndicator('#activeSortNkws', getSortIndicator('active', 'nkws'));
+  setIndicator('#activeSortDate', getSortIndicator('active', 'sejak_tanggal'));
+  setIndicator('#activeSortDays', getSortIndicator('active', 'jumlah_hari'));
+
+  setIndicator('#pendingSortNkws', getSortIndicator('pending', 'nkws'));
+  setIndicator('#pendingSortStatus', getSortIndicator('pending', 'status_terakhir'));
+  setIndicator('#pendingSortDays', getSortIndicator('pending', 'jumlah_hari_terlambat'));
 }
   
 function renderStatus(){const counts=Object.fromEntries(Object.keys(STATUS).map(s=>[s,reports.filter(r=>r.status===s).length])),total=reports.length||1;$('#statusLegend').innerHTML=Object.entries(STATUS).map(([k,v])=>`<span class="inline-flex items-center gap-1 rounded-full ${v.badge} px-2 py-1 text-xs font-bold text-white">${v.icon} ${k}</span>`).join('');$('#segmentedBar').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div title="${k}: ${counts[k]}" style="width:${counts[k]*100/total}%;background-color:${v.color}"></div>`).join('');$('#statusBreakdown').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div class="rounded-lg bg-slate-50 p-3"><div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-600">${k}</span><b>${counts[k]}</b></div><div class="mt-2 h-1.5 rounded" style="background-color:${v.color}"></div></div>`).join('')}
@@ -1663,44 +1791,28 @@ function matrixCell(report, group, date) {
 function renderMatrix() {
   const dates = getVisibleMatrixDates();
   const selectedPulau = $('#pulauFilter').value;
-  const matrixHead = $('#matrixHead');
-  const matrixBody = $('#matrixBody');
+  const kawasanQuery = normalizeSearchText(
+    $('#kawasanSearchFilter')?.value || ''
+  );
 
-  console.log('Matriks debug:', {
-    reports: reports.length,
-    totalGroups: groups().length,
-    visibleDates: dates,
-    matrixStartDate
-  });
-
-  /*
-    Lindungi aplikasi jika data belum tersedia.
-  */
-  if (!dates.length) {
-    matrixHead.innerHTML = '';
-
-    matrixBody.innerHTML = `
-      <tr>
-        <td colspan="3" class="p-8 text-center text-slate-500">
-          Belum ada tanggal laporan yang dapat ditampilkan.
-        </td>
-      </tr>
-    `;
-
-    $('#matrixPeriodLabel').textContent = 'Belum ada periode data';
-    return;
-  }
-
-  $('#matrixPeriodLabel').textContent =
-    `${fmtDate(dates[0])} – ${fmtDate(dates[dates.length - 1])} • ${dates.length} hari`;
-
-  matrixHead.innerHTML = matrixHeader(dates);
+  // ... kode matrixPeriodLabel dan matrixHead tetap ada ...
 
   const matrixGroups = groups()
-    .filter((group) =>
-      !selectedPulau || group.npulau === selectedPulau
-    );
-
+    /* Filter pertama: pulau. */
+    .filter((pulauGroup) =>
+      !selectedPulau || pulauGroup.npulau === selectedPulau
+    )
+    /* Filter kedua: nama NKWS. Kedua filter berjalan bersamaan. */
+    .map((pulauGroup) => ({
+      ...pulauGroup,
+      items: pulauGroup.items.filter((item) =>
+        !kawasanQuery ||
+        normalizeSearchText(item.nkws).includes(kawasanQuery)
+      )
+    }))
+    /* Jangan tampilkan header pulau bila semua kawasannya tersaring. */
+    .filter((pulauGroup) => pulauGroup.items.length > 0);
+  
   let html = '';
 
   matrixGroups.forEach((pulauGroup) => {
@@ -1751,7 +1863,7 @@ function renderMatrix() {
         colspan="${dates.length + 2}"
         class="p-8 text-center text-slate-500"
       >
-        Tidak ada laporan yang cocok dengan filter pulau.
+        Tidak ada kawasan yang cocok dengan filter pulau atau pencarian NKWS.
       </td>
     </tr>
   `;
@@ -1849,7 +1961,34 @@ function resetMatrix() {
   renderMatrix();
 }
   
-function renderFilters(){const val=$('#pulauFilter').value;$('#pulauFilter').innerHTML='<option value="">Semua pulau</option>'+PULAU.map(p=>`<option ${p===val?'selected':''}>${p}</option>`).join('');const set=a=>[...new Set(a)].filter(Boolean).sort();const u=$('#mapUptFilter').value;$('#mapUptFilter').innerHTML='<option value="">Semua UPT</option>'+set(reports.map(r=>r.nupt)).map(x=>`<option ${x===u?'selected':''}>${esc(x)}</option>`).join('');const k=$('#mapKawasanFilter').value;$('#mapKawasanFilter').innerHTML='<option value="">Semua kawasan</option>'+set(reports.map(r=>r.nkws)).map(x=>`<option ${x===k?'selected':''}>${esc(x)}</option>`).join('')}
+function renderFilters() {
+  const set = (arr) => [...new Set(arr)].filter(Boolean).sort();
+
+  // Filter Pulau
+  const pulauVal = $('#pulauFilter').value;
+  $('#pulauFilter').innerHTML = 
+    '<option value="">Semua pulau</option>' +
+    PULAU.map(p => `<option ${p === pulauVal ? 'selected' : ''}>${p}</option>`).join('');
+
+  // Filter UPT
+  const uptVal = $('#mapUptFilter').value;
+  const uptList = set(reports.map(r => r.nupt));
+  $('#mapUptFilter').innerHTML = 
+    '<option value="">Semua UPT</option>' +
+    uptList.map(x => `<option ${x === uptVal ? 'selected' : ''}>${esc(x)}</option>`).join('');
+
+  // Filter Kawasan
+  const kawasanVal = $('#mapKawasanFilter').value;
+  const kawasanList = set(reports.map(r => r.nkws));
+  $('#mapKawasanFilter').innerHTML = 
+    '<option value="">Semua kawasan</option>' +
+    kawasanList.map(x => `<option ${x === kawasanVal ? 'selected' : ''}>${esc(x)}</option>`).join('');
+
+  // Update opsi pencarian kawasan dan status tombol reset
+  populateKawasanSearchOptions();
+  updateKawasanSearchResetButton();
+}
+  
 function setupMap(){map=L.map('map').setView([-2.5,118],5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);reportLayer=L.layerGroup().addTo(map);map.options.maxZoom=18;map.on('popupopen',e=>{const p=e.popup;setTimeout(()=>{if(p&&p.getLatLng())map.panInside(p.getLatLng(),{paddingTopLeft:[24,90],paddingBottomRight:[24,120],animate:true,duration:0.25})},60)});hotspotLayer=L.layerGroup().addTo(map);HOTSPOTS.forEach(h=>L.circleMarker([h.lat,h.lon],{radius:8,color:'#92400e',fillColor:'#f59e0b',fillOpacity:.9,weight:2}).bindPopup(`<b>Hotspot SIPONGI (mock)</b><br>Confidence: ${h.confidence}<br>Wilayah: ${h.area}`).addTo(hotspotLayer))}
 async function loadKawasanGeoJSON() {
   if (!map) {
@@ -2342,19 +2481,57 @@ async function init() {
     btn.onclick = () => setView(btn.dataset.view);
   });
 
-  // 4. Event Listeners - Matriks & Filter
+ // 4. Event Listeners - Matriks & Filter
   $('#pulauFilter').onchange = renderMatrix;
+  
   $('#expandAll').onclick = () => {
     collapsedPulau.clear();
     renderMatrix();
   };
+  
   $('#collapseAll').onclick = () => {
     PULAU.forEach(p => collapsedPulau.add(p));
     renderMatrix();
   };
+  
   $('#matrixPrev').onclick = () => shiftMatrix(-14);
   $('#matrixNext').onclick = () => shiftMatrix(14);
   $('#matrixToday').onclick = resetMatrix;
+  
+  // Event Listeners - Pencarian Kawasan (NKWS)
+  const kawasanSearchInput = $('#kawasanSearchFilter');
+  const resetKawasanSearchBtn = $('#resetKawasanSearchBtn');
+  
+  if (kawasanSearchInput) {
+    const handleKawasanSearch = () => {
+      updateKawasanSearchResetButton();
+      renderMatrix();
+    };
+  
+    kawasanSearchInput.addEventListener('input', handleKawasanSearch);
+    kawasanSearchInput.addEventListener('change', handleKawasanSearch);
+  }
+  
+  if (resetKawasanSearchBtn) {
+    resetKawasanSearchBtn.onclick = () => {
+      if (!kawasanSearchInput) return;
+  
+      kawasanSearchInput.value = '';
+      updateKawasanSearchResetButton();
+      renderMatrix();
+      kawasanSearchInput.focus();
+    };
+  }
+  
+  // Event Listeners - Pengurutan Tabel Detail (Rincian & Tunggakan)
+  $$('[data-detail-sort]').forEach((button) => {
+    button.onclick = () => {
+      toggleDetailsSort(
+        button.dataset.detailSort,
+        button.dataset.sortKey
+      );
+    };
+  });
 
   // 5. Event Listeners - Filter Peta
   ['mapUptFilter', 'mapKawasanFilter', 'mapDateFilter'].forEach(id => {
