@@ -1006,7 +1006,39 @@ const fmtDate=d=>new Intl.DateTimeFormat('id-ID',{day:'2-digit',month:'short'}).
 function toast(m,bad=false){const e=$('#toast');e.textContent=m;e.className=`fixed bottom-5 right-5 z-[60] max-w-sm rounded-xl px-4 py-3 text-sm font-medium text-white shadow-xl ${bad?'bg-red-700':'bg-slate-900'}`;setTimeout(()=>e.classList.add('hidden'),3500)}
 function canonicalPulau(v=''){const x=String(v).trim().toUpperCase().replace(/[-_]+/g,' ').replace(/\s+/g,' ');if(/SUMATERA|ACEH|RIAU|JAMBI|BENGKULU|LAMPUNG|SUMUT|SUMSEL|SUMBAR/.test(x))return 'SUMATERA';if(/KALIMANTAN|KALBAR|KALTENG|KALSEL|KALTIM|KALTARA/.test(x))return 'KALIMANTAN';if(/JAWA|JABAR|JATENG|JATIM|BANTEN|DKI|YOGYA/.test(x))return 'JAWA';if(/BALI|NUSRA|NTB|NTT|JABALNUSRA/.test(x))return 'BALI NUSRA';if(/SULAWESI|SULSEL|SULBAR|SULTENG|SULTRA|SULUT|GORONTALO/.test(x))return 'SULAWESI';if(/MALUKU/.test(x)&&!/PAPUA/.test(x))return 'MALUKU';if(/PAPUA/.test(x))return 'PAPUA';return 'LAINNYA'}
 function normalizeStatus(v=''){const x=String(v).toLowerCase();if(/false|bukan titik|bukan api/.test(x))return 'False Hotspot';if(/sudah padam|telah padam|pendinginan selesai/.test(x))return 'Sudah Padam';if(/ground\s*check|groundcheck|cek lapangan|verifikasi lapangan/.test(x))return 'Proses Groundcheck';if(/konfirmasi|belum.*status|menunggu.*(info|verifikasi)/.test(x))return 'Perlu Konfirmasi';return 'Upaya Pemadaman'}
+function normalizeMatchText(value = '') {
+  return String(value)
+    .trim()
+    .toLocaleUpperCase('id-ID')
+    .replace(/\s+/g, ' ');
+}
 
+function findKawasanMaster(nupt, nkwsValue) {
+  /*
+    Jika value pada dropdown NKWS adalah ID kawasan.
+  */
+  const matchById = kawasanMaster.find(
+    (item) => String(item.id) === String(nkwsValue)
+  );
+
+  if (matchById) {
+    return matchById;
+  }
+
+  /*
+    Fallback jika value dropdown/field NKWS masih berupa nama kawasan.
+  */
+  const targetNupt = normalizeMatchText(nupt);
+  const targetNkws = normalizeMatchText(nkwsValue);
+
+  return kawasanMaster.find((item) => {
+    return (
+      normalizeMatchText(item.nupt) === targetNupt &&
+      normalizeMatchText(item.nkws) === targetNkws
+    );
+  }) || null;
+}
+  
 /* ============================================================
    PEMADAMAN AKTIF — HANYA GELOMBANG TERAKHIR BELUM PADAM
    ============================================================ */
@@ -4151,12 +4183,42 @@ async function saveForm(event) {
   }
 
   const laporanField = $('#laporan');
-
-  const basePayload = {
-    tanggal: $('#tanggal').value,
-    npulau: canonicalPulau($('#npulau').value),
+  const selectedKawasan = findKawasanMaster({
     nupt: $('#nupt').value,
-    nkws: $('#nkws').value,
+    nkws: $('#nkws').value
+  });
+  
+  if (!selectedKawasan) {
+    toast(
+      'Kawasan tidak ditemukan di master kawasan. Pilih NUPT dan NKWS dari daftar yang tersedia.',
+      true
+    );
+    return;
+  }
+  const selectedKawasan = findKawasanMaster(
+    $('#nupt').value,
+    $('#nkws').value
+  );
+  
+  if (!selectedKawasan) {
+    toast(
+      'Kawasan tidak ditemukan di master kawasan. Pastikan NUPT dan NKWS sesuai data master.',
+      true
+    );
+    return;
+  }
+  const basePayload = {
+  tanggal: $('#tanggal').value,
+
+    /*
+      Otomatis dari tabel master kawasan.
+      Jangan gunakan lagi nilai npulau dari input form.
+    */
+    kawasan_id: selectedKawasan.id,
+    npulau: canonicalPulau(selectedKawasan.npulau),
+    nupt: selectedKawasan.nupt,
+    nkws: selectedKawasan.nkws,
+  
     upaya: $('#upaya').value.trim(),
     rencana: $('#rencana').value.trim(),
     personel: $('#personel').value.trim(),
@@ -4575,6 +4637,18 @@ function runActiveOperationalWaveTest() {
 }
 // Jalankan fungsi init saat dokumen selesai dimuat
 document.addEventListener('DOMContentLoaded', init);
+
+async function init() {
+  try {
+    await loadKawasanMaster();
+    await loadReports();
+
+    renderAll();
+  } catch (error) {
+    console.error(error);
+    toast(error.message, true);
+  }
+}
 </script>
 </body>
 </html>
