@@ -3151,9 +3151,6 @@ function openEdit(report = selectedReport) {
     toast('Tidak ada laporan yang dipilih untuk diedit.', true);
     return;
   }
-    closeModal();
-    // gunakan variabel report, bukan selectedReport
-  }
   const reportUuid = report.report_uuid || report.id;
 
   if (!reportUuid) {
