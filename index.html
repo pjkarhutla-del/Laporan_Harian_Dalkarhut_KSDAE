@@ -2750,13 +2750,6 @@ function renderOperationalDetails() {
   const activeRaw = getActiveExtinctionReports(reports, null);
   const activeItems = sortActiveExtinctionItems(activeRaw);  
   const pendingRaw = getPendingUpdateDetails(reports);
-
-  const activeItems = sortDetailsData(
-    activeRaw,
-    detailSortState.active.key,
-    detailSortState.active.direction
-  );
-
   const pendingItems = sortDetailsData(
     pendingRaw,
     detailSortState.pending.key,
