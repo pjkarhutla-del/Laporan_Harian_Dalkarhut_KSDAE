@@ -2495,7 +2495,7 @@ function renderOperationalDetails() {
     return;
   }
 
-  const activeRaw = getActiveExtinctionReports(reports, new Date());
+  const activeRaw = getActiveExtinctionReports(reports, null);
   const pendingRaw = getPendingUpdateDetails(reports);
 
   const activeItems = sortDetailsData(
