@@ -447,7 +447,92 @@ where lower(trim(r.nkws)) = lower(trim(k.nkws))
 on public.reports for select
 to anon using (true);</pre></article></div></section>
 </main>
-<div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-bg"><div class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl"><div class="sticky top-0 flex items-center justify-between border-b bg-white px-6 py-4"><div><h3 class="text-lg font-bold">Detail Laporan</h3><p id="modalSub" class="text-xs text-slate-500"></p></div><button class="modal-close grid h-9 w-9 place-items-center rounded-full text-xl hover:bg-slate-100">×</button></div><div id="modalContent" class="p-6"></div><div class="flex flex-wrap justify-end gap-3 border-t px-6 py-4"><button id="deleteBtn" class="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700">Hapus</button><button class="modal-close rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">Tutup</button><button id="modalEditBtn" class="rounded-lg bg-forest-700 px-4 py-2 text-sm font-semibold text-white">Edit Laporan</button></div></div></div><div id="toast" class="fixed bottom-5 right-5 z-[60] hidden max-w-sm rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-xl"></div>
+
+<div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-bg">
+  <div class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+    
+    <!-- Header Modal yang Disesuaikan -->
+    <div class="sticky top-0 z-10 border-b bg-white px-6 py-4">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="text-lg font-bold text-slate-900">Detail Laporan</h3>
+            <span
+              id="detailSlideBadge"
+              class="hidden rounded-full bg-forest-100 px-2.5 py-0.5 text-xs font-bold text-forest-800"
+            >
+              Data 1 dari 1
+            </span>
+          </div>
+          <p id="modalSub" class="mt-1 text-xs text-slate-500"></p>
+        </div>
+
+        <button
+          type="button"
+          class="modal-close grid h-9 w-9 shrink-0 place-items-center rounded-full text-xl hover:bg-slate-100"
+          aria-label="Tutup detail laporan"
+        >
+          ×
+        </button>
+      </div>
+
+      <!-- Navigasi (Tampil jika data > 1) -->
+      <div
+        id="detailCarouselControls"
+        class="mt-3 hidden items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 border border-slate-100"
+      >
+        <button
+          id="detailPrevBtn"
+          type="button"
+          class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ◄ Sebelumnya
+        </button>
+
+        <p id="detailSlidePosition" class="text-center text-xs font-semibold text-slate-600">
+          Data 1 dari 1
+        </p>
+
+        <button
+          id="detailNextBtn"
+          type="button"
+          class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Berikutnya ►
+        </button>
+      </div>
+    </div>
+
+    <!-- Isi Laporan -->
+    <div id="modalContent" class="p-6"></div>
+
+    <!-- Footer Modal -->
+    <div class="flex flex-wrap justify-end gap-3 border-t px-6 py-4">
+      <button
+        id="deleteBtn"
+        type="button"
+        class="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+      >
+        Hapus Data Ini
+      </button>
+    
+      <button type="button" class="modal-close rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">
+        Tutup
+      </button>
+    
+      <button
+        id="modalEditBtn"
+        type="button"
+        class="rounded-lg bg-forest-700 px-4 py-2 text-sm font-semibold text-white hover:bg-forest-800"
+      >
+        Edit Data Ini
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-5 right-5 z-[60] hidden max-w-sm rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-xl"></div>  
+  
 <div id="fullReportModal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 modal-bg"><div class="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl"><div class="flex items-center justify-between border-b bg-white px-6 py-4"><div><p class="text-xs font-bold uppercase tracking-wide text-forest-700">Narasi Laporan Lapangan</p><h3 id="fullReportTitle" class="mt-1 text-lg font-bold text-slate-900">Detail laporan</h3></div><button type="button" class="full-report-close grid h-9 w-9 place-items-center rounded-full text-xl hover:bg-slate-100" aria-label="Tutup laporan lengkap">×</button></div><div class="max-h-[65vh] overflow-y-auto p-6"><div id="fullReportContent" class="whitespace-pre-wrap break-words text-sm leading-7 text-slate-700"></div></div><div class="flex justify-end border-t bg-slate-50 px-6 py-4"><button type="button" class="full-report-close rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white">Tutup</button></div></div></div>
 <script>
 /* Isi URL project dan publishable/anon key Supabase. Jangan gunakan service_role/secret key di browser. */
@@ -488,6 +573,8 @@ const FALLBACK_REPORTS=[
 const HOTSPOTS=[{lat:.49,lon:101.44,confidence:'High',area:'Riau'},{lat:-2.28,lon:113.8,confidence:'High',area:'Kalimantan Tengah'},{lat:-7.9,lon:114.3,confidence:'Medium',area:'Jawa Timur'},{lat:-2.6,lon:140.6,confidence:'Medium',area:'Papua'}];
 let reports=[],map,reportLayer,hotspotLayer,selectedReport=null,collapsedPulau=new Set(),usingFallback=!isConfigured,matrixStartDate=null;
 let kawasanMaster = [];
+let detailSlideReports = [];
+let currentSlideIndex = 0;
 let kawasanGeoJsonLayer = null;
 
 const KAWASAN_GEOJSON_URL = 'https://raw.githubusercontent.com/pjkarhutla-del/Laporan_Harian_Dalkarhut_KSDAE/main/kawasan.geojson';
@@ -544,6 +631,83 @@ function getLocationKey(report) {
     .join('|');
 }
 
+/* ============================================================
+   MULTI-DATA DETAIL MATRIX
+   ============================================================ */
+
+function getReportUiKey(report) {
+  return String(report?.report_uuid || report?.id || '');
+}
+
+function getReportsForMatrixCell({
+  kawasanId = null,
+  npulau = '',
+  nupt = '',
+  nkws = '',
+  tanggal = ''
+}) {
+  const targetDate = String(tanggal || '').slice(0, 10);
+
+  return reports
+    .filter((report) => {
+      const reportDate = String(report.tanggal || '').slice(0, 10);
+
+      if (reportDate !== targetDate) {
+        return false;
+      }
+
+      /*
+        Prioritas matching memakai kawasan_id apabila tersedia,
+        karena lebih stabil daripada nama kawasan.
+      */
+      if (
+        kawasanId !== null &&
+        kawasanId !== undefined &&
+        String(kawasanId).trim() !== '' &&
+        report.kawasan_id !== null &&
+        report.kawasan_id !== undefined
+      ) {
+        return String(report.kawasan_id) === String(kawasanId);
+      }
+
+      /* Fallback bila kawasan_id belum lengkap pada data migrasi. */
+      return (
+        String(report.nkws || '').trim().toUpperCase() ===
+          String(nkws || '').trim().toUpperCase() &&
+        String(report.nupt || '').trim().toUpperCase() ===
+          String(nupt || '').trim().toUpperCase() &&
+        String(report.npulau || '').trim().toUpperCase() ===
+          String(npulau || '').trim().toUpperCase()
+      );
+    })
+    .sort((a, b) => {
+      /* Urutkan titik secara deterministik untuk carousel. */
+      const timeA = String(a.updated_at || a.created_at || '');
+      const timeB = String(b.updated_at || b.created_at || '');
+
+      return (
+        timeA.localeCompare(timeB) ||
+        getReportUiKey(a).localeCompare(getReportUiKey(b))
+      );
+    });
+}
+
+function getActiveSlideReport() {
+  return detailSlideReports[currentSlideIndex] || null;
+}
+
+function clampSlideIndex() {
+  if (!detailSlideReports.length) {
+    currentSlideIndex = 0;
+    return;
+  }
+
+  currentSlideIndex = Math.max(
+    0,
+    Math.min(currentSlideIndex, detailSlideReports.length - 1)
+  );
+}
+  
 function getReportChronologyKey(report) {
   return [
     String(report.tanggal || '').slice(0, 10),
@@ -2027,7 +2191,6 @@ function matrixHeader(dates) {
 function matrixCell(report, group, date) {
   if (report) {
     const config = STATUS[report.status] || STATUS['Perlu Konfirmasi'];
-    const reportKey = report.report_uuid || report.id;
 
     const symbol =
       report.status === 'Perlu Konfirmasi'
@@ -2039,8 +2202,13 @@ function matrixCell(report, group, date) {
     return `
       <td
         class="matrix-cell ${config.cls} cursor-pointer text-base font-black"
-        data-detail="${esc(reportKey)}"
-        title="${esc(report.status)} — klik untuk detail"
+        data-detail-cell="true"
+        data-kawasan-id="${esc(report.kawasan_id ?? '')}"
+        data-npulau="${esc(group.npulau)}"
+        data-nupt="${esc(group.nupt)}"
+        data-nkws="${esc(group.nkws)}"
+        data-tanggal="${esc(date)}"
+        title="${esc(report.status)} — klik untuk melihat seluruh data titik"
       >
         ${symbol}
       </td>
@@ -2190,21 +2358,25 @@ function renderMatrix() {
   `;
 
   /* Event detail laporan */
-  $$('[data-detail]').forEach((element) => {
+  $$('[data-detail-cell]').forEach((element) => {
     element.onclick = () => {
-      const reportId = String(element.dataset.detail || '');
+      const cellContext = {
+        kawasanId: element.dataset.kawasanId || null,
+        npulau: element.dataset.npulau || '',
+        nupt: element.dataset.nupt || '',
+        nkws: element.dataset.nkws || '',
+        tanggal: element.dataset.tanggal || ''
+      };
   
-      const report = reports.find((item) =>
-        String(item.report_uuid || item.id) === reportId
-      );
+      const matchingReports = getReportsForMatrixCell(cellContext);
   
-      if (!report) {
-        console.error('Record matriks tidak ditemukan:', reportId);
-        toast('Detail laporan tidak ditemukan. Muat ulang data lalu coba kembali.', true);
+      if (!matchingReports.length) {
+        console.error('Tidak ada data untuk sel matriks:', cellContext);
+        toast('Data laporan untuk sel matriks tidak ditemukan.', true);
         return;
       }
   
-      openDetail(report);
+      openDetailCarousel(matchingReports, 0);
     };
   });
 
@@ -2598,21 +2770,79 @@ function renderAll() {
 }
 
 function openDetail(report) {
+  /* Kompatibilitas: buka satu laporan tetap dapat dipakai dari marker peta. */
   if (!report) {
     toast('Data laporan tidak tersedia.', true);
     return;
   }
 
-  const reportKey = report.report_uuid || report.id;
+  openDetailCarousel([report], 0);
+}
 
-  if (!reportKey) {
-    console.error('Record tidak memiliki report_uuid/id:', report);
-    toast('ID laporan tidak tersedia. Record tidak dapat diedit.', true);
+function openDetailCarousel(items = [], initialIndex = 0) {
+  if (!Array.isArray(items) || !items.length) {
+    toast('Tidak ada data laporan untuk ditampilkan.', true);
     return;
   }
 
-  /* Penting: state record edit berasal dari sel yang dipilih. */
+  detailSlideReports = [...items];
+  currentSlideIndex = Number(initialIndex) || 0;
+  clampSlideIndex();
+
+  renderDetailSlide();
+
+  $('#detailModal').classList.remove('hidden');
+  $('#detailModal').classList.add('flex');
+}
+
+function renderDetailSlide() {
+  clampSlideIndex();
+
+  const report = getActiveSlideReport();
+
+  if (!report) {
+    closeModal();
+    return;
+  }
+
+  /*
+    Kunci: semua aksi edit/hapus membaca selectedReport.
+    Saat slide pindah, selectedReport ikut berubah ke titik aktif.
+  */
   selectedReport = report;
+
+  const total = detailSlideReports.length;
+  const position = currentSlideIndex + 1;
+  const reportKey = getReportUiKey(report);
+  const hasMultiple = total > 1;
+
+  const slideBadge = $('#detailSlideBadge');
+  const controls = $('#detailCarouselControls');
+  const slidePosition = $('#detailSlidePosition');
+  const prevButton = $('#detailPrevBtn');
+  const nextButton = $('#detailNextBtn');
+
+  if (slideBadge) {
+    slideBadge.textContent = `Data ${position} dari ${total}`;
+    slideBadge.classList.toggle('hidden', !hasMultiple);
+  }
+
+  if (controls) {
+    controls.classList.toggle('hidden', !hasMultiple);
+    controls.classList.toggle('flex', hasMultiple);
+  }
+
+  if (slidePosition) {
+    slidePosition.textContent = `Data ${position} dari ${total}`;
+  }
+
+  if (prevButton) {
+    prevButton.disabled = currentSlideIndex === 0;
+  }
+
+  if (nextButton) {
+    nextButton.disabled = currentSlideIndex === total - 1;
+  }
 
   $('#modalSub').textContent =
     `${report.tanggal || '-'} • ${report.npulau || '-'} • ` +
@@ -2621,14 +2851,19 @@ function openDetail(report) {
   $('#modalContent').innerHTML = `
     <div class="flex flex-wrap items-center justify-between gap-3">
       ${statusBadge(report.status)}
-      <span class="text-xs text-slate-500">
-        UUID: ${esc(reportKey)}
-      </span>
+
+      <div class="rounded-lg bg-slate-100 px-3 py-2 text-right text-xs text-slate-600">
+        <p class="font-semibold text-slate-800">Titik ${position}</p>
+        <p class="mt-0.5">
+          ${esc(report.lat ?? '-')} , ${esc(report.lon ?? '-')}
+        </p>
+        <p class="mt-0.5 text-[11px]">UUID: ${esc(reportKey || '-')}</p>
+      </div>
     </div>
 
     <div class="mt-5 grid gap-4 sm:grid-cols-2">
       <div class="rounded-xl bg-slate-50 p-4">
-        <p class="text-xs font-bold uppercase text-slate-500">Koordinat & luas</p>
+        <p class="text-xs font-bold uppercase text-slate-500">Titik koordinat & luas</p>
         <p class="mt-1 font-semibold">${esc(report.lat ?? '-')}, ${esc(report.lon ?? '-')}</p>
         <p class="text-sm text-slate-600">${esc(report.luas ?? 0)} ha</p>
       </div>
@@ -2639,7 +2874,7 @@ function openDetail(report) {
       </div>
 
       <div class="sm:col-span-2">
-        <p class="text-xs font-bold uppercase text-slate-500">Upaya</p>
+        <p class="text-xs font-bold uppercase text-slate-500">Upaya yang dilakukan</p>
         <p class="mt-1 whitespace-pre-wrap text-sm">${esc(report.upaya || '-')}</p>
       </div>
 
@@ -2659,29 +2894,41 @@ function openDetail(report) {
       </div>
 
       <div class="rounded-xl border border-forest-100 bg-forest-50 p-4 sm:col-span-2">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p class="text-xs font-bold uppercase text-forest-700">Narasi Laporan</p>
-            <p class="mt-1 text-sm text-slate-600">
-              ${report.laporan ? 'Narasi lengkap tersedia.' : 'Narasi lengkap belum diisi.'}
-            </p>
-          </div>
-        </div>
-
-        ${report.laporan ? `
-          <p class="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-slate-700">
-            ${esc(report.laporan)}
-          </p>
-        ` : ''}
+        <p class="text-xs font-bold uppercase text-forest-700">Narasi laporan</p>
+        <p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+          ${esc(report.laporan || 'Narasi lengkap belum diisi.')}
+        </p>
       </div>
     </div>
   `;
+}
 
-  $('#detailModal').classList.remove('hidden');
-  $('#detailModal').classList.add('flex');
+function nextSlide() {
+  if (currentSlideIndex >= detailSlideReports.length - 1) {
+    return;
+  }
+
+  currentSlideIndex += 1;
+  renderDetailSlide();
+}
+
+function prevSlide() {
+  if (currentSlideIndex <= 0) {
+    return;
+  }
+
+  currentSlideIndex -= 1;
+  renderDetailSlide();
 }
   
-function closeModal(){$('#detailModal').classList.add('hidden');$('#detailModal').classList.remove('flex')}
+function closeModal() {
+  $('#detailModal').classList.add('hidden');
+  $('#detailModal').classList.remove('flex');
+
+  detailSlideReports = [];
+  currentSlideIndex = 0;
+  selectedReport = null;
+}
 function openFullReport(t,c){const m=$('#fullReportModal');$('#fullReportTitle').textContent=t||'Detail laporan';$('#fullReportContent').textContent=c||'Tidak ada narasi laporan yang tersedia.';m.classList.remove('hidden');m.classList.add('flex')}function closeFullReport(){const m=$('#fullReportModal');m.classList.add('hidden');m.classList.remove('flex')}
 function pointRow(v={}){return `<div class="point-row grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-4"><label class="text-xs font-semibold">Lintang<input required step="any" type="number" class="pt-lat mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm" value="${esc(v.lat??'')}" placeholder="-2.321"></label><label class="text-xs font-semibold">Bujur<input required step="any" type="number" class="pt-lon mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm" value="${esc(v.lon??'')}" placeholder="113.921"></label><label class="text-xs font-semibold">Status<select class="pt-status mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm">${Object.keys(STATUS).map(s=>`<option ${s===(v.status||'Upaya Pemadaman')?'selected':''}>${s}</option>`).join('')}</select></label><label class="text-xs font-semibold">Luas (ha)<div class="mt-1 flex gap-1"><input required min="0" step=".01" type="number" class="pt-luas w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm" value="${esc(v.luas??'')}" placeholder="0"><button type="button" class="remove-point rounded-lg px-2 text-red-600">×</button></div></label></div>`}
 function ensureOpt(el,v){if(v&&!([...el.options].some(o=>o.value===v)))el.insertAdjacentHTML('beforeend',`<option value="${esc(v)}">${esc(v)}</option>`);if(v)el.value=v}
@@ -2904,7 +3151,9 @@ function openEdit(report = selectedReport) {
     toast('Tidak ada laporan yang dipilih untuk diedit.', true);
     return;
   }
-
+    closeModal();
+    // gunakan variabel report, bukan selectedReport
+  }
   const reportUuid = report.report_uuid || report.id;
 
   if (!reportUuid) {
@@ -3139,13 +3388,24 @@ async function saveForm(event) {
 }
 
 async function removeCurrent() {
-  if (!selectedReport || !selectedReport.id) {
-    toast('UUID laporan tidak tersedia.', true);
+  const activeReport = getActiveSlideReport() || selectedReport;
+
+  if (!activeReport) {
+    toast('Tidak ada data aktif yang dapat dihapus.', true);
+    return;
+  }
+
+  const reportUuid = activeReport.report_uuid || activeReport.id;
+
+  if (!reportUuid) {
+    toast('UUID laporan tidak tersedia. Data tidak dapat dihapus.', true);
     return;
   }
 
   const confirmed = confirm(
-    `Hapus laporan ${selectedReport.nkws || '-'} tanggal ${selectedReport.tanggal || '-'}?`
+    `Hapus data titik ${activeReport.nkws || '-'} ` +
+    `(${activeReport.lat ?? '-'}, ${activeReport.lon ?? '-'}) ` +
+    `tanggal ${activeReport.tanggal || '-'}?`
   );
 
   if (!confirmed) {
@@ -3153,26 +3413,89 @@ async function removeCurrent() {
   }
 
   try {
-    await deleteReport(selectedReport.id);
+    await deleteReport(reportUuid);
 
-    reports = reports.filter(
-      (report) => String(report.id) !== String(selectedReport.id)
+    /* Hapus dari state master aplikasi. */
+    reports = reports.filter((report) =>
+      String(report.report_uuid || report.id) !== String(reportUuid)
     );
 
-    closeModal();
-    renderAll();
+    /* Hapus dari state carousel saat ini. */
+    detailSlideReports = detailSlideReports.filter((report) =>
+      String(report.report_uuid || report.id) !== String(reportUuid)
+    );
 
-    toast('Laporan berhasil dihapus.');
+    if (!detailSlideReports.length) {
+      closeModal();
+      selectedReport = null;
+    } else {
+      clampSlideIndex();
+      renderDetailSlide();
+    }
+
+    renderAll();
+    toast('Data laporan berhasil dihapus.');
 
   } catch (error) {
-    console.error('Gagal menghapus laporan:', error);
-
+    console.error('Gagal menghapus data laporan:', error);
     toast(
       `Gagal menghapus: ${error.message || 'Lihat Console browser.'}`,
       true
     );
   }
-}  
+} 
+
+function handleDetailCarouselKeyboard(event) {
+  const modalIsOpen = !$('#detailModal').classList.contains('hidden');
+
+  if (!modalIsOpen || detailSlideReports.length <= 1) {
+    return;
+  }
+
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    prevSlide();
+  }
+
+  if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    nextSlide();
+  }
+}
+
+function setupDetailCarouselSwipe() {
+  const modalContent = $('#modalContent');
+
+  if (!modalContent) {
+    return;
+  }
+
+  let touchStartX = null;
+
+  modalContent.addEventListener('touchstart', (event) => {
+    touchStartX = event.changedTouches[0]?.screenX ?? null;
+  }, { passive: true });
+
+  modalContent.addEventListener('touchend', (event) => {
+    if (touchStartX === null || detailSlideReports.length <= 1) {
+      return;
+    }
+
+    const touchEndX = event.changedTouches[0]?.screenX ?? touchStartX;
+    const distance = touchEndX - touchStartX;
+
+    /* Ambang 60px untuk menghindari swipe tidak sengaja. */
+    if (distance <= -60) {
+      nextSlide();
+    }
+
+    if (distance >= 60) {
+      prevSlide();
+    }
+
+    touchStartX = null;
+  }, { passive: true });
+}
   
 async function init() {
   // 1. Inisialisasi Peta & Form Awal
@@ -3284,6 +3607,9 @@ async function init() {
   };
   $('#deleteBtn').onclick = removeCurrent;
 
+  $('#detailPrevBtn').onclick = prevSlide;
+  $('#detailNextBtn').onclick = nextSlide;
+  
   $('#npulau').onchange = () => {
   $('#nupt').value = '';
   $('#nkws').value = '';
@@ -3309,6 +3635,10 @@ async function init() {
       closeFullReport();
     }
   });
+
+  document.addEventListener('keydown', handleDetailCarouselKeyboard);
+  setupDetailCarouselSwipe();
+  
   window.addEventListener('resize', () => {
     /* Tidak merender ulang data; hanya menjaga browser menghitung layout sticky. */
     const matrixContainer = $('#matrixScrollContainer');
