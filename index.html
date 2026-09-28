@@ -905,80 +905,6 @@ function getPendingUpdateDetails(
     );
 }
   
-function calculateCardStats(reports = []) {
-  const chains = buildStatusChains(reports);
-
-  const stats = {
-    /* Total kejadian Karhutla, tanpa False Hotspot. */
-    totalKejadian: 0,
-    kawasanTerdampak: 0,
-    /* Kejadian dengan status terakhir Upaya Pemadaman. */
-    upayaPemadamanAktif: 0,
-
-    /* Kejadian yang berakhir Sudah Padam. */
-    sudahPadam: 0,
-
-    /* Hanya kondisi akhir/rantai yang belum berubah. */
-    groundcheckPending: 0,
-    konfirmasiPending: 0,
-    pendingVerifikasi: 0,
-
-    /* Hasil validasi bukan api, tidak dihitung sebagai Karhutla. */
-    falseHotspot: 0,
-
-    /* Metadata untuk tampilan/diagnostik. */
-    jumlahStatusChain: chains.length,
-    totalBarisLaporan: reports.length,
-    chains,
-    persenPadam: 0
-  };
-
-  chains.forEach((chain) => {
-    switch (chain.classification) {
-      case 'sudah_padam':
-        stats.totalKejadian += 1;
-        stats.sudahPadam += 1;
-        break;
-
-      case 'upaya_aktif':
-        stats.totalKejadian += 1;
-        stats.upayaPemadamanAktif += 1;
-        break;
-
-      case 'groundcheck_pending':
-        stats.totalKejadian += 1;
-        stats.groundcheckPending += 1;
-        break;
-
-      case 'konfirmasi_pending':
-        stats.totalKejadian += 1;
-        stats.konfirmasiPending += 1;
-        break;
-
-      case 'false_hotspot':
-        stats.falseHotspot += 1;
-        break;
-
-      default:
-        break;
-    }
-  });
-
-  stats.pendingVerifikasi =
-    stats.groundcheckPending + stats.konfirmasiPending;
-
-  /*
-    Persentase penyelesaian = kejadian sudah padam / total kejadian Karhutla.
-    False hotspot tidak menjadi penyebut karena bukan kejadian kebakaran.
-  */
-  stats.persenPadam = stats.totalKejadian
-    ? Math.round((stats.sudahPadam / stats.totalKejadian) * 100)
-    : 0;
-  
-  stats.kawasanTerdampak = calculateAffectedKawasanCount(sourceReports);
-  
-  return stats;
-}
 
 /* ============================================================
    ANALISIS OPERASIONAL — PEMADAMAN AKTIF & TUNGGAKAN HARIAN
@@ -1568,6 +1494,68 @@ function getAffectedKawasanDetails(sourceReports = reports) {
 function calculateAffectedKawasanCount(sourceReports = reports) {
   return getAffectedKawasanDetails(sourceReports).length;
 }
+
+function calculateCardStats(sourceReports = reports) {
+  const chains = buildStatusChains(sourceReports);
+
+  const stats = {
+    totalKejadian: 0,
+    kawasanTerdampak: 0,
+    upayaPemadamanAktif: 0,
+    sudahPadam: 0,
+    groundcheckPending: 0,
+    konfirmasiPending: 0,
+    pendingVerifikasi: 0,
+    falseHotspot: 0,
+    totalBarisLaporan: sourceReports.length,
+    jumlahStatusChain: chains.length,
+    persenPadam: 0
+  };
+
+  chains.forEach((chain) => {
+    switch (chain.classification) {
+      case 'sudah_padam':
+        stats.totalKejadian += 1;
+        stats.sudahPadam += 1;
+        break;
+
+      case 'upaya_aktif':
+        stats.totalKejadian += 1;
+        stats.upayaPemadamanAktif += 1;
+        break;
+
+      case 'groundcheck_pending':
+        stats.totalKejadian += 1;
+        stats.groundcheckPending += 1;
+        break;
+
+      case 'konfirmasi_pending':
+        stats.totalKejadian += 1;
+        stats.konfirmasiPending += 1;
+        break;
+
+      case 'false_hotspot':
+        stats.falseHotspot += 1;
+        break;
+    }
+  });
+
+  stats.pendingVerifikasi =
+    stats.groundcheckPending + stats.konfirmasiPending;
+
+  stats.persenPadam = stats.totalKejadian
+    ? Math.round((stats.sudahPadam / stats.totalKejadian) * 100)
+    : 0;
+
+  /*
+    Baris ini harus tetap DI DALAM fungsi ini.
+    sourceReports tersedia karena menjadi parameter calculateCardStats().
+  */
+  stats.kawasanTerdampak =
+    calculateAffectedKawasanCount(sourceReports);
+
+  return stats;
+}
   
 function renderSummary() {
   const stats = calculateCardStats(reports);
@@ -1705,7 +1693,7 @@ function renderSummary() {
   $('#lastUpdate').textContent =
     `Pembaruan tampilan: ${new Date().toLocaleString('id-ID')}`;
 }
-
+ 
 function renderOperationalDetails() {
   const activeCount = $('#activeExtinctionCount');
   const activeBody = $('#activeExtinctionBody');
