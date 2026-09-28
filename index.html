@@ -310,6 +310,288 @@ function canonicalPulau(v=''){const x=String(v).trim().toUpperCase().replace(/[-
 function normalizeStatus(v=''){const x=String(v).toLowerCase();if(/false|bukan titik|bukan api/.test(x))return 'False Hotspot';if(/sudah padam|telah padam|pendinginan selesai/.test(x))return 'Sudah Padam';if(/ground\s*check|groundcheck|cek lapangan|verifikasi lapangan/.test(x))return 'Proses Groundcheck';if(/konfirmasi|belum.*status|menunggu.*(info|verifikasi)/.test(x))return 'Perlu Konfirmasi';return 'Upaya Pemadaman'}
 function connectionLabel(){const e=$('#connectionState');if(usingFallback){e.textContent='● Mode demo lokal — Supabase belum aktif';e.className='rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs text-amber-100'}else{e.textContent='● Terhubung ke Supabase';e.className='rounded-full border border-emerald-400/30 bg-white/10 px-3 py-1.5 text-xs text-emerald-100'}}
 
+/* ============================================================
+   CARD STATISTICS — STATUS CHAIN PER LOKASI
+   ============================================================ */
+
+const STATUS_CHAIN = {
+  INVESTIGATION: new Set([
+    'Perlu Konfirmasi',
+    'Proses Groundcheck'
+  ]),
+
+  FIRE_ACTIVE: 'Upaya Pemadaman',
+  FIRE_RESOLVED: 'Sudah Padam',
+  FALSE_HOTSPOT: 'False Hotspot'
+};
+
+function getLocationKey(report) {
+  /*
+    kawasan_id adalah pilihan utama karena stabil dan tidak bergantung
+    pada perubahan penulisan nama. Jika kosong, gunakan komposit lokasi.
+  */
+  if (
+    report.kawasan_id !== null &&
+    report.kawasan_id !== undefined &&
+    String(report.kawasan_id).trim() !== ''
+  ) {
+    return `kawasan:${report.kawasan_id}`;
+  }
+
+  return [
+    report.npulau || '',
+    report.nupt || '',
+    report.nkws || ''
+  ]
+    .map((value) => String(value).trim().toUpperCase())
+    .join('|');
+}
+
+function getReportChronologyKey(report) {
+  /*
+    DATE PostgreSQL disusun dahulu, lalu updated_at/created_at, lalu UUID.
+    ISO timestamp dan UUID/string cukup aman untuk pembanding deterministik.
+  */
+  return [
+    String(report.tanggal || '').slice(0, 10),
+    String(report.updated_at || report.created_at || ''),
+    String(report.report_uuid || report.id || '')
+  ].join('|');
+}
+
+function isTerminalStatus(status) {
+  return (
+    status === STATUS_CHAIN.FIRE_RESOLVED ||
+    status === STATUS_CHAIN.FALSE_HOTSPOT
+  );
+}
+
+function isCandidateStatus(status) {
+  return (
+    STATUS_CHAIN.INVESTIGATION.has(status) ||
+    status === STATUS_CHAIN.FIRE_ACTIVE ||
+    status === STATUS_CHAIN.FIRE_RESOLVED ||
+    status === STATUS_CHAIN.FALSE_HOTSPOT
+  );
+}
+
+function createChain(locationKey, firstReport) {
+  return {
+    locationKey,
+    kawasan_id: firstReport.kawasan_id ?? null,
+    npulau: firstReport.npulau || '',
+    nupt: firstReport.nupt || '',
+    nkws: firstReport.nkws || '',
+    startedAt: String(firstReport.tanggal || '').slice(0, 10),
+    endedAt: null,
+    reports: [],
+    latestReport: null,
+    hasFireEffort: false,
+    hasResolved: false,
+    hasFalseHotspot: false
+  };
+}
+
+function appendToChain(chain, report) {
+  chain.reports.push(report);
+  chain.latestReport = report;
+
+  if (report.status === STATUS_CHAIN.FIRE_ACTIVE) {
+    chain.hasFireEffort = true;
+  }
+
+  if (report.status === STATUS_CHAIN.FIRE_RESOLVED) {
+    chain.hasResolved = true;
+    chain.endedAt = String(report.tanggal || '').slice(0, 10);
+  }
+
+  if (report.status === STATUS_CHAIN.FALSE_HOTSPOT) {
+    chain.hasFalseHotspot = true;
+    chain.endedAt = String(report.tanggal || '').slice(0, 10);
+  }
+}
+
+function classifyChain(chain) {
+  const finalStatus = chain.latestReport?.status || '';
+
+  /*
+    False Hotspot bukan kejadian kebakaran. Simpan dalam kategori sendiri
+    untuk kebutuhan transparansi dashboard, tanpa menaikkan total Karhutla.
+  */
+  if (chain.hasFalseHotspot && finalStatus === STATUS_CHAIN.FALSE_HOTSPOT) {
+    return 'false_hotspot';
+  }
+
+  /*
+    Aturan 1 dan 2:
+    - Upaya → Padam adalah satu kejadian selesai.
+    - Padam tanpa riwayat upaya juga satu kejadian selesai.
+  */
+  if (finalStatus === STATUS_CHAIN.FIRE_RESOLVED) {
+    return 'sudah_padam';
+  }
+
+  /* Aturan 3: hanya rangkaian yang status TERAKHIR-nya upaya yang aktif. */
+  if (finalStatus === STATUS_CHAIN.FIRE_ACTIVE) {
+    return 'upaya_aktif';
+  }
+
+  /*
+    Aturan 4: hanya status terakhir murni/masih pending yang dihitung.
+    Jika dulu groundcheck/konfirmasi kemudian beralih ke upaya/padam,
+    fungsi di atas sudah mengelompokkannya pada upaya_aktif/sudah_padam.
+  */
+  if (finalStatus === 'Proses Groundcheck') {
+    return 'groundcheck_pending';
+  }
+
+  if (finalStatus === 'Perlu Konfirmasi') {
+    return 'konfirmasi_pending';
+  }
+
+  return 'tidak_diklasifikasi';
+}
+
+function buildStatusChains(reports = []) {
+  const byLocation = new Map();
+
+  reports
+    .filter((report) => report && isCandidateStatus(report.status))
+    .forEach((report) => {
+      const locationKey = getLocationKey(report);
+
+      if (!byLocation.has(locationKey)) {
+        byLocation.set(locationKey, []);
+      }
+
+      byLocation.get(locationKey).push(report);
+    });
+
+  const chains = [];
+
+  byLocation.forEach((locationReports, locationKey) => {
+    const sorted = [...locationReports].sort((a, b) =>
+      getReportChronologyKey(a).localeCompare(getReportChronologyKey(b))
+    );
+
+    let currentChain = null;
+
+    sorted.forEach((report) => {
+      const status = report.status;
+
+      /*
+        Mulai chain pertama. Sudah Padam tanpa riwayat upaya tetap valid:
+        chain dibuka dan ditutup dalam laporan yang sama.
+      */
+      if (!currentChain) {
+        currentChain = createChain(locationKey, report);
+        appendToChain(currentChain, report);
+
+        if (isTerminalStatus(status)) {
+          chains.push(currentChain);
+          currentChain = null;
+        }
+
+        return;
+      }
+
+      /*
+        Chain yang masih terbuka menerima setiap perubahan status:
+        konfirmasi → groundcheck → upaya → padam adalah satu kejadian.
+      */
+      appendToChain(currentChain, report);
+
+      if (isTerminalStatus(status)) {
+        chains.push(currentChain);
+        currentChain = null;
+      }
+    });
+
+    /* Chain tanpa terminal adalah kondisi terakhir yang sedang berjalan/pending. */
+    if (currentChain) {
+      chains.push(currentChain);
+    }
+  });
+
+  return chains.map((chain) => ({
+    ...chain,
+    classification: classifyChain(chain)
+  }));
+}
+
+function calculateCardStats(reports = []) {
+  const chains = buildStatusChains(reports);
+
+  const stats = {
+    /* Total kejadian Karhutla, tanpa False Hotspot. */
+    totalKejadian: 0,
+
+    /* Kejadian dengan status terakhir Upaya Pemadaman. */
+    upayaPemadamanAktif: 0,
+
+    /* Kejadian yang berakhir Sudah Padam. */
+    sudahPadam: 0,
+
+    /* Hanya kondisi akhir/rantai yang belum berubah. */
+    groundcheckPending: 0,
+    konfirmasiPending: 0,
+    pendingVerifikasi: 0,
+
+    /* Hasil validasi bukan api, tidak dihitung sebagai Karhutla. */
+    falseHotspot: 0,
+
+    /* Metadata untuk tampilan/diagnostik. */
+    jumlahStatusChain: chains.length,
+    totalBarisLaporan: reports.length,
+    chains,
+    persenPadam: 0
+  };
+
+  chains.forEach((chain) => {
+    switch (chain.classification) {
+      case 'sudah_padam':
+        stats.totalKejadian += 1;
+        stats.sudahPadam += 1;
+        break;
+
+      case 'upaya_aktif':
+        stats.totalKejadian += 1;
+        stats.upayaPemadamanAktif += 1;
+        break;
+
+      case 'groundcheck_pending':
+        stats.totalKejadian += 1;
+        stats.groundcheckPending += 1;
+        break;
+
+      case 'konfirmasi_pending':
+        stats.totalKejadian += 1;
+        stats.konfirmasiPending += 1;
+        break;
+
+      case 'false_hotspot':
+        stats.falseHotspot += 1;
+        break;
+
+      default:
+        break;
+    }
+  });
+
+  stats.pendingVerifikasi =
+    stats.groundcheckPending + stats.konfirmasiPending;
+
+  /*
+    Persentase penyelesaian = kejadian sudah padam / total kejadian Karhutla.
+    False hotspot tidak menjadi penyebut karena bukan kejadian kebakaran.
+  */
+  stats.persenPadam = stats.totalKejadian
+    ? Math.round((stats.sudahPadam / stats.totalKejadian) * 100)
+    : 0;
+
+  return stats;
+}
+  
 async function loadReports() {
   const state = $('#connectionState');
 
@@ -653,7 +935,124 @@ async function deleteReport(reportUuid) {
 }
   
 function statusBadge(status){const s=STATUS[status]||STATUS['Perlu Konfirmasi'];return `<span class="inline-flex items-center gap-1 rounded-full ${s.badge} px-2 py-1 text-xs font-bold text-white">${s.icon} ${esc(status)}</span>`}
-function renderSummary(){const n=s=>reports.filter(r=>r.status===s).length,total=reports.length,upaya=n('Upaya Pemadaman'),padam=n('Sudah Padam'),ground=n('Proses Groundcheck'),confirm=n('Perlu Konfirmasi'),falseHot=n('False Hotspot'),success=total?Math.round(padam*100/total):0;$('#summaryCards').innerHTML=`<article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><p class="text-sm font-medium text-slate-500">Total Laporan Kejadian</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-slate-900">${total}</p><span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">${falseHot} false hotspot</span></div><p class="mt-3 text-xs text-slate-500">Akumulasi seluruh laporan Karhutla.</p></article><article class="rounded-2xl border border-red-100 bg-red-50 p-5 shadow-sm"><p class="text-sm font-medium text-red-700">Upaya Pemadaman Aktif</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-red-700">${upaya}</p><span class="rounded-full bg-red-600 px-2 py-1 text-xs font-bold text-white">♨ Prioritas</span></div><p class="mt-3 text-xs text-red-700">Kejadian memerlukan tindakan pemadaman.</p></article><article class="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm"><p class="text-sm font-medium text-blue-700">Sudah Padam</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-blue-700">${padam}</p><span class="rounded-full bg-blue-600 px-2 py-1 text-xs font-bold text-white">${success}%</span></div><p class="mt-3 text-xs text-blue-700">Persentase dari total laporan kejadian.</p></article><article class="rounded-2xl border border-amber-100 bg-amber-50 p-5 shadow-sm"><p class="text-sm font-medium text-amber-800">Groundcheck & Konfirmasi</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-amber-800">${ground+confirm}</p><span class="rounded-full bg-amber-500 px-2 py-1 text-xs font-bold text-white">${ground} + ${confirm}</span></div><p class="mt-3 text-xs text-amber-800">${ground} groundcheck • ${confirm} perlu konfirmasi.</p></article><article class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm"><p class="text-sm font-medium text-emerald-800">Hotspot SIPONGI</p><div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-emerald-800">${HOTSPOTS.length}</p><span class="rounded-full bg-emerald-600 px-2 py-1 text-xs font-bold text-white">Mock API</span></div><p class="mt-3 text-xs text-emerald-800">${HOTSPOTS.filter(x=>x.confidence==='High').length} High • ${HOTSPOTS.filter(x=>x.confidence==='Medium').length} Medium.</p></article>`;$('#lastUpdate').textContent='Pembaruan tampilan: '+new Date().toLocaleString('id-ID')}
+
+function renderSummary() {
+  const stats = calculateCardStats(reports);
+
+  const hotspotHigh = HOTSPOTS.filter(
+    (hotspot) => hotspot.confidence === 'High'
+  ).length;
+
+  const hotspotMedium = HOTSPOTS.filter(
+    (hotspot) => hotspot.confidence === 'Medium'
+  ).length;
+
+  $('#summaryCards').innerHTML = `
+    <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <p class="text-sm font-medium text-slate-500">
+        Total Kejadian Karhutla
+      </p>
+
+      <div class="mt-3 flex items-end justify-between">
+        <p class="text-3xl font-bold text-slate-900">
+          ${stats.totalKejadian}
+        </p>
+
+        <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
+          ${stats.totalBarisLaporan} laporan
+        </span>
+      </div>
+
+      <p class="mt-3 text-xs text-slate-500">
+        Dihitung dari ${stats.jumlahStatusChain} rangkaian status kawasan.
+      </p>
+    </article>
+
+    <article class="rounded-2xl border border-red-100 bg-red-50 p-5 shadow-sm">
+      <p class="text-sm font-medium text-red-700">
+        Upaya Pemadaman Aktif
+      </p>
+
+      <div class="mt-3 flex items-end justify-between">
+        <p class="text-3xl font-bold text-red-700">
+          ${stats.upayaPemadamanAktif}
+        </p>
+
+        <span class="rounded-full bg-red-600 px-2 py-1 text-xs font-bold text-white">
+          ♨ Prioritas
+        </span>
+      </div>
+
+      <p class="mt-3 text-xs text-red-700">
+        Hanya chain dengan status terakhir Upaya Pemadaman.
+      </p>
+    </article>
+
+    <article class="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm">
+      <p class="text-sm font-medium text-blue-700">
+        Kejadian Sudah Padam
+      </p>
+
+      <div class="mt-3 flex items-end justify-between">
+        <p class="text-3xl font-bold text-blue-700">
+          ${stats.sudahPadam}
+        </p>
+
+        <span class="rounded-full bg-blue-600 px-2 py-1 text-xs font-bold text-white">
+          ${stats.persenPadam}%
+        </span>
+      </div>
+
+      <p class="mt-3 text-xs text-blue-700">
+        Penyelesaian dari total kejadian Karhutla.
+      </p>
+    </article>
+
+    <article class="rounded-2xl border border-amber-100 bg-amber-50 p-5 shadow-sm">
+      <p class="text-sm font-medium text-amber-800">
+        Groundcheck & Konfirmasi
+      </p>
+
+      <div class="mt-3 flex items-end justify-between">
+        <p class="text-3xl font-bold text-amber-800">
+          ${stats.pendingVerifikasi}
+        </p>
+
+        <span class="rounded-full bg-amber-500 px-2 py-1 text-xs font-bold text-white">
+          ${stats.groundcheckPending} + ${stats.konfirmasiPending}
+        </span>
+      </div>
+
+      <p class="mt-3 text-xs text-amber-800">
+        ${stats.groundcheckPending} groundcheck • ${stats.konfirmasiPending} perlu konfirmasi.
+      </p>
+    </article>
+
+    <article class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm">
+      <p class="text-sm font-medium text-emerald-800">
+        Hotspot SIPONGI
+      </p>
+
+      <div class="mt-3 flex items-end justify-between">
+        <p class="text-3xl font-bold text-emerald-800">
+          ${HOTSPOTS.length}
+        </p>
+
+        <span class="rounded-full bg-emerald-600 px-2 py-1 text-xs font-bold text-white">
+          Aktif
+        </span>
+      </div>
+
+      <p class="mt-3 text-xs text-emerald-800">
+        ${hotspotHigh} High • ${hotspotMedium} Medium confidence • ${stats.falseHotspot} false hotspot laporan.
+      </p>
+    </article>
+  `;
+
+  $('#lastUpdate').textContent =
+    `Pembaruan tampilan: ${new Date().toLocaleString('id-ID')}`;
+}
+  
 function renderStatus(){const counts=Object.fromEntries(Object.keys(STATUS).map(s=>[s,reports.filter(r=>r.status===s).length])),total=reports.length||1;$('#statusLegend').innerHTML=Object.entries(STATUS).map(([k,v])=>`<span class="inline-flex items-center gap-1 rounded-full ${v.badge} px-2 py-1 text-xs font-bold text-white">${v.icon} ${k}</span>`).join('');$('#segmentedBar').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div title="${k}: ${counts[k]}" style="width:${counts[k]*100/total}%;background-color:${v.color}"></div>`).join('');$('#statusBreakdown').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div class="rounded-lg bg-slate-50 p-3"><div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-600">${k}</span><b>${counts[k]}</b></div><div class="mt-2 h-1.5 rounded" style="background-color:${v.color}"></div></div>`).join('')}
 
 /* ===================== MATRIKS DINAMIS ===================== */
