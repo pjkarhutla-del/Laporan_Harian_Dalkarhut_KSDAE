@@ -74,13 +74,15 @@
       background: #103a26;
     }
    /* ============================================================
-   SIAGA KARHUTLA — MATRIX FREEZE PANE
-   Sticky berlaku relatif ke .matrix-scroll-container, bukan
-   terhadap viewport/browser.
+   MATRIX: internal scroll + freeze pane
    ============================================================ */
-
+    
+    #matrixSection {
+      overflow: visible;
+    }
+    
     .matrix-scroll-container {
-      /* Tinggi area matriks di desktop; container ini menangani scroll X dan Y. */
+      /* Tinggi internal yang membuat vertical scrolling terjadi di wrapper. */
       max-height: min(68vh, 680px);
       overflow: auto;
       position: relative;
@@ -89,7 +91,6 @@
     }
     
     .matrix-table {
-      /* collapse lebih stabil untuk sticky cell daripada border-spacing. */
       border-collapse: separate;
       border-spacing: 0;
       table-layout: auto;
@@ -101,23 +102,22 @@
       border-bottom: 1px solid #e2e8f0;
     }
     
+    /* Header semua tanggal: freeze VERTIKAL di dalam .matrix-scroll-container. */
     .matrix-table thead th {
-      /* Freeze row header/tanggal di sisi atas container. */
       position: sticky;
       top: 0;
       z-index: 20;
-    
-      /* Wajib solid agar isi tabel di bawah tidak tembus. */
-      background-color: #f1f5f9;
-      background-clip: padding-box;
-      box-shadow: inset 0 -1px 0 #cbd5e1;
-    
       height: 48px;
       vertical-align: middle;
       white-space: nowrap;
+    
+      /* Background wajib solid agar sel di bawah tidak tembus. */
+      background-color: #f1f5f9;
+      background-clip: padding-box;
+      box-shadow: inset 0 -1px 0 #94a3b8;
     }
     
-    /* Kolom kiri body: freeze horizontal. */
+    /* Kolom NUPT body: freeze HORIZONTAL di sisi kiri. */
     .matrix-table .matrix-col-nupt {
       position: sticky;
       left: 0;
@@ -129,6 +129,7 @@
       box-shadow: 1px 0 0 #cbd5e1;
     }
     
+    /* Kolom NKWS body: freeze HORIZONTAL sesudah NUPT. */
     .matrix-table .matrix-col-nkws {
       position: sticky;
       left: 150px;
@@ -140,7 +141,7 @@
       box-shadow: 1px 0 0 #cbd5e1;
     }
     
-    /* Sel header pada perpotongan top + left harus paling depan. */
+    /* Titik perpotongan header top + left: lapisan tertinggi. */
     .matrix-table thead .matrix-header-nupt {
       position: sticky;
       top: 0;
@@ -165,7 +166,7 @@
       box-shadow: inset 0 -1px 0 #94a3b8, 1px 0 0 #94a3b8;
     }
     
-    /* Header tanggal hanya freeze vertikal, tetap ikut saat scroll horizontal. */
+    /* Header tanggal: hanya freeze atas, ikut saat horizontal scroll. */
     .matrix-table thead .matrix-header-date {
       position: sticky;
       top: 0;
@@ -176,19 +177,21 @@
       background-clip: padding-box;
     }
     
-    /* Header kelompok pulau: ikut scroll vertikal seperti baris biasa. */
-    .matrix-region-row td {
+    /* Baris regional tidak sticky; hanya pembeda kelompok data. */
+    .matrix-table .matrix-region-row td {
       background-color: #103a26;
       color: #ffffff;
       border-color: #174d31;
     }
     
-    /* Pastikan warna status tetap solid, tidak tertimpa background sticky/body. */
-    .matrix-table .status-upaya { background-color: #dc2626 !important; color: #ffffff !important; }
-    .matrix-table .status-groundcheck { background-color: #eab308 !important; color: #3d2700 !important; }
-    .matrix-table .status-padam { background-color: #2563eb !important; color: #ffffff !important; }
-    .matrix-table .status-konfirmasi { background-color: #9333ea !important; color: #ffffff !important; }
-    .matrix-table .status-false { background-color: #6b7280 !important; color: #ffffff !important; }
+    .matrix-table .matrix-cell {
+      min-width: 54px;
+      width: 54px;
+      height: 44px;
+      padding: 0;
+      text-align: center;
+      vertical-align: middle;
+    }
     
     .matrix-table .matrix-empty {
       background-color: #f8fafc;
@@ -199,17 +202,13 @@
       background-color: #d8f2e1;
     }
     
-    /* Lebar dan tinggi sel tanggal konsisten. */
-    .matrix-table .matrix-cell {
-      min-width: 54px;
-      width: 54px;
-      height: 44px;
-      padding: 0;
-      text-align: center;
-      vertical-align: middle;
-    }
+    /* Pertahankan warna status dalam sel. */
+    .matrix-table .status-upaya { background-color: #dc2626 !important; color: #fff !important; }
+    .matrix-table .status-groundcheck { background-color: #eab308 !important; color: #3d2700 !important; }
+    .matrix-table .status-padam { background-color: #2563eb !important; color: #fff !important; }
+    .matrix-table .status-konfirmasi { background-color: #9333ea !important; color: #fff !important; }
+    .matrix-table .status-false { background-color: #6b7280 !important; color: #fff !important; }
     
-    /* Responsif: area scroll tetap nyaman pada layar kecil. */
     @media (max-width: 640px) {
       .matrix-scroll-container {
         max-height: 62vh;
@@ -244,7 +243,127 @@
   <div id="summaryCards" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"></div>
   <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Status Terakhir</h3><p class="text-xs text-slate-500">Warna status konsisten pada kartu, matriks, peta, dan formulir.</p></div><div id="statusLegend" class="flex flex-wrap gap-2"></div></div><div id="segmentedBar" class="flex h-5 overflow-hidden rounded-full bg-slate-100"></div><div id="statusBreakdown" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"></div></section>
   <section class="grid gap-5 xl:grid-cols-2"><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Pemadaman Aktif</h3><p class="text-xs text-slate-500">Lokasi dengan status terakhir Upaya Pemadaman.</p></div><span id="activeExtinctionCount" class="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="nkws">NUPT / NKWS <span id="activeSortNkws"></span></button></th><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="sejak_tanggal">Sejak pemadaman <span id="activeSortDate"></span></button></th><th class="p-2 text-right"><button type="button" class="ml-auto inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="jumlah_hari">Durasi <span id="activeSortDays"></span></button></th></tr></thead><tbody id="activeExtinctionBody"></tbody></table></div></article><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Tunggakan Update Harian</h3><p class="text-xs text-slate-500">Status terbuka yang belum diperbarui hingga hari ini.</p></div><span id="pendingUpdateCount" class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="nkws">NUPT / NKWS <span id="pendingSortNkws"></span></button></th><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="status_terakhir">Status terakhir <span id="pendingSortStatus"></span></button></th><th class="p-2 text-right"><button type="button" class="ml-auto inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="jumlah_hari_terlambat">Terlambat <span id="pendingSortDays"></span></button></th></tr></thead><tbody id="pendingUpdateBody"></tbody></table></div></article></section>
-  <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-col justify-between gap-3 xl:flex-row xl:items-end"><div><h3 class="font-bold text-slate-900">Matriks Kawasan × Tanggal</h3><p class="text-xs text-slate-500">Dikelompokkan tegas menurut pulau. Klik sel berwarna untuk detail; klik <b>+</b> pada sel kosong untuk mengisi laporan.</p></div><div class="flex flex-wrap items-center gap-2"><div class="flex flex-wrap items-center gap-2"><select id="pulauFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-forest-600 focus:ring-2 focus:ring-forest-100"><option value="">Semua pulau</option></select><div class="relative min-w-[240px] flex-1 sm:flex-none"><input id="kawasanSearchFilter" type="search" list="kawasanSearchOptions" autocomplete="off" class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-10 text-sm focus:border-forest-600 focus:ring-2 focus:ring-forest-100" placeholder="Cari atau pilih kawasan (NKWS)..." aria-label="Cari kawasan pada matriks" /><button id="resetKawasanSearchBtn" type="button" class="absolute inset-y-0 right-0 hidden w-10 place-items-center rounded-r-lg text-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Bersihkan pencarian kawasan" aria-label="Bersihkan pencarian kawasan">×</button><datalist id="kawasanSearchOptions"></datalist></div><button id="expandAll" type="button" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Show All</button><button id="collapseAll" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Hide All</button></div><div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-forest-50 p-3"><div><p class="text-xs font-bold uppercase tracking-wide text-forest-700">Rentang matriks</p><p id="matrixPeriodLabel" class="mt-0.5 text-sm font-semibold text-forest-900"></p></div><div class="flex flex-wrap gap-2"><button id="matrixPrev" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">← Sebelumnya</button><button id="matrixToday" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Hari ini</button><button id="matrixNext" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">Berikutnya →</button></div></div><div id="matrixScrollContainer" class="matrix-scroll-container scrollbar-thin rounded-xl border border-slate-200 bg-white" aria-label="Matriks kawasan dan tanggal" tabindex="0"><table id="matrixTable" class="matrix-table w-max min-w-full text-left text-xs"><thead id="matrixHead"></thead><tbody id="matrixBody"></tbody></table></div><p class="mt-3 text-xs text-slate-500">Gunakan scrollbar horizontal untuk melihat seluruh tanggal. Rentang otomatis memuat keseluruhan tanggal laporan; navigasi periode menggeser jendela 14 hari.</p></section>
+  <section
+    id="matrixSection"
+    class="relative isolate rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
+  >
+    <!-- Area heading dan kontrol: berada DI LUAR container scroll. -->
+    <div class="matrix-toolbar relative z-20 mb-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div class="min-w-0">
+        <h3 class="text-lg font-bold text-slate-900">
+          Matriks Kawasan × Tanggal
+        </h3>
+  
+        <p class="mt-1 text-xs leading-5 text-slate-500">
+          Dikelompokkan berdasarkan pulau. Klik sel berwarna untuk detail laporan;
+          klik tanda + pada sel kosong untuk mengisi laporan baru.
+        </p>
+      </div>
+  
+      <div class="flex flex-wrap items-center gap-2">
+        <select
+          id="pulauFilter"
+          class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-forest-600 focus:ring-2 focus:ring-forest-100"
+        >
+          <option value="">Semua pulau</option>
+        </select>
+  
+        <div class="relative min-w-[230px] flex-1 sm:flex-none">
+          <input
+            id="kawasanSearchFilter"
+            type="search"
+            list="kawasanSearchOptions"
+            autocomplete="off"
+            placeholder="Cari kawasan (NKWS)..."
+            class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-10 text-sm focus:border-forest-600 focus:ring-2 focus:ring-forest-100"
+          />
+  
+          <button
+            id="resetKawasanSearchBtn"
+            type="button"
+            class="absolute inset-y-0 right-0 hidden w-10 place-items-center rounded-r-lg text-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            title="Bersihkan pencarian kawasan"
+          >
+            ×
+          </button>
+  
+          <datalist id="kawasanSearchOptions"></datalist>
+        </div>
+  
+        <button
+          id="expandAll"
+          type="button"
+          class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800"
+        >
+          Show All
+        </button>
+  
+        <button
+          id="collapseAll"
+          type="button"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Hide All
+        </button>
+      </div>
+    </div>
+  
+    <!-- Kontrol periode: tetap di luar area scroll tabel. -->
+    <div class="matrix-period-panel relative z-20 mb-4 flex flex-col gap-3 rounded-xl bg-forest-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wide text-forest-700">
+          Rentang matriks
+        </p>
+        <p id="matrixPeriodLabel" class="mt-0.5 text-sm font-semibold text-forest-900">
+          Memuat periode...
+        </p>
+      </div>
+  
+      <div class="flex flex-wrap gap-2">
+        <button
+          id="matrixPrev"
+          type="button"
+          class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100"
+        >
+          ← Sebelumnya
+        </button>
+  
+        <button
+          id="matrixToday"
+          type="button"
+          class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800"
+        >
+          Hari ini
+        </button>
+  
+        <button
+          id="matrixNext"
+          type="button"
+          class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100"
+        >
+          Berikutnya →
+        </button>
+      </div>
+    </div>
+  
+    <!-- Hanya bagian ini yang boleh memiliki overflow dan scroll internal. -->
+    <div
+      id="matrixScrollContainer"
+      class="matrix-scroll-container scrollbar-thin relative z-10 rounded-xl border border-slate-200 bg-white"
+      tabindex="0"
+      aria-label="Matriks kawasan dan tanggal"
+    >
+      <table id="matrixTable" class="matrix-table min-w-max w-full text-left text-xs">
+        <thead id="matrixHead"></thead>
+        <tbody id="matrixBody"></tbody>
+      </table>
+    </div>
+  
+    <p class="relative z-20 mt-3 text-xs leading-5 text-slate-500">
+      Scroll ke bawah/atas di dalam tabel untuk melihat kawasan lain. Geser ke kiri/kanan untuk melihat tanggal lain.
+      Header tanggal, NUPT, dan NKWS akan tetap terlihat selama scroll dilakukan di area tabel.
+    </p>
+  </section>
   <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-end"><div><h3 class="font-bold text-slate-900">Peta Kejadian & Hotspot</h3><p class="text-xs text-slate-500">Marker laporan berasal dari tabel Supabase <code>reports</code>; hotspot masih data simulasi SIPONGI.</p></div><div class="flex flex-wrap gap-2"><select id="mapUptFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua UPT</option></select><select id="mapKawasanFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua kawasan</option></select><input id="mapDateFilter" type="date" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></div></div><div id="map" class="overflow-hidden rounded-xl border border-slate-200"></div><p class="mt-3 text-xs text-slate-500"><span class="font-semibold text-red-600">●</span> Laporan kejadian &nbsp; <span class="font-semibold text-amber-500">●</span> Hotspot SIPONGI mock.</p></section>
 </section>
 
@@ -1732,16 +1851,16 @@ function getVisibleMatrixDates() {
 function matrixHeader(dates) {
   return `
     <tr>
-      <th class="matrix-header-nupt p-3 font-bold">
+      <th class="matrix-header-nupt p-3 font-bold text-slate-800">
         NUPT
       </th>
 
-      <th class="matrix-header-nkws p-3 font-bold">
+      <th class="matrix-header-nkws p-3 font-bold text-slate-800">
         NKWS
       </th>
 
       ${dates.map((date) => `
-        <th class="matrix-header-date p-2 text-center font-bold">
+        <th class="matrix-header-date p-2 text-center font-bold text-slate-700">
           ${fmtDate(date)}
         </th>
       `).join('')}
