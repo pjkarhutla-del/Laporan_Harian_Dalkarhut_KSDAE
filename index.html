@@ -4325,37 +4325,18 @@ async function saveForm(event) {
   }
 
   const laporanField = $('#laporan');
-  const selectedKawasan = findKawasanMaster({
-    nupt: $('#nupt').value,
-    nkws: $('#nkws').value
-  });
+
   console.log('Nilai form NUPT:', $('#nupt').value);
   console.log('Nilai form NKWS:', $('#nkws').value);
   console.log('Master kawasan:', kawasanMaster);
   
-  console.log(
-    'Kawasan hasil pencarian:',
-    selectedKawasan
-  );
-  if (!selectedKawasan) {
-    toast(
-      'Kawasan tidak ditemukan di master kawasan. Pilih NUPT dan NKWS dari daftar yang tersedia.',
-      true
-    );
-    return;
-  }
-
   const basePayload = {
   tanggal: $('#tanggal').value,
 
-    /*
-      Otomatis dari tabel master kawasan.
-      Jangan gunakan lagi nilai npulau dari input form.
-    */
-    kawasan_id: selectedKawasan.id,
-    npulau: canonicalPulau(selectedKawasan.npulau),
-    nupt: selectedKawasan.nupt,
-    nkws: selectedKawasan.nkws,
+    npulau: canonicalPulau($('#npulau').value),
+    nupt: $('#nupt').value,
+    nkws: $('#nkws').value,
+
   
     upaya: $('#upaya').value.trim(),
     rencana: $('#rencana').value.trim(),
