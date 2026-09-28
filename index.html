@@ -243,6 +243,7 @@
   <div class="flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p class="text-sm font-semibold text-forest-700">DASHBOARD OPERASIONAL</p><h2 class="text-2xl font-bold text-slate-900">Ringkasan Pengendalian Karhutla</h2><p class="mt-1 text-sm text-slate-500">Akumulasi laporan kejadian, kondisi penanganan, dan titik hotspot SIPONGI.</p></div><p id="lastUpdate" class="rounded-lg bg-white px-3 py-2 text-xs text-slate-500 shadow-sm"></p></div>
   <div id="summaryCards" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"></div>
   <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Status Terakhir</h3><p class="text-xs text-slate-500">Warna status konsisten pada kartu, matriks, peta, dan formulir.</p></div><div id="statusLegend" class="flex flex-wrap gap-2"></div></div><div id="segmentedBar" class="flex h-5 overflow-hidden rounded-full bg-slate-100"></div><div id="statusBreakdown" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"></div></section>
+  <section class="grid gap-5 xl:grid-cols-2"><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Pemadaman Aktif</h3><p class="text-xs text-slate-500">Lokasi dengan status terakhir Upaya Pemadaman.</p></div><span id="activeExtinctionCount" class="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2">NUPT / NKWS</th><th class="p-2">Sejak pemadaman</th><th class="p-2 text-right">Durasi</th></tr></thead><tbody id="activeExtinctionBody"></tbody></table></div></article><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Tunggakan Update Harian</h3><p class="text-xs text-slate-500">Status terbuka yang belum diperbarui hingga hari ini.</p></div><span id="pendingUpdateCount" class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2">NUPT / NKWS</th><th class="p-2">Status terakhir</th><th class="p-2 text-right">Terlambat</th></tr></thead><tbody id="pendingUpdateBody"></tbody></table></div></article></section>
   <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-col justify-between gap-3 xl:flex-row xl:items-end"><div><h3 class="font-bold text-slate-900">Matriks Kawasan × Tanggal</h3><p class="text-xs text-slate-500">Dikelompokkan tegas menurut pulau. Klik sel berwarna untuk detail; klik <b>+</b> pada sel kosong untuk mengisi laporan.</p></div><div class="flex flex-wrap items-center gap-2"><select id="pulauFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua pulau</option></select><button id="expandAll" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Show All</button><button id="collapseAll" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Hide All</button></div></div><div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-forest-50 p-3"><div><p class="text-xs font-bold uppercase tracking-wide text-forest-700">Rentang matriks</p><p id="matrixPeriodLabel" class="mt-0.5 text-sm font-semibold text-forest-900"></p></div><div class="flex flex-wrap gap-2"><button id="matrixPrev" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">← Sebelumnya</button><button id="matrixToday" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Hari ini</button><button id="matrixNext" class="rounded-lg border border-forest-300 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">Berikutnya →</button></div></div><div id="matrixScrollContainer" class="matrix-scroll-container scrollbar-thin rounded-xl border border-slate-200 bg-white" aria-label="Matriks kawasan dan tanggal" tabindex="0"><table id="matrixTable" class="matrix-table w-max min-w-full text-left text-xs"><thead id="matrixHead"></thead><tbody id="matrixBody"></tbody></table></div><p class="mt-3 text-xs text-slate-500">Gunakan scrollbar horizontal untuk melihat seluruh tanggal. Rentang otomatis memuat keseluruhan tanggal laporan; navigasi periode menggeser jendela 14 hari.</p></section>
   <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-end"><div><h3 class="font-bold text-slate-900">Peta Kejadian & Hotspot</h3><p class="text-xs text-slate-500">Marker laporan berasal dari tabel Supabase <code>reports</code>; hotspot masih data simulasi SIPONGI.</p></div><div class="flex flex-wrap gap-2"><select id="mapUptFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua UPT</option></select><select id="mapKawasanFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua kawasan</option></select><input id="mapDateFilter" type="date" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></div></div><div id="map" class="overflow-hidden rounded-xl border border-slate-200"></div><p class="mt-3 text-xs text-slate-500"><span class="font-semibold text-red-600">●</span> Laporan kejadian &nbsp; <span class="font-semibold text-amber-500">●</span> Hotspot SIPONGI mock.</p></section>
 </section>
@@ -299,7 +300,8 @@ const FALLBACK_REPORTS=[
 const HOTSPOTS=[{lat:.49,lon:101.44,confidence:'High',area:'Riau'},{lat:-2.28,lon:113.8,confidence:'High',area:'Kalimantan Tengah'},{lat:-7.9,lon:114.3,confidence:'Medium',area:'Jawa Timur'},{lat:-2.6,lon:140.6,confidence:'Medium',area:'Papua'}];
 let reports=[],map,reportLayer,hotspotLayer,selectedReport=null,collapsedPulau=new Set(),usingFallback=!isConfigured,matrixStartDate=null;
 let kawasanMaster = [];
-  
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];  
 const KAWASAN_GEOJSON_URL = 'https://raw.githubusercontent.com/pjkarhutla-del/Laporan_Harian_Dalkarhut_KSDAE/main/kawasan.geojson';
 let kawasanGeoJsonLayer = null;
   
@@ -311,7 +313,7 @@ function normalizeStatus(v=''){const x=String(v).toLowerCase();if(/false|bukan t
 function connectionLabel(){const e=$('#connectionState');if(usingFallback){e.textContent='● Mode demo lokal — Supabase belum aktif';e.className='rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs text-amber-100'}else{e.textContent='● Terhubung ke Supabase';e.className='rounded-full border border-emerald-400/30 bg-white/10 px-3 py-1.5 text-xs text-emerald-100'}}
 
 /* ============================================================
-   CARD STATISTICS — STATUS CHAIN PER LOKASI
+   STATUS CHAIN PER LOKASI
    ============================================================ */
 
 const STATUS_CHAIN = {
@@ -319,17 +321,12 @@ const STATUS_CHAIN = {
     'Perlu Konfirmasi',
     'Proses Groundcheck'
   ]),
-
   FIRE_ACTIVE: 'Upaya Pemadaman',
   FIRE_RESOLVED: 'Sudah Padam',
   FALSE_HOTSPOT: 'False Hotspot'
 };
 
 function getLocationKey(report) {
-  /*
-    kawasan_id adalah pilihan utama karena stabil dan tidak bergantung
-    pada perubahan penulisan nama. Jika kosong, gunakan komposit lokasi.
-  */
   if (
     report.kawasan_id !== null &&
     report.kawasan_id !== undefined &&
@@ -348,10 +345,6 @@ function getLocationKey(report) {
 }
 
 function getReportChronologyKey(report) {
-  /*
-    DATE PostgreSQL disusun dahulu, lalu updated_at/created_at, lalu UUID.
-    ISO timestamp dan UUID/string cukup aman untuk pembanding deterministik.
-  */
   return [
     String(report.tanggal || '').slice(0, 10),
     String(report.updated_at || report.created_at || ''),
@@ -360,19 +353,7 @@ function getReportChronologyKey(report) {
 }
 
 function isTerminalStatus(status) {
-  return (
-    status === STATUS_CHAIN.FIRE_RESOLVED ||
-    status === STATUS_CHAIN.FALSE_HOTSPOT
-  );
-}
-
-function isCandidateStatus(status) {
-  return (
-    STATUS_CHAIN.INVESTIGATION.has(status) ||
-    status === STATUS_CHAIN.FIRE_ACTIVE ||
-    status === STATUS_CHAIN.FIRE_RESOLVED ||
-    status === STATUS_CHAIN.FALSE_HOTSPOT
-  );
+  return status === 'Sudah Padam' || status === 'False Hotspot';
 }
 
 function createChain(locationKey, firstReport) {
@@ -396,16 +377,16 @@ function appendToChain(chain, report) {
   chain.reports.push(report);
   chain.latestReport = report;
 
-  if (report.status === STATUS_CHAIN.FIRE_ACTIVE) {
+  if (report.status === 'Upaya Pemadaman') {
     chain.hasFireEffort = true;
   }
 
-  if (report.status === STATUS_CHAIN.FIRE_RESOLVED) {
+  if (report.status === 'Sudah Padam') {
     chain.hasResolved = true;
     chain.endedAt = String(report.tanggal || '').slice(0, 10);
   }
 
-  if (report.status === STATUS_CHAIN.FALSE_HOTSPOT) {
+  if (report.status === 'False Hotspot') {
     chain.hasFalseHotspot = true;
     chain.endedAt = String(report.tanggal || '').slice(0, 10);
   }
@@ -414,33 +395,18 @@ function appendToChain(chain, report) {
 function classifyChain(chain) {
   const finalStatus = chain.latestReport?.status || '';
 
-  /*
-    False Hotspot bukan kejadian kebakaran. Simpan dalam kategori sendiri
-    untuk kebutuhan transparansi dashboard, tanpa menaikkan total Karhutla.
-  */
-  if (chain.hasFalseHotspot && finalStatus === STATUS_CHAIN.FALSE_HOTSPOT) {
+  if (chain.hasFalseHotspot && finalStatus === 'False Hotspot') {
     return 'false_hotspot';
   }
 
-  /*
-    Aturan 1 dan 2:
-    - Upaya → Padam adalah satu kejadian selesai.
-    - Padam tanpa riwayat upaya juga satu kejadian selesai.
-  */
-  if (finalStatus === STATUS_CHAIN.FIRE_RESOLVED) {
+  if (finalStatus === 'Sudah Padam') {
     return 'sudah_padam';
   }
 
-  /* Aturan 3: hanya rangkaian yang status TERAKHIR-nya upaya yang aktif. */
-  if (finalStatus === STATUS_CHAIN.FIRE_ACTIVE) {
+  if (finalStatus === 'Upaya Pemadaman') {
     return 'upaya_aktif';
   }
 
-  /*
-    Aturan 4: hanya status terakhir murni/masih pending yang dihitung.
-    Jika dulu groundcheck/konfirmasi kemudian beralih ke upaya/padam,
-    fungsi di atas sudah mengelompokkannya pada upaya_aktif/sudah_padam.
-  */
   if (finalStatus === 'Proses Groundcheck') {
     return 'groundcheck_pending';
   }
@@ -452,19 +418,19 @@ function classifyChain(chain) {
   return 'tidak_diklasifikasi';
 }
 
-function buildStatusChains(reports = []) {
+function buildStatusChains(sourceReports = reports) {
   const byLocation = new Map();
 
-  reports
-    .filter((report) => report && isCandidateStatus(report.status))
+  sourceReports
+    .filter((report) => report && report.status)
     .forEach((report) => {
-      const locationKey = getLocationKey(report);
+      const key = getLocationKey(report);
 
-      if (!byLocation.has(locationKey)) {
-        byLocation.set(locationKey, []);
+      if (!byLocation.has(key)) {
+        byLocation.set(key, []);
       }
 
-      byLocation.get(locationKey).push(report);
+      byLocation.get(key).push(report);
     });
 
   const chains = [];
@@ -477,17 +443,11 @@ function buildStatusChains(reports = []) {
     let currentChain = null;
 
     sorted.forEach((report) => {
-      const status = report.status;
-
-      /*
-        Mulai chain pertama. Sudah Padam tanpa riwayat upaya tetap valid:
-        chain dibuka dan ditutup dalam laporan yang sama.
-      */
       if (!currentChain) {
         currentChain = createChain(locationKey, report);
         appendToChain(currentChain, report);
 
-        if (isTerminalStatus(status)) {
+        if (isTerminalStatus(report.status)) {
           chains.push(currentChain);
           currentChain = null;
         }
@@ -495,19 +455,14 @@ function buildStatusChains(reports = []) {
         return;
       }
 
-      /*
-        Chain yang masih terbuka menerima setiap perubahan status:
-        konfirmasi → groundcheck → upaya → padam adalah satu kejadian.
-      */
       appendToChain(currentChain, report);
 
-      if (isTerminalStatus(status)) {
+      if (isTerminalStatus(report.status)) {
         chains.push(currentChain);
         currentChain = null;
       }
     });
 
-    /* Chain tanpa terminal adalah kondisi terakhir yang sedang berjalan/pending. */
     if (currentChain) {
       chains.push(currentChain);
     }
@@ -519,6 +474,140 @@ function buildStatusChains(reports = []) {
   }));
 }
 
+/* ============================================================
+   RINCIAN PEMADAMAN AKTIF DAN TUNGGAKAN UPDATE
+   ============================================================ */
+
+function parseLocalDate(value) {
+  const dateOnly = String(value || '').slice(0, 10);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+    return null;
+  }
+
+  const [year, month, day] = dateOnly.split('-').map(Number);
+
+  return new Date(year, month - 1, day, 12, 0, 0, 0);
+}
+
+function daysBetweenDateOnly(fromDate, toDate = new Date()) {
+  const from = parseLocalDate(fromDate);
+
+  const to = toDate instanceof Date
+    ? new Date(
+        toDate.getFullYear(),
+        toDate.getMonth(),
+        toDate.getDate(),
+        12, 0, 0, 0
+      )
+    : parseLocalDate(toDate);
+
+  if (!from || !to) {
+    return 0;
+  }
+
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+
+  return Math.max(
+    0,
+    Math.floor((to.getTime() - from.getTime()) / millisecondsPerDay)
+  );
+}
+
+function formatDateId(dateValue) {
+  const date = parseLocalDate(dateValue);
+
+  if (!date) {
+    return '-';
+  }
+
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  }).format(date);
+}
+
+function getLatestChainReport(chain) {
+  return chain.latestReport || chain.reports?.[chain.reports.length - 1] || null;
+}
+
+function getChainStartForStatus(chain, targetStatus) {
+  const firstMatch = chain.reports.find(
+    (report) => report.status === targetStatus
+  );
+
+  return firstMatch?.tanggal || chain.startedAt || chain.latestReport?.tanggal;
+}
+
+function getActiveExtinctionDetails(sourceReports = reports, referenceDate = new Date()) {
+  return buildStatusChains(sourceReports)
+    .filter((chain) => chain.classification === 'upaya_aktif')
+    .map((chain) => {
+      const latest = getLatestChainReport(chain);
+      const sejakTanggal = getChainStartForStatus(chain, 'Upaya Pemadaman');
+
+      return {
+        location_key: chain.locationKey,
+        kawasan_id: chain.kawasan_id ?? null,
+        npulau: chain.npulau,
+        nupt: chain.nupt,
+        nkws: chain.nkws,
+        status_terakhir: latest?.status || 'Upaya Pemadaman',
+        tanggal_laporan_terakhir: latest?.tanggal || null,
+        sejak_tanggal: sejakTanggal || null,
+        jumlah_hari: daysBetweenDateOnly(sejakTanggal, referenceDate),
+        jumlah_laporan_chain: chain.reports.length,
+        lat: latest?.lat ?? null,
+        lon: latest?.lon ?? null,
+        luas: latest?.luas ?? null,
+        report_uuid: latest?.report_uuid ?? latest?.id ?? null
+      };
+    })
+    .sort((a, b) =>
+      b.jumlah_hari - a.jumlah_hari ||
+      String(a.nkws).localeCompare(String(b.nkws), 'id')
+    );
+}
+
+function getPendingUpdateDetails(
+  sourceReports = reports,
+  referenceDate = new Date(),
+  minimumDaysLate = 1
+) {
+  const pendingClassifications = new Set([
+    'upaya_aktif',
+    'groundcheck_pending',
+    'konfirmasi_pending'
+  ]);
+
+  return buildStatusChains(sourceReports)
+    .filter((chain) => pendingClassifications.has(chain.classification))
+    .map((chain) => {
+      const latest = getLatestChainReport(chain);
+      const lastDate = latest?.tanggal || null;
+      const daysLate = daysBetweenDateOnly(lastDate, referenceDate);
+
+      return {
+        location_key: chain.locationKey,
+        kawasan_id: chain.kawasan_id ?? null,
+        npulau: chain.npulau,
+        nupt: chain.nupt,
+        nkws: chain.nkws,
+        status_terakhir: latest?.status || '-',
+        sejak_tanggal: lastDate,
+        jumlah_hari_terlambat: daysLate,
+        jumlah_laporan_chain: chain.reports.length,
+        report_uuid: latest?.report_uuid ?? latest?.id ?? null
+      };
+    })
+    .filter((item) => item.jumlah_hari_terlambat >= minimumDaysLate)
+    .sort((a, b) =>
+      b.jumlah_hari_terlambat - a.jumlah_hari_terlambat ||
+      String(a.nkws).localeCompare(String(b.nkws), 'id')
+    );
+}
+  
 function calculateCardStats(reports = []) {
   const chains = buildStatusChains(reports);
 
@@ -590,6 +679,195 @@ function calculateCardStats(reports = []) {
     : 0;
 
   return stats;
+}
+
+/* ============================================================
+   ANALISIS OPERASIONAL — PEMADAMAN AKTIF & TUNGGAKAN HARIAN
+   ============================================================ */
+
+function parseLocalDate(value) {
+  const dateOnly = String(value || '').slice(0, 10);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+    return null;
+  }
+
+  const [year, month, day] = dateOnly.split('-').map(Number);
+
+  /* Tengah hari lokal menghindari pergeseran UTC/WIB. */
+  return new Date(year, month - 1, day, 12, 0, 0, 0);
+}
+
+function toDateOnlyLocal(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0')
+  ].join('-');
+}
+
+function daysBetweenDateOnly(fromDate, toDate = new Date()) {
+  const from = parseLocalDate(fromDate);
+  const to = toDate instanceof Date
+    ? new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 12)
+    : parseLocalDate(toDate);
+
+  if (!from || !to) {
+    return 0;
+  }
+
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+
+  return Math.max(
+    0,
+    Math.floor((to.getTime() - from.getTime()) / millisecondsPerDay)
+  );
+}
+
+function formatDateId(dateValue) {
+  const date = parseLocalDate(dateValue);
+
+  if (!date) {
+    return '-';
+  }
+
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  }).format(date);
+}
+
+function getChainStartForStatus(chain, targetStatus) {
+  /*
+    Mengambil tanggal pertama kali target status muncul dalam chain aktif.
+    Contoh:
+    Konfirmasi (1 Sep) → Groundcheck (2 Sep) → Upaya (4 Sep)
+    hasil untuk Upaya Pemadaman = 4 Sep.
+  */
+  const first = chain.reports.find(
+    (report) => report.status === targetStatus
+  );
+
+  return first?.tanggal || chain.startedAt || chain.latestReport?.tanggal;
+}
+
+function getLatestChainReport(chain) {
+  return chain.latestReport || chain.reports?.[chain.reports.length - 1] || null;
+}
+
+/**
+ * Menghasilkan rincian lokasi yang masih Upaya Pemadaman aktif.
+ *
+ * Syarat:
+ * - Chain diklasifikasi `upaya_aktif`;
+ * - Status terakhir chain adalah Upaya Pemadaman;
+ * - Belum ada Sudah Padam/False Hotspot setelah upaya pada chain tersebut.
+ */
+function getActiveExtinctionDetails(reports = [], referenceDate = new Date()) {
+  const chains = buildStatusChains(reports);
+
+  return chains
+    .filter((chain) => chain.classification === 'upaya_aktif')
+    .map((chain) => {
+      const latest = getLatestChainReport(chain);
+      const sejakTanggal = getChainStartForStatus(
+        chain,
+        'Upaya Pemadaman'
+      );
+
+      return {
+        /* Identifier aman untuk klik/detail UI. */
+        location_key: chain.locationKey,
+        kawasan_id: chain.kawasan_id ?? null,
+
+        npulau: chain.npulau,
+        nupt: chain.nupt,
+        nkws: chain.nkws,
+
+        status_terakhir: latest?.status || 'Upaya Pemadaman',
+        tanggal_laporan_terakhir: latest?.tanggal || null,
+
+        sejak_tanggal: sejakTanggal || null,
+        jumlah_hari: daysBetweenDateOnly(sejakTanggal, referenceDate),
+
+        /* Tambahan bermanfaat untuk tabel/detail operasi. */
+        jumlah_laporan_chain: chain.reports.length,
+        lat: latest?.lat ?? null,
+        lon: latest?.lon ?? null,
+        luas: latest?.luas ?? null,
+        report_uuid: latest?.report_uuid ?? latest?.id ?? null,
+        chain
+      };
+    })
+    .sort((a, b) => {
+      /* Durasi terlama tampil paling atas. */
+      if (b.jumlah_hari !== a.jumlah_hari) {
+        return b.jumlah_hari - a.jumlah_hari;
+      }
+
+      return String(a.nkws).localeCompare(String(b.nkws), 'id');
+    });
+}
+
+/**
+ * Menghasilkan rincian lokasi yang belum memperbarui laporan harian.
+ *
+ * Syarat:
+ * - Chain terakhir/masih terbuka statusnya Upaya, Groundcheck, atau Konfirmasi;
+ * - Tanggal laporan terakhir < hari referensi;
+ * - Chain Sudah Padam atau False Hotspot otomatis tidak masuk.
+ *
+ * `minimumDaysLate = 1` berarti status terakhir kemarin atau lebih lama
+ * dianggap tertunggak. Untuk toleransi 1 hari penuh, gunakan `2`.
+ */
+function getPendingUpdateDetails(
+  reports = [],
+  referenceDate = new Date(),
+  minimumDaysLate = 1
+) {
+  const chains = buildStatusChains(reports);
+
+  const pendingClassifications = new Set([
+    'upaya_aktif',
+    'groundcheck_pending',
+    'konfirmasi_pending'
+  ]);
+
+  return chains
+    .filter((chain) => pendingClassifications.has(chain.classification))
+    .map((chain) => {
+      const latest = getLatestChainReport(chain);
+      const lastDate = latest?.tanggal || null;
+      const daysLate = daysBetweenDateOnly(lastDate, referenceDate);
+
+      return {
+        location_key: chain.locationKey,
+        kawasan_id: chain.kawasan_id ?? null,
+
+        npulau: chain.npulau,
+        nupt: chain.nupt,
+        nkws: chain.nkws,
+
+        status_terakhir: latest?.status || '-',
+        sejak_tanggal: lastDate,
+        jumlah_hari_terlambat: daysLate,
+
+        jumlah_laporan_chain: chain.reports.length,
+        report_uuid: latest?.report_uuid ?? latest?.id ?? null,
+        chain
+      };
+    })
+    .filter((item) => item.jumlah_hari_terlambat >= minimumDaysLate)
+    .sort((a, b) => {
+      if (b.jumlah_hari_terlambat !== a.jumlah_hari_terlambat) {
+        return b.jumlah_hari_terlambat - a.jumlah_hari_terlambat;
+      }
+
+      return String(a.nkws).localeCompare(String(b.nkws), 'id');
+    });
 }
   
 async function loadReports() {
@@ -1051,6 +1329,81 @@ function renderSummary() {
 
   $('#lastUpdate').textContent =
     `Pembaruan tampilan: ${new Date().toLocaleString('id-ID')}`;
+}
+
+function renderOperationalDetails() {
+  const activeItems = getActiveExtinctionDetails(reports);
+  const pendingItems = getPendingUpdateDetails(reports);
+
+  const activeCount = $('#activeExtinctionCount');
+  const activeBody = $('#activeExtinctionBody');
+  const pendingCount = $('#pendingUpdateCount');
+  const pendingBody = $('#pendingUpdateBody');
+
+  /* Mencegah error jika HTML section belum ditempel. */
+  if (!activeCount || !activeBody || !pendingCount || !pendingBody) {
+    console.warn('Container rincian operasional belum ditemukan di HTML.');
+    return;
+  }
+
+  activeCount.textContent = `${activeItems.length} lokasi`;
+  pendingCount.textContent = `${pendingItems.length} lokasi`;
+
+  activeBody.innerHTML = activeItems.length
+    ? activeItems.map((item) => `
+        <tr class="border-b border-slate-100 hover:bg-red-50/40">
+          <td class="p-2">
+            <p class="font-semibold text-slate-800">${esc(item.nkws)}</p>
+            <p class="mt-0.5 text-slate-500">${esc(item.nupt)}</p>
+          </td>
+
+          <td class="p-2 text-slate-600">
+            ${formatDateId(item.sejak_tanggal)}
+          </td>
+
+          <td class="p-2 text-right">
+            <span class="rounded-full bg-red-100 px-2 py-1 font-bold text-red-700">
+              ${item.jumlah_hari} hari
+            </span>
+          </td>
+        </tr>
+      `).join('')
+    : `
+      <tr>
+        <td colspan="3" class="p-6 text-center text-slate-500">
+          Tidak ada pemadaman aktif.
+        </td>
+      </tr>
+    `;
+
+  pendingBody.innerHTML = pendingItems.length
+    ? pendingItems.map((item) => `
+        <tr class="border-b border-slate-100 hover:bg-amber-50/60">
+          <td class="p-2">
+            <p class="font-semibold text-slate-800">${esc(item.nkws)}</p>
+            <p class="mt-0.5 text-slate-500">
+              ${esc(item.nupt)} • ${formatDateId(item.sejak_tanggal)}
+            </p>
+          </td>
+
+          <td class="p-2">
+            ${statusBadge(item.status_terakhir)}
+          </td>
+
+          <td class="p-2 text-right">
+            <span class="rounded-full bg-amber-100 px-2 py-1 font-bold text-amber-800">
+              ${item.jumlah_hari_terlambat} hari
+            </span>
+          </td>
+        </tr>
+      `).join('')
+    : `
+      <tr>
+        <td colspan="3" class="p-6 text-center text-slate-500">
+          Tidak ada tunggakan update harian.
+        </td>
+      </tr>
+    `;
 }
   
 function renderStatus(){const counts=Object.fromEntries(Object.keys(STATUS).map(s=>[s,reports.filter(r=>r.status===s).length])),total=reports.length||1;$('#statusLegend').innerHTML=Object.entries(STATUS).map(([k,v])=>`<span class="inline-flex items-center gap-1 rounded-full ${v.badge} px-2 py-1 text-xs font-bold text-white">${v.icon} ${k}</span>`).join('');$('#segmentedBar').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div title="${k}: ${counts[k]}" style="width:${counts[k]*100/total}%;background-color:${v.color}"></div>`).join('');$('#statusBreakdown').innerHTML=Object.entries(STATUS).map(([k,v])=>`<div class="rounded-lg bg-slate-50 p-3"><div class="flex items-center justify-between"><span class="text-xs font-medium text-slate-600">${k}</span><b>${counts[k]}</b></div><div class="mt-2 h-1.5 rounded" style="background-color:${v.color}"></div></div>`).join('')}
@@ -1774,7 +2127,15 @@ window.showReport = (id) => {
   if (report) openDetail(report);
 };
   
-function renderAll(){renderSummary();renderStatus();renderFilters();renderMatrix();renderMap();populateSelects()}
+function renderAll() {
+  renderSummary();
+  renderOperationalDetails();
+  renderStatus();
+  renderFilters();
+  renderMatrix();
+  renderMap();
+  populateSelects();
+}
 function openDetail(r){if(!r)return;selectedReport=r;$('#modalSub').textContent=`${r.tanggal} • ${r.npulau} • ${r.nupt} — ${r.nkws}`;$('#modalContent').innerHTML=`<div class="flex flex-wrap items-center justify-between gap-3">${statusBadge(r.status)}<span class="text-sm text-slate-500">ID: ${esc(r.id)}</span></div><div class="mt-5 grid gap-4 sm:grid-cols-2"><div class="rounded-xl bg-slate-50 p-4"><p class="text-xs font-bold uppercase text-slate-500">Koordinat & luas</p><p class="mt-1 font-semibold">${esc(r.lat)}, ${esc(r.lon)}</p><p class="text-sm text-slate-600">${esc(r.luas||0)} ha</p></div><div class="rounded-xl bg-slate-50 p-4"><p class="text-xs font-bold uppercase text-slate-500">Personel</p><p class="mt-1 font-semibold">${esc(r.personel||'Belum diisi')}</p></div><div class="sm:col-span-2"><p class="text-xs font-bold uppercase text-slate-500">Upaya</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.upaya||'—')}</p></div><div class="sm:col-span-2"><p class="text-xs font-bold uppercase text-slate-500">Rencana tindak lanjut</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.rencana||'—')}</p></div><div><p class="text-xs font-bold uppercase text-slate-500">Kendala</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.kendala||'—')}</p></div><div><p class="text-xs font-bold uppercase text-slate-500">Kebutuhan</p><p class="mt-1 whitespace-pre-wrap text-sm">${esc(r.kebutuhan||'—')}</p></div><div class="sm:col-span-2 rounded-xl border border-forest-100 bg-forest-50 p-4"><div class="flex flex-wrap items-center justify-between gap-3"><div><p class="text-xs font-bold uppercase text-forest-700">Laporan Lapangan</p><p class="mt-1 text-sm text-slate-600">${r.laporan ? 'Narasi laporan mentah tersedia untuk ditinjau.' : 'Belum ada narasi laporan yang tersimpan.'}</p></div>${r.laporan ? `<button type="button" class="read-report-btn rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800" data-report-text="${encodeURIComponent(r.laporan)}" data-report-title="${encodeURIComponent(`${r.nupt} — ${r.nkws}`)}">Baca selengkapnya</button>` : ''}</div>${r.laporan ? `<p class="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-slate-700">${esc(r.laporan)}</p>` : ''}</div></div>`;document.querySelectorAll('.read-report-btn').forEach(button => button.onclick = () => openFullReport(decodeURIComponent(button.dataset.reportTitle || ''), decodeURIComponent(button.dataset.reportText || '')));$('#detailModal').classList.remove('hidden');$('#detailModal').classList.add('flex')}
 function closeModal(){$('#detailModal').classList.add('hidden');$('#detailModal').classList.remove('flex')}
 function openFullReport(t,c){const m=$('#fullReportModal');$('#fullReportTitle').textContent=t||'Detail laporan';$('#fullReportContent').textContent=c||'Tidak ada narasi laporan yang tersedia.';m.classList.remove('hidden');m.classList.add('flex')}function closeFullReport(){const m=$('#fullReportModal');m.classList.add('hidden');m.classList.remove('flex')}
