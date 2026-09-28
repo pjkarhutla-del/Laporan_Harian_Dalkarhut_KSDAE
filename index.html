@@ -906,6 +906,8 @@ let reports=[],map,reportLayer,hotspotLayer,selectedReport=null,collapsedPulau=n
 let kawasanMaster = [];
 let detailSlideReports = [];
 let currentSlideIndex = 0;
+let reportsRealtimeChannel = null;
+let realtimeRefreshTimer = null;
 let kawasanGeoJsonLayer = null;
 
 const KAWASAN_GEOJSON_URL = 'https://raw.githubusercontent.com/pjkarhutla-del/Laporan_Harian_Dalkarhut_KSDAE/main/kawasan.geojson';
@@ -1718,6 +1720,32 @@ async function loadReports() {
     );
   }
 }
+ 
+function scheduleReportsRefresh() {
+  /*
+    Debounce agar jika banyak perubahan masuk berurutan,
+    aplikasi tidak menjalankan loadReports() berkali-kali.
+  */
+  clearTimeout(realtimeRefreshTimer);
+
+  realtimeRefreshTimer = setTimeout(async () => {
+    try {
+      console.log('Realtime: memperbarui data reports...');
+
+      await loadReports();
+      await loadKawasanMaster();
+
+      matrixStartDate = null;
+      renderAll();
+
+      toast('Data laporan diperbarui dari server.');
+
+    } catch (error) {
+      console.error('Realtime refresh gagal:', error);
+    }
+  }, 600);
+}
+  
 async function loadKawasanMaster() {
   if (!supabaseClient) {
     /*
@@ -1781,6 +1809,55 @@ async function loadKawasanMaster() {
     );
   }
 }  
+
+function subscribeReportsRealtime() {
+  if (!supabaseClient) {
+    console.warn('Realtime tidak diaktifkan: Supabase client tidak tersedia.');
+    return;
+  }
+
+  /*
+    Hindari channel ganda bila init dipanggil lebih dari sekali.
+  */
+  if (reportsRealtimeChannel) {
+    supabaseClient.removeChannel(reportsRealtimeChannel);
+    reportsRealtimeChannel = null;
+  }
+
+  reportsRealtimeChannel = supabaseClient
+    .channel('siaga-karhutla-reports-realtime')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'reports'
+      },
+      (payload) => {
+        console.log('Realtime reports diterima:', {
+          eventType: payload.eventType,
+          new: payload.new,
+          old: payload.old
+        });
+
+        scheduleReportsRefresh();
+      }
+    )
+    .subscribe((status) => {
+      console.log('Status Realtime reports:', status);
+
+      if (status === 'SUBSCRIBED') {
+        console.log('Realtime reports aktif.');
+      }
+
+      if (status === 'CHANNEL_ERROR') {
+        console.warn(
+          'Realtime reports gagal. Periksa publication, RLS, dan WebSocket jaringan.'
+        );
+      }
+    });
+}
+  
 async function createReport(row) {
   if (!supabaseClient) {
     const localReport = {
@@ -3931,8 +4008,10 @@ async function init() {
   
   matrixStartDate = null;
   renderAll();
-  };
   
+  subscribeReportsRealtime();
+  };
+ 
   // 3. Event Listeners - Navigasi Tab
   $$('.tab-button').forEach(btn => {
     btn.onclick = () => setView(btn.dataset.view);
