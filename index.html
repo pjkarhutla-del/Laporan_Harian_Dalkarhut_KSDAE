@@ -2748,8 +2748,20 @@ function renderOperationalDetails() {
   }
 
   const activeRaw = getActiveExtinctionReports(reports, null);
-  const activeItems = sortActiveExtinctionItems(activeRaw);  
   const pendingRaw = getPendingUpdateDetails(reports);
+
+  /*
+    Sorting rincian Pemadaman Aktif.
+  */
+  const activeItems = sortDetailsData(
+    activeRaw,
+    detailSortState.active.key,
+    detailSortState.active.direction
+  );
+
+  /*
+    Sorting rincian Perlu Update.
+  */
   const pendingItems = sortDetailsData(
     pendingRaw,
     detailSortState.pending.key,
@@ -2758,39 +2770,47 @@ function renderOperationalDetails() {
 
   activeCount.textContent = `${activeItems.length} lokasi`;
   pendingCount.textContent = `${pendingItems.length} lokasi`;
-  
+
   activeBody.innerHTML = activeItems.length
-  ? activeItems.map((item) => `
-      <tr class="border-b border-slate-100 hover:bg-red-50/40">
-        <td class="p-2">
-          <p class="font-semibold text-slate-800">${esc(item.nkws || '-')}</p>
-          <p class="mt-0.5 text-slate-500">${esc(item.nupt || '-')}</p>
-        </td>
+    ? activeItems.map((item) => `
+        <tr class="border-b border-slate-100 hover:bg-red-50/40">
+          <td class="p-2">
+            <p class="font-semibold text-slate-800">
+              ${esc(item.nkws || '-')}
+            </p>
+            <p class="mt-0.5 text-slate-500">
+              ${esc(item.nupt || '-')}
+            </p>
+          </td>
 
-        <td class="p-2">
-          ${statusBadge(item.status_terakhir)}
-        </td>
+          <td class="p-2">
+            ${statusBadge(item.status_terakhir)}
+          </td>
 
-        <td class="p-2 text-slate-600">
-          ${formatDateId(item.sejak_tanggal)}
-        </td>
+          <td class="p-2 text-slate-600">
+            ${formatDateId(item.sejak_tanggal)}
+          </td>
 
-        <td class="p-2 text-right">
-          <span class="rounded-full bg-red-100 px-2 py-1 font-bold text-red-700">
-            ${item.jumlah_hari} hari
-          </span>
-        </td>
-      </tr>
-    `).join('')
-  : `
-    <tr>
-      <td colspan="4" class="p-6 text-center text-slate-500">
-        Tidak ada kawasan dengan gelombang pemadaman aktif.
-      </td>
-    </tr>
-  `;
-  
-  pendingBody.innerHTML = pendingItems.length
+          <td class="p-2 text-right">
+            <span class="rounded-full bg-red-100 px-2 py-1 font-bold text-red-700">
+              ${item.jumlah_hari} hari
+            </span>
+          </td>
+        </tr>
+      `).join('')
+    : `
+        <tr>
+          <td colspan="4" class="p-6 text-center text-slate-500">
+            Tidak ada kawasan dengan gelombang pemadaman aktif.
+          </td>
+        </tr>
+      `;
+
+    /*
+      Lanjutkan kode pendingBody.innerHTML Anda di bawah sini.
+    */
+  }  
+    pendingBody.innerHTML = pendingItems.length
     ? pendingItems.map((item) => `
         <tr class="border-b border-slate-100 hover:bg-amber-50/60">
           <td class="p-2">
