@@ -522,13 +522,52 @@
       <div class="max-h-80 overflow-auto rounded-lg border border-slate-100">
         <table class="w-full text-left text-xs">
           <thead class="sticky top-0 z-10 bg-slate-100 text-slate-600">
-            <tr>
-              <th class="p-2">NUPT / NKWS</th>
-              <th class="p-2">Status terakhir</th>
-              <th class="p-2">Sejak</th>
-              <th class="p-2 text-right">Durasi</th>
-            </tr>
-          </thead>
+              <tr>
+                <th class="p-2 text-left">
+                  <button
+                    type="button"
+                    class="active-sort-btn inline-flex items-center gap-1 font-semibold hover:text-red-700"
+                    data-active-sort="nkws"
+                  >
+                    NUPT / NKWS
+                    <span data-active-sort-icon="nkws">↕</span>
+                  </button>
+                </th>
+            
+                <th class="p-2 text-left">
+                  <button
+                    type="button"
+                    class="active-sort-btn inline-flex items-center gap-1 font-semibold hover:text-red-700"
+                    data-active-sort="status_terakhir"
+                  >
+                    Status terakhir
+                    <span data-active-sort-icon="status_terakhir">↕</span>
+                  </button>
+                </th>
+            
+                <th class="p-2 text-left">
+                  <button
+                    type="button"
+                    class="active-sort-btn inline-flex items-center gap-1 font-semibold hover:text-red-700"
+                    data-active-sort="sejak_tanggal"
+                  >
+                    Sejak
+                    <span data-active-sort-icon="sejak_tanggal">↕</span>
+                  </button>
+                </th>
+            
+                <th class="p-2 text-right">
+                  <button
+                    type="button"
+                    class="active-sort-btn inline-flex items-center gap-1 font-semibold hover:text-red-700"
+                    data-active-sort="jumlah_hari"
+                  >
+                    Durasi
+                    <span data-active-sort-icon="jumlah_hari">↓</span>
+                  </button>
+                </th>
+              </tr>
+            </thead>
           <tbody id="activeExtinctionBody"></tbody>
         </table>
       </div>
