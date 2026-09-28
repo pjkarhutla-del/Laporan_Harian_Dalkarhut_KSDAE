@@ -508,7 +508,83 @@
   <div class="flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p class="text-sm font-semibold text-forest-700">DASHBOARD OPERASIONAL</p><h2 class="text-2xl font-bold text-slate-900">Ringkasan Pengendalian Karhutla</h2><p class="mt-1 text-sm text-slate-500">Akumulasi laporan kejadian, kondisi penanganan, dan titik hotspot SIPONGI.</p></div><p id="lastUpdate" class="rounded-lg bg-white px-3 py-2 text-xs text-slate-500 shadow-sm"></p></div>
   <div id="summaryCards" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"></div>
   <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Status Terakhir</h3><p class="text-xs text-slate-500">Warna status konsisten pada kartu, matriks, peta, dan formulir.</p></div><div id="statusLegend" class="flex flex-wrap gap-2"></div></div><div id="segmentedBar" class="flex h-5 overflow-hidden rounded-full bg-slate-100"></div><div id="statusBreakdown" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"></div></section>
-  <section class="grid gap-5 xl:grid-cols-2"><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Pemadaman Aktif</h3><p class="text-xs text-slate-500">Lokasi dengan status terakhir Upaya Pemadaman.</p></div><span id="activeExtinctionCount" class="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="nkws">NUPT / NKWS <span id="activeSortNkws"></span></button></th><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="sejak_tanggal">Sejak pemadaman <span id="activeSortDate"></span></button></th><th class="p-2 text-right"><button type="button" class="ml-auto inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="jumlah_hari">Durasi <span id="activeSortDays"></span></button></th></tr></thead><tbody id="activeExtinctionBody"></tbody></table></div></article><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Tunggakan Update Harian</h3><p class="text-xs text-slate-500">Status terbuka yang belum diperbarui hingga hari ini.</p></div><span id="pendingUpdateCount" class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="nkws">NUPT / NKWS <span id="pendingSortNkws"></span></button></th><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="status_terakhir">Status terakhir <span id="pendingSortStatus"></span></button></th><th class="p-2 text-right"><button type="button" class="ml-auto inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="jumlah_hari_terlambat">Terlambat <span id="pendingSortDays"></span></button></th></tr></thead><tbody id="pendingUpdateBody"></tbody></table></div></article></section>
+  <section class="grid gap-5 xl:grid-cols-2">
+    <!-- Rincian Pemadaman Aktif -->
+    <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h3 class="font-bold text-slate-900">Rincian Pemadaman Aktif</h3>
+          <p class="text-xs text-slate-500">Lokasi dengan status terakhir Upaya Pemadaman.</p>
+        </div>
+        <span id="activeExtinctionCount" class="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">0 lokasi</span>
+      </div>
+  
+      <div class="max-h-80 overflow-auto rounded-lg border border-slate-100">
+        <table class="w-full text-left text-xs">
+          <thead class="sticky top-0 z-10 bg-slate-100 text-slate-600">
+            <tr>
+              <th class="p-2">NUPT / NKWS</th>
+              <th class="p-2">Status terakhir</th>
+              <th class="p-2">Sejak</th>
+              <th class="p-2 text-right">Durasi</th>
+            </tr>
+          </thead>
+          <tbody id="activeExtinctionBody"></tbody>
+        </table>
+      </div>
+    </article>
+  
+    <!-- Tunggakan Update Harian -->
+    <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h3 class="font-bold text-slate-900">Tunggakan Update Harian</h3>
+          <p class="text-xs text-slate-500">Status terbuka yang belum diperbarui hingga hari ini.</p>
+        </div>
+        <span id="pendingUpdateCount" class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">0 lokasi</span>
+      </div>
+  
+      <div class="max-h-80 overflow-auto rounded-lg border border-slate-100">
+        <table class="w-full text-left text-xs">
+          <thead class="sticky top-0 z-10 bg-slate-100 text-slate-600">
+            <tr>
+              <th class="p-2">
+                <button
+                  type="button"
+                  class="inline-flex items-center font-bold hover:text-forest-700"
+                  data-detail-sort="pending"
+                  data-sort-key="nkws"
+                >
+                  NUPT / NKWS <span id="pendingSortNkws"></span>
+                </button>
+              </th>
+              <th class="p-2">
+                <button
+                  type="button"
+                  class="inline-flex items-center font-bold hover:text-forest-700"
+                  data-detail-sort="pending"
+                  data-sort-key="status_terakhir"
+                >
+                  Status terakhir <span id="pendingSortStatus"></span>
+                </button>
+              </th>
+              <th class="p-2 text-right">
+                <button
+                  type="button"
+                  class="ml-auto inline-flex items-center font-bold hover:text-forest-700"
+                  data-detail-sort="pending"
+                  data-sort-key="jumlah_hari_terlambat"
+                >
+                  Terlambat <span id="pendingSortDays"></span>
+                </button>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="pendingUpdateBody"></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
   <section
     id="matrixSection"
     class="relative isolate rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
@@ -935,33 +1011,79 @@ function normalizeStatus(v=''){const x=String(v).toLowerCase();if(/false|bukan t
    PEMADAMAN AKTIF — HANYA GELOMBANG TERAKHIR BELUM PADAM
    ============================================================ */
 
+/* ============================================================
+   GELOMBANG OPERASIONAL TERBUKA
+   Groundcheck + Upaya + Konfirmasi dihitung sebagai satu wave.
+   Sudah Padam / False Hotspot menutup wave.
+   ============================================================ */
+
 function normalizeStatusForChain(value = '') {
   const text = String(value)
     .trim()
     .toLowerCase()
     .replace(/\s+/g, ' ');
 
-  if (/sudah padam|telah padam|api padam|padam total/.test(text)) {
-    return 'Sudah Padam';
-  }
-
-  if (/upaya pemadaman|proses pemadaman|pemadaman aktif|pemadaman masih|pemadaman/.test(text)) {
-    return 'Upaya Pemadaman';
-  }
-
-  if (/ground ?check|cek lapangan|verifikasi lapangan/.test(text)) {
-    return 'Proses Groundcheck';
-  }
-
-  if (/konfirmasi|belum ada kabar|menunggu informasi/.test(text)) {
+  if (!text) {
     return 'Perlu Konfirmasi';
   }
 
-  if (/false|bukan titik api|bukan api/.test(text)) {
+  /* Terminal harus dicek terlebih dahulu. */
+  if (
+    text.includes('sudah padam') ||
+    text.includes('telah padam') ||
+    text.includes('api padam') ||
+    text.includes('padam total') ||
+    text.includes('pendinginan selesai')
+  ) {
+    return 'Sudah Padam';
+  }
+
+  if (
+    text.includes('false hotspot') ||
+    text.includes('falsehotspot') ||
+    text.includes('bukan titik api') ||
+    text.includes('bukan titik panas') ||
+    text.includes('bukan api') ||
+    text.includes('tidak ditemukan api')
+  ) {
     return 'False Hotspot';
   }
 
-  return String(value).trim();
+  if (
+    text.includes('groundcheck') ||
+    text.includes('ground check') ||
+    text.includes('proses ground') ||
+    text.includes('cek lapangan') ||
+    text.includes('verifikasi lapangan') ||
+    text.includes('peninjauan lapangan')
+  ) {
+    return 'Proses Groundcheck';
+  }
+
+  if (
+    text.includes('perlu konfirmasi') ||
+    text.includes('menunggu konfirmasi') ||
+    text.includes('belum ada konfirmasi') ||
+    text.includes('belum ada kabar') ||
+    text.includes('menunggu informasi')
+  ) {
+    return 'Perlu Konfirmasi';
+  }
+
+  if (
+    text.includes('upaya pemadaman') ||
+    text.includes('proses pemadaman') ||
+    text.includes('pemadaman aktif') ||
+    text.includes('pemadaman masih') ||
+    text === 'pemadaman' ||
+    text.includes('water bombing') ||
+    text.includes('pemadaman darat')
+  ) {
+    return 'Upaya Pemadaman';
+  }
+
+  /* Nilai tidak dikenali lebih aman dianggap pending/open. */
+  return 'Perlu Konfirmasi';
 }
 
 function parseDateOnlyLocal(value) {
@@ -973,7 +1095,6 @@ function parseDateOnlyLocal(value) {
 
   const [year, month, day] = date.split('-').map(Number);
 
-  /* Pukul 12:00 lokal untuk menghindari pergeseran timezone UTC/WIB. */
   return new Date(year, month - 1, day, 12, 0, 0, 0);
 }
 
@@ -999,16 +1120,13 @@ function daysInclusive(startDate, endDate) {
     return 0;
   }
 
-  const millisecondsPerDay = 24 * 60 * 60 * 1000;
-
   return Math.max(
     0,
-    Math.floor((end.getTime() - start.getTime()) / millisecondsPerDay) + 1
+    Math.floor((end.getTime() - start.getTime()) / 86400000) + 1
   );
 }
 
 function getKawasanKey(report) {
-  /* Utamakan kawasan_id bila sudah terisi dari master kawasan. */
   if (
     report.kawasan_id !== null &&
     report.kawasan_id !== undefined &&
@@ -1017,18 +1135,16 @@ function getKawasanKey(report) {
     return `kawasan:${report.kawasan_id}`;
   }
 
-  /* Fallback untuk hasil migrasi yang belum memiliki kawasan_id. */
   return [report.npulau, report.nupt, report.nkws]
     .map((value) => String(value ?? '').trim().toUpperCase())
     .join('|');
 }
 
 function compareReportsChronologically(a, b) {
-  const dateA = String(a.tanggal ?? '').slice(0, 10);
-  const dateB = String(b.tanggal ?? '').slice(0, 10);
-
   return (
-    dateA.localeCompare(dateB) ||
+    String(a.tanggal ?? '').slice(0, 10).localeCompare(
+      String(b.tanggal ?? '').slice(0, 10)
+    ) ||
     String(a.updated_at ?? a.created_at ?? '').localeCompare(
       String(b.updated_at ?? b.created_at ?? '')
     ) ||
@@ -1038,24 +1154,44 @@ function compareReportsChronologically(a, b) {
   );
 }
 
+function isOpenOperationalStatus(status) {
+  return [
+    'Proses Groundcheck',
+    'Upaya Pemadaman',
+    'Perlu Konfirmasi'
+  ].includes(status);
+}
+
+function isTerminalOperationalStatus(status) {
+  return [
+    'Sudah Padam',
+    'False Hotspot'
+  ].includes(status);
+}
+
 /**
- * Mengembalikan hanya kawasan dengan gelombang Upaya Pemadaman terakhir
- * yang belum diikuti status Sudah Padam.
+ * Menghasilkan daftar kawasan yang memiliki gelombang operasional terakhir
+ * yang masih terbuka dan setidaknya pernah memiliki Upaya Pemadaman.
  *
- * @param {Array} sourceReports Array laporan dari Supabase/state aplikasi.
- * @param {Date|string|null} referenceDate Opsional. Jika null, durasi
- *   berhenti pada tanggal laporan upaya terakhir. Bila ingin sampai hari
- *   ini, panggil dengan `new Date()`.
+ * Groundcheck/Konfirmasi sebelum atau sesudah Upaya dihitung dalam durasi
+ * gelombang yang sama, tetapi kawasan tanpa Upaya sama sekali tidak masuk
+ * daftar "Pemadaman Aktif".
  */
 function getActiveExtinctionReports(sourceReports = reports, referenceDate = null) {
   const byKawasan = new Map();
 
-  sourceReports.forEach((report) => {
-    const date = String(report.tanggal ?? '').slice(0, 10);
+  sourceReports.forEach((rawReport) => {
+    const tanggal = String(rawReport.tanggal ?? '').slice(0, 10);
 
-    if (!parseDateOnlyLocal(date)) {
+    if (!parseDateOnlyLocal(tanggal)) {
       return;
     }
+
+    const report = {
+      ...rawReport,
+      tanggal,
+      normalized_status: normalizeStatusForChain(rawReport.status)
+    };
 
     const key = getKawasanKey(report);
 
@@ -1063,11 +1199,7 @@ function getActiveExtinctionReports(sourceReports = reports, referenceDate = nul
       byKawasan.set(key, []);
     }
 
-    byKawasan.get(key).push({
-      ...report,
-      tanggal: date,
-      normalized_status: normalizeStatusForChain(report.status)
-    });
+    byKawasan.get(key).push(report);
   });
 
   const activeLocations = [];
@@ -1075,53 +1207,57 @@ function getActiveExtinctionReports(sourceReports = reports, referenceDate = nul
   byKawasan.forEach((locationReports, kawasanKey) => {
     const sortedReports = [...locationReports].sort(compareReportsChronologically);
 
-    let activeWave = null;
+    let openWave = null;
 
     sortedReports.forEach((report) => {
       const status = report.normalized_status;
 
       /*
-        Setiap Upaya Pemadaman membuka gelombang bila belum aktif.
-        Bila sudah aktif, tanggal laporan terakhir gelombang diperbarui.
+        Terminal menutup wave lebih dulu. Ini menjamin:
+        Upaya 5 Sep → Sudah Padam 6 Sep = tidak aktif.
       */
-      if (status === 'Upaya Pemadaman') {
-        if (!activeWave) {
-          activeWave = {
-            sejak_tanggal: report.tanggal,
-            tanggal_laporan_terakhir: report.tanggal,
-            reports: [report]
-          };
-        } else {
-          activeWave.tanggal_laporan_terakhir = report.tanggal;
-          activeWave.reports.push(report);
-        }
-
+      if (isTerminalOperationalStatus(status)) {
+        openWave = null;
         return;
       }
 
       /*
-        Sudah Padam menutup/menghapus gelombang aktif sebelumnya.
-        Jika ada Upaya baru setelah ini, gelombang baru dimulai dari nol.
+        Status operasional terbuka membangun/memperpanjang wave.
+        Semua Groundcheck + Upaya + Konfirmasi masuk duration chain yang sama.
       */
-      if (status === 'Sudah Padam') {
-        activeWave = null;
+      if (isOpenOperationalStatus(status)) {
+        if (!openWave) {
+          openWave = {
+            sejak_tanggal: report.tanggal,
+            tanggal_laporan_terakhir: report.tanggal,
+            reports: [],
+            has_upaya_pemadaman: false
+          };
+        }
+
+        openWave.tanggal_laporan_terakhir = report.tanggal;
+        openWave.reports.push(report);
+
+        if (status === 'Upaya Pemadaman') {
+          openWave.has_upaya_pemadaman = true;
+        }
       }
     });
 
-    /* Tidak ada gelombang aktif tersisa = jangan masuk daftar. */
-    if (!activeWave) {
+    /*
+      Tampilkan hanya bila:
+      - gelombang terakhir belum ditutup terminal;
+      - dalam gelombang tersebut minimal ada Upaya Pemadaman.
+    */
+    if (!openWave || !openWave.has_upaya_pemadaman) {
       return;
     }
 
-    const latestReport = activeWave.reports[activeWave.reports.length - 1];
+    const latestReport = openWave.reports[openWave.reports.length - 1];
 
-    /*
-      Default: durasi sampai tanggal laporan Upaya terakhir.
-      Untuk durasi berjalan hingga hari ini, panggil fungsi dengan new Date().
-    */
     const endDate = referenceDate
       ? toDateOnlyLocal(referenceDate)
-      : activeWave.tanggal_laporan_terakhir;
+      : openWave.tanggal_laporan_terakhir;
 
     activeLocations.push({
       kawasan_key: kawasanKey,
@@ -1129,10 +1265,17 @@ function getActiveExtinctionReports(sourceReports = reports, referenceDate = nul
       npulau: latestReport.npulau ?? '',
       nupt: latestReport.nupt ?? '',
       nkws: latestReport.nkws ?? '',
-      sejak_tanggal: activeWave.sejak_tanggal,
-      tanggal_laporan_terakhir: activeWave.tanggal_laporan_terakhir,
-      jumlah_hari: daysInclusive(activeWave.sejak_tanggal, endDate),
-      jumlah_laporan_upaya: activeWave.reports.length,
+
+      sejak_tanggal: openWave.sejak_tanggal,
+      tanggal_laporan_terakhir: openWave.tanggal_laporan_terakhir,
+      status_terakhir: latestReport.normalized_status,
+      jumlah_hari: daysInclusive(openWave.sejak_tanggal, endDate),
+
+      jumlah_laporan_chain: openWave.reports.length,
+      jumlah_laporan_upaya: openWave.reports.filter(
+        (report) => report.normalized_status === 'Upaya Pemadaman'
+      ).length,
+
       report_uuid_terakhir: latestReport.report_uuid ?? latestReport.id ?? null
     });
   });
@@ -2512,30 +2655,38 @@ function renderOperationalDetails() {
 
   activeCount.textContent = `${activeItems.length} lokasi`;
   pendingCount.textContent = `${pendingItems.length} lokasi`;
-
+  
   activeBody.innerHTML = activeItems.length
-    ? activeItems.map((item) => `
-        <tr class="border-b border-slate-100 hover:bg-red-50/40">
-          <td class="p-2">
-            <p class="font-semibold text-slate-800">${esc(item.nkws || '-')}</p>
-            <p class="mt-0.5 text-slate-500">${esc(item.nupt || '-')}</p>
-          </td>
-          <td class="p-2 text-slate-600">${formatDateId(item.sejak_tanggal)}</td>
-          <td class="p-2 text-right">
-            <span class="rounded-full bg-red-100 px-2 py-1 font-bold text-red-700">
-              ${item.jumlah_hari} hari
-            </span>
-          </td>
-        </tr>
-      `).join('')
-    : `
-      <tr>
-        <td colspan="3" class="p-6 text-center text-slate-500">
-          Tidak ada lokasi dengan status terakhir Upaya Pemadaman.
+  ? activeItems.map((item) => `
+      <tr class="border-b border-slate-100 hover:bg-red-50/40">
+        <td class="p-2">
+          <p class="font-semibold text-slate-800">${esc(item.nkws || '-')}</p>
+          <p class="mt-0.5 text-slate-500">${esc(item.nupt || '-')}</p>
+        </td>
+
+        <td class="p-2">
+          ${statusBadge(item.status_terakhir)}
+        </td>
+
+        <td class="p-2 text-slate-600">
+          ${formatDateId(item.sejak_tanggal)}
+        </td>
+
+        <td class="p-2 text-right">
+          <span class="rounded-full bg-red-100 px-2 py-1 font-bold text-red-700">
+            ${item.jumlah_hari} hari
+          </span>
         </td>
       </tr>
-    `;
-
+    `).join('')
+  : `
+    <tr>
+      <td colspan="4" class="p-6 text-center text-slate-500">
+        Tidak ada kawasan dengan gelombang pemadaman aktif.
+      </td>
+    </tr>
+  `;
+  
   pendingBody.innerHTML = pendingItems.length
     ? pendingItems.map((item) => `
         <tr class="border-b border-slate-100 hover:bg-amber-50/60">
@@ -4367,6 +4518,61 @@ async function init() {
     }
   });
 
+function runActiveOperationalWaveTest() {
+  const testReports = [
+    /*
+      Kasus 1:
+      1 Groundcheck → 2-3 Upaya → 4 Konfirmasi
+      Expected: AKTIF, sejak 1 Sep, 4 hari, status akhir Konfirmasi.
+    */
+    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-01', status: 'Proses Groundcheck' },
+    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-02', status: 'Upaya Pemadaman' },
+    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-03', status: 'Upaya Pemadaman' },
+    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-04', status: 'Perlu Konfirmasi' },
+
+    /*
+      Kasus 2: TN Tesso Nilo
+      5 Upaya → 6 Sudah Padam
+      Expected: TIDAK AKTIF.
+    */
+    { kawasan_id: 102, nupt: 'BKSDA RIAU', nkws: 'TN Tesso Nilo', tanggal: '2026-09-05', status: 'Upaya Pemadaman' },
+    { kawasan_id: 102, nupt: 'BKSDA RIAU', nkws: 'TN Tesso Nilo', tanggal: '2026-09-06', status: 'Sudah Padam' }
+  ];
+
+  const active = getActiveExtinctionReports(testReports, null);
+
+  console.table(active);
+
+  const openWave = active.find(
+    (item) => item.nkws === 'Kawasan Rangkaian Terbuka'
+  );
+
+  const tessoNilo = active.find(
+    (item) => item.nkws === 'TN Tesso Nilo'
+  );
+
+  console.assert(
+    openWave?.sejak_tanggal === '2026-09-01',
+    'Kasus 1 gagal: sejak_tanggal harus 1 Sep'
+  );
+
+  console.assert(
+    openWave?.jumlah_hari === 4,
+    'Kasus 1 gagal: durasi harus 4 hari'
+  );
+
+  console.assert(
+    openWave?.status_terakhir === 'Perlu Konfirmasi',
+    'Kasus 1 gagal: status terakhir harus Perlu Konfirmasi'
+  );
+
+  console.assert(
+    !tessoNilo,
+    'Kasus TN Tesso Nilo gagal: Upaya → Sudah Padam tidak boleh aktif'
+  );
+
+  console.info('Test gelombang operasional selesai. Tidak ada Assertion failed = lulus.');
+}
 // Jalankan fungsi init saat dokumen selesai dimuat
 document.addEventListener('DOMContentLoaded', init);
 </script>
