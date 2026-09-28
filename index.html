@@ -311,7 +311,7 @@
 <main class="mx-auto max-w-[1800px] p-4 sm:p-6">
 <section id="view-dashboard" class="view space-y-6">
   <div class="flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p class="text-sm font-semibold text-forest-700">DASHBOARD OPERASIONAL</p><h2 class="text-2xl font-bold text-slate-900">Ringkasan Pengendalian Karhutla</h2><p class="mt-1 text-sm text-slate-500">Akumulasi laporan kejadian, kondisi penanganan, dan titik hotspot SIPONGI.</p></div><p id="lastUpdate" class="rounded-lg bg-white px-3 py-2 text-xs text-slate-500 shadow-sm"></p></div>
-  <div id="summaryCards" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"></div>
+  <div id="summaryCards" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"></div>
   <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Status Terakhir</h3><p class="text-xs text-slate-500">Warna status konsisten pada kartu, matriks, peta, dan formulir.</p></div><div id="statusLegend" class="flex flex-wrap gap-2"></div></div><div id="segmentedBar" class="flex h-5 overflow-hidden rounded-full bg-slate-100"></div><div id="statusBreakdown" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"></div></section>
   <section class="grid gap-5 xl:grid-cols-2"><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Rincian Pemadaman Aktif</h3><p class="text-xs text-slate-500">Lokasi dengan status terakhir Upaya Pemadaman.</p></div><span id="activeExtinctionCount" class="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="nkws">NUPT / NKWS <span id="activeSortNkws"></span></button></th><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="sejak_tanggal">Sejak pemadaman <span id="activeSortDate"></span></button></th><th class="p-2 text-right"><button type="button" class="ml-auto inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="active" data-sort-key="jumlah_hari">Durasi <span id="activeSortDays"></span></button></th></tr></thead><tbody id="activeExtinctionBody"></tbody></table></div></article><article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-900">Tunggakan Update Harian</h3><p class="text-xs text-slate-500">Status terbuka yang belum diperbarui hingga hari ini.</p></div><span id="pendingUpdateCount" class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">0 lokasi</span></div><div class="max-h-80 overflow-auto rounded-lg border border-slate-100"><table class="w-full text-left text-xs"><thead class="sticky top-0 z-10 bg-slate-100 text-slate-600"><tr><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="nkws">NUPT / NKWS <span id="pendingSortNkws"></span></button></th><th class="p-2"><button type="button" class="inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="status_terakhir">Status terakhir <span id="pendingSortStatus"></span></button></th><th class="p-2 text-right"><button type="button" class="ml-auto inline-flex items-center font-bold hover:text-forest-700" data-detail-sort="pending" data-sort-key="jumlah_hari_terlambat">Terlambat <span id="pendingSortDays"></span></button></th></tr></thead><tbody id="pendingUpdateBody"></tbody></table></div></article></section>
   <section
@@ -911,7 +911,7 @@ function calculateCardStats(reports = []) {
   const stats = {
     /* Total kejadian Karhutla, tanpa False Hotspot. */
     totalKejadian: 0,
-
+    kawasanTerdampak: 0,
     /* Kejadian dengan status terakhir Upaya Pemadaman. */
     upayaPemadamanAktif: 0,
 
@@ -974,7 +974,9 @@ function calculateCardStats(reports = []) {
   stats.persenPadam = stats.totalKejadian
     ? Math.round((stats.sudahPadam / stats.totalKejadian) * 100)
     : 0;
-
+  
+  stats.kawasanTerdampak = calculateAffectedKawasanCount(sourceReports);
+  
   return stats;
 }
 
@@ -1511,6 +1513,62 @@ async function deleteReport(reportUuid) {
   
 function statusBadge(status){const s=STATUS[status]||STATUS['Perlu Konfirmasi'];return `<span class="inline-flex items-center gap-1 rounded-full ${s.badge} px-2 py-1 text-xs font-bold text-white">${s.icon} ${esc(status)}</span>`}
 
+/* ============================================================
+   KAWASAN TERDAMPAK KARHUTLA
+   Kriteria: minimal pernah Upaya Pemadaman atau Sudah Padam.
+   ============================================================ */
+
+function getAffectedKawasanDetails(sourceReports = reports) {
+  const affectedStatuses = new Set([
+    'Upaya Pemadaman',
+    'Sudah Padam'
+  ]);
+
+  const uniqueKawasan = new Map();
+
+  sourceReports
+    .filter((report) => affectedStatuses.has(report.status))
+    .forEach((report) => {
+      /*
+        Prioritas identitas kawasan:
+        1. kawasan_id dari master kawasan.
+        2. Fallback gabungan Pulau + UPT + NKWS.
+      */
+      const key = getLocationKey(report);
+
+      if (!uniqueKawasan.has(key)) {
+        uniqueKawasan.set(key, {
+          location_key: key,
+          kawasan_id: report.kawasan_id ?? null,
+          npulau: report.npulau || '-',
+          nupt: report.nupt || '-',
+          nkws: report.nkws || '-',
+          status_ditemukan: new Set(),
+          laporan: []
+        });
+      }
+
+      const kawasan = uniqueKawasan.get(key);
+
+      kawasan.status_ditemukan.add(report.status);
+      kawasan.laporan.push(report);
+    });
+
+  return [...uniqueKawasan.values()]
+    .map((kawasan) => ({
+      ...kawasan,
+      status_ditemukan: [...kawasan.status_ditemukan],
+      jumlah_laporan: kawasan.laporan.length
+    }))
+    .sort((a, b) =>
+      String(a.nkws).localeCompare(String(b.nkws), 'id')
+    );
+}
+
+function calculateAffectedKawasanCount(sourceReports = reports) {
+  return getAffectedKawasanDetails(sourceReports).length;
+}
+  
 function renderSummary() {
   const stats = calculateCardStats(reports);
 
@@ -1543,6 +1601,26 @@ function renderSummary() {
       </p>
     </article>
 
+    <article class="rounded-2xl border border-orange-100 bg-orange-50 p-5 shadow-sm">
+      <p class="text-sm font-medium text-orange-800">
+        Kawasan Terdampak
+      </p>
+    
+      <div class="mt-3 flex items-end justify-between">
+        <p class="text-3xl font-bold text-orange-800">
+          ${stats.kawasanTerdampak}
+        </p>
+    
+        <span class="rounded-full bg-orange-600 px-2 py-1 text-xs font-bold text-white">
+          Kawasan unik
+        </span>
+      </div>
+    
+      <p class="mt-3 text-xs text-orange-800">
+        Minimal satu laporan Upaya Pemadaman atau Sudah Padam.
+      </p>
+    </article>
+    
     <article class="rounded-2xl border border-red-100 bg-red-50 p-5 shadow-sm">
       <p class="text-sm font-medium text-red-700">
         Upaya Pemadaman Aktif
