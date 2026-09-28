@@ -326,19 +326,6 @@
   }
   
   /*
-    Z-index Leaflet tetap berfungsi di dalam peta, tetapi tidak dapat
-    naik melewati modal karena container peta sendiri berada pada z-index 0.
-  */
-  .leaflet-pane,
-  .leaflet-top,
-  .leaflet-bottom,
-  .leaflet-control,
-  .leaflet-popup-pane,
-  .leaflet-tooltip-pane {
-    z-index: auto;
-  }
-  
-  /*
     Jika sebelumnya ada parent map yang memakai transform/filter,
     pastikan tidak membangun stacking context tinggi.
   */
@@ -410,6 +397,101 @@
       padding-top: 2rem;
       padding-bottom: 2rem;
     }
+  }
+  /* ============================================================
+   LEAFLET — POPUP LAPORAN DAN MARKER STATUS
+   ============================================================ */
+
+  /* Pastikan Leaflet memiliki stacking context internal yang benar. */
+  #map,
+  .leaflet-container {
+    position: relative;
+    z-index: 0;
+    overflow: hidden;
+  }
+  
+  /* Jangan paksa z-index popup menjadi auto. Leaflet membutuhkan nilai pane-nya. */
+  .leaflet-popup-pane {
+    z-index: 700 !important;
+  }
+  
+  .leaflet-tooltip-pane {
+    z-index: 750 !important;
+  }
+  
+  .leaflet-control {
+    z-index: 800;
+  }
+  
+  /* Popup laporan harus berada di atas vector/marker/tile Leaflet. */
+  .siaga-leaflet-popup {
+    z-index: 900 !important;
+  }
+  
+  .siaga-leaflet-popup .leaflet-popup-content-wrapper {
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.26);
+  }
+  
+  .siaga-leaflet-popup .leaflet-popup-content {
+    width: 245px !important;
+    max-height: 220px;
+    margin: 14px 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
+  .siaga-leaflet-popup .leaflet-popup-tip {
+    background: #ffffff;
+  }
+  
+  .siaga-map-popup {
+    min-width: 215px;
+    overflow-wrap: anywhere;
+  }
+  
+  .siaga-map-popup button {
+    display: block;
+    width: 100%;
+    cursor: pointer;
+    border: 0;
+    border-radius: 8px;
+    background: #174d31;
+    color: #ffffff;
+    padding: 9px 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  
+  .siaga-map-popup button:hover {
+    background: #103a26;
+  }
+  
+  /*
+    Marker segitiga untuk Upaya Pemadaman.
+    Dibuat sebagai divIcon Leaflet sehingga tidak membutuhkan file gambar/SVG eksternal.
+  */
+  .siaga-triangle-marker {
+    width: 0;
+    height: 0;
+    border-left: 11px solid transparent;
+    border-right: 11px solid transparent;
+    border-bottom: 20px solid #dc2626;
+    filter: drop-shadow(0 2px 2px rgba(15, 23, 42, 0.38));
+    transform: rotate(0deg);
+  }
+  
+  /* Ring putih tipis dibuat dari pseudo-element untuk kontras di peta. */
+  .siaga-triangle-marker::after {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 8px;
+    width: 14px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.94);
   }
   </style>
 </head>
@@ -546,7 +628,37 @@
       Header tanggal, NUPT, dan NKWS akan tetap terlihat selama scroll dilakukan di area tabel.
     </p>
   </section>
-  <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-end"><div><h3 class="font-bold text-slate-900">Peta Kejadian & Hotspot</h3><p class="text-xs text-slate-500">Marker laporan berasal dari tabel Supabase <code>reports</code>; hotspot masih data simulasi SIPONGI.</p></div><div class="flex flex-wrap gap-2"><select id="mapUptFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua UPT</option></select><select id="mapKawasanFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Semua kawasan</option></select><input id="mapDateFilter" type="date" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></div></div><div id="map" class="overflow-hidden rounded-xl border border-slate-200"></div><p class="mt-3 text-xs text-slate-500"><span class="font-semibold text-red-600">●</span> Laporan kejadian &nbsp; <span class="font-semibold text-amber-500">●</span> Hotspot SIPONGI mock.</p></section>
+  <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+  <span>
+    <span class="font-bold text-red-600">▲</span>
+    Upaya Pemadaman
+  </span>
+
+  <span>
+    <span class="font-bold text-blue-600">●</span>
+    Sudah Padam
+  </span>
+
+  <span>
+    <span class="font-bold text-amber-500">●</span>
+    Proses Groundcheck
+  </span>
+
+  <span>
+    <span class="font-bold text-purple-600">●</span>
+    Perlu Konfirmasi
+  </span>
+
+  <span>
+    <span class="font-bold text-gray-600">●</span>
+    False Hotspot
+  </span>
+
+  <span>
+    <span class="font-bold text-amber-700">●</span>
+    Hotspot SIPONGI
+  </span>
+</p>
 </section>
 
 <section id="view-report" class="view hidden space-y-6"><div><p class="text-sm font-semibold text-forest-700">ENTRI LAPORAN</p><h2 class="text-2xl font-bold text-slate-900">Isi Laporan Pengendalian Karhutla</h2><p class="mt-1 text-sm text-slate-500">Simpan laporan baru atau perbarui laporan yang dipilih dari matriks/peta.</p></div><div class="grid gap-6 xl:grid-cols-[.85fr_1.35fr]"><aside class="h-fit rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 xl:sticky xl:top-36"><h3 class="font-bold text-slate-900">Tempel Teks Laporan</h3><p class="mt-1 text-xs leading-5 text-slate-500">Parser mendeteksi tanggal, koordinat, status, luas, personel, upaya, rencana, kendala, dan kebutuhan.</p><textarea id="rawText" rows="22" class="mt-4 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm leading-6 focus:border-forest-600 focus:ring-2 focus:ring-forest-100" placeholder="Sabtu, 26 September 2026&#10;Lokasi: TN Sebangau, BKSDA Kalteng&#10;Koordinat: X: -2.321 | Y: 113.921&#10;Status: Upaya Pemadaman&#10;Luas terbakar: 12 Ha&#10;Personel: 8 Manggala Agni dan 12 MPA&#10;Upaya: pemadaman darat dan sekat bakar&#10;Rencana tindak lanjut: patroli ulang besok"></textarea><button type="button" id="parseBtn" class="mt-4 w-full rounded-xl bg-forest-700 px-4 py-3 font-bold text-white hover:bg-forest-800">✦ Pisahkan & Isi Form</button><p id="parserNotes" class="mt-4 rounded-xl border border-emerald-100 bg-forest-50 p-3 text-xs leading-5 text-forest-900">Verifikasi hasil parser sebelum menyimpan ke database.</p></aside><form id="reportForm" class="space-y-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4"><div><h3 class="text-lg font-bold text-slate-900">Isi Laporan Manual</h3><p class="text-xs text-slate-500">Dapat terisi dari parser atau sel kosong matriks.</p></div><span id="editPill" class="hidden rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">Mode edit laporan</span></div><fieldset><legend class="mb-3 font-semibold text-forest-800">Identitas Laporan</legend><div class="grid gap-4 sm:grid-cols-2"><label class="block text-sm font-medium">Tanggal<input id="tanggal" required type="date" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" /></label><label class="block text-sm font-medium">Pulau / NPulau<select id="npulau" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></select></label><label class="block text-sm font-medium">NUPT<select id="nupt" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></select></label><label class="block text-sm font-medium">NKWS<select id="nkws" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></select></label></div></fieldset><fieldset class="border-t border-slate-100 pt-5"><div class="mb-3 flex flex-wrap items-center justify-between gap-2"><legend class="font-semibold text-forest-800">Titik Koordinat & Status</legend><button type="button" id="addPointBtn" class="rounded-lg border border-forest-600 px-3 py-1.5 text-sm font-semibold text-forest-700 hover:bg-forest-50">+ Tambah titik</button></div><div id="pointsContainer" class="space-y-3"></div></fieldset><fieldset class="border-t border-slate-100 pt-5"><legend class="mb-3 font-semibold text-forest-800">Tindak Lanjut Operasional</legend><div class="grid gap-4 sm:grid-cols-2"><label class="block text-sm font-medium">Upaya<textarea id="upaya" rows="4" class="mt-1 w-full rounded-lg border border-slate-300 p-3"></textarea></label><label class="block text-sm font-medium">Rencana tindak lanjut<textarea id="rencana" rows="4" class="mt-1 w-full rounded-lg border border-slate-300 p-3"></textarea></label><label class="block text-sm font-medium">Jumlah personel<input id="personel" type="text" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" /></label><label class="block text-sm font-medium">Kendala<textarea id="kendala" rows="2" class="mt-1 w-full rounded-lg border border-slate-300 p-3"></textarea></label><label class="block text-sm font-medium sm:col-span-2">Kebutuhan / saran<textarea id="kebutuhan" rows="2" class="mt-1 w-full rounded-lg border border-slate-300 p-3"></textarea></label><label class="block text-sm font-medium sm:col-span-2">Narasi laporan lengkap<textarea id="laporan" rows="6" class="mt-1 w-full rounded-lg border border-slate-300 p-3 focus:border-forest-600" placeholder="Narasi lengkap laporan lapangan atau hasil tempelan teks."></textarea></label></div></fieldset><div class="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-5"><button id="cancelEditBtn" type="button" class="hidden rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700">Batal edit</button><button id="saveBtn" class="rounded-xl bg-forest-700 px-5 py-3 font-bold text-white shadow hover:bg-forest-800">Simpan laporan ke database</button></div></form></div></section>
@@ -2655,7 +2767,123 @@ function renderFilters() {
   updateKawasanSearchResetButton();
 }
   
-function setupMap(){map=L.map('map').setView([-2.5,118],5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);reportLayer=L.layerGroup().addTo(map);map.options.maxZoom=18;map.on('popupopen',e=>{const p=e.popup;setTimeout(()=>{if(p&&p.getLatLng())map.panInside(p.getLatLng(),{paddingTopLeft:[24,90],paddingBottomRight:[24,120],animate:true,duration:0.25})},60)});hotspotLayer=L.layerGroup().addTo(map);HOTSPOTS.forEach(h=>L.circleMarker([h.lat,h.lon],{radius:8,color:'#92400e',fillColor:'#f59e0b',fillOpacity:.9,weight:2}).bindPopup(`<b>Hotspot SIPONGI (mock)</b><br>Confidence: ${h.confidence}<br>Wilayah: ${h.area}`).addTo(hotspotLayer))}
+function setupMap() {
+  map = L.map('map').setView([-2.5, 118], 5);
+
+  L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap contributors'
+    }
+  ).addTo(map);
+
+  reportLayer = L.layerGroup().addTo(map);
+  hotspotLayer = L.layerGroup().addTo(map);
+}
+/* ============================================================
+   LEAFLET MARKER FACTORY
+   ============================================================ */
+
+function createReportMapMarker(report) {
+  const statusConfig = STATUS[report.status] || STATUS['Perlu Konfirmasi'];
+  const latLng = [Number(report.lat), Number(report.lon)];
+
+  /*
+    Upaya Pemadaman memakai segitiga merah.
+    Marker dibuat sebagai L.marker + divIcon.
+  */
+  if (report.status === 'Upaya Pemadaman') {
+    const triangleIcon = L.divIcon({
+      className: 'siaga-triangle-icon-wrapper',
+      html: '<div class="siaga-triangle-marker" title="Upaya Pemadaman"></div>',
+      iconSize: [24, 22],
+      iconAnchor: [12, 20],
+      popupAnchor: [0, -20]
+    });
+
+    return L.marker(latLng, {
+      icon: triangleIcon,
+      keyboard: true,
+      riseOnHover: true,
+      zIndexOffset: 500
+    });
+  }
+
+  /* Status selain Upaya Pemadaman tetap memakai circle marker. */
+  return L.circleMarker(latLng, {
+    radius: 9,
+    color: '#ffffff',
+    weight: 2,
+    fillColor: statusConfig.color,
+    fillOpacity: 1,
+    pane: 'markerPane'
+  });
+}
+
+// ==========================================
+// MAP POPUP HELPER & BRIDGE HANDLERS
+// ==========================================
+
+function getReportMapPopupHtml(report) {
+  const reportKey = report.report_uuid || report.id || '';
+
+  return `
+    <div class="siaga-map-popup">
+      <p style="margin:0;color:#174d31;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase">
+        Laporan Karhutla
+      </p>
+
+      <h4 style="margin:4px 0 0;color:#0f172a;font-size:14px;font-weight:700">
+        ${esc(report.nkws || '-')}
+      </h4>
+
+      <p style="margin:4px 0 0;color:#475569;font-size:11px">
+        ${esc(report.nupt || '-')} • ${esc(report.npulau || '-')}
+      </p>
+
+      <div style="margin-top:10px;color:#334155;font-size:12px;line-height:1.55">
+        <p style="margin:0"><b>Tanggal:</b> ${esc(report.tanggal || '-')}</p>
+        <p style="margin:0"><b>Status:</b> ${esc(report.status || '-')}</p>
+        <p style="margin:0"><b>Luas:</b> ${esc(report.luas ?? 0)} ha</p>
+        <p style="margin:0"><b>Koordinat:</b> ${esc(report.lat ?? '-')}, ${esc(report.lon ?? '-')}</p>
+      </div>
+
+      <button
+        type="button"
+        onclick="window.showReportFromMap('${esc(String(reportKey))}')"
+        style="margin-top:12px"
+      >
+        Lihat detail lengkap
+      </button>
+    </div>
+  `;
+}
+
+// Global function agar bisa dipanggil dari inline HTML attribute Leaflet Popup (onclick="window.showReportFromMap(...)")
+window.showReportFromMap = (reportUuid) => {
+  const report = reports.find((item) =>
+    String(item.report_uuid || item.id) === String(reportUuid)
+  );
+
+  if (!report) {
+    console.error('Data laporan dari marker peta tidak ditemukan:', reportUuid);
+    toast('Data laporan pada peta tidak ditemukan.', true);
+    return;
+  }
+
+  /*
+    Tutup popup Leaflet dahulu agar tidak terlihat bertumpuk
+    ketika modal halaman utama muncul.
+  */
+  if (map) {
+    map.closePopup();
+  }
+
+  /* Modal utama menggunakan alur carousel yang sama dengan matriks. */
+  openDetail(report);
+};
+  
 async function loadKawasanGeoJSON() {
   if (!map) {
     console.warn('Peta Leaflet belum siap. GeoJSON tidak dimuat.');
@@ -2810,118 +3038,68 @@ async function loadKawasanGeoJSON() {
 }
 
 function renderMap() {
-  if (!map) return;
+  if (!map || !reportLayer) {
+    return;
+  }
 
   reportLayer.clearLayers();
 
-  const u = $('#mapUptFilter').value;
-  const k = $('#mapKawasanFilter').value;
-  const d = $('#mapDateFilter').value;
+  const selectedUpt = $('#mapUptFilter')?.value || '';
+  const selectedKawasan = $('#mapKawasanFilter')?.value || '';
+  const selectedDate = $('#mapDateFilter')?.value || '';
 
-  const filteredReports = reports.filter(
-    (r) =>
-      (!u || r.nupt === u) &&
-      (!k || r.nkws === k) &&
-      (!d || r.tanggal === d) &&
-      Number.isFinite(+r.lat) &&
-      Number.isFinite(+r.lon)
-  );
+  const visibleReports = reports.filter((report) => {
+    const matchesUpt = !selectedUpt || report.nupt === selectedUpt;
+    const matchesKawasan = !selectedKawasan || report.nkws === selectedKawasan;
+    const matchesDate = !selectedDate ||
+      String(report.tanggal || '').slice(0, 10) === selectedDate;
 
-  filteredReports.forEach((r) => {
-    const s = STATUS[r.status] || STATUS['Perlu Konfirmasi'];
+    const hasCoordinate =
+      Number.isFinite(Number(report.lat)) &&
+      Number.isFinite(Number(report.lon));
 
-    const popupContent = `
-      <b>${esc(r.nkws)}</b><br>
-      ${esc(r.nupt)} • ${esc(r.npulau)}<br>
-      ${esc(r.tanggal)}<br>
-      ${statusBadge(r.status)}<br>
-      Luas: ${esc(r.luas || 0)} ha<br>
-      <button 
-        onclick="window.showReport('${r.id}')" 
-        style="margin-top:7px; padding:4px 8px; background:#174d31; color:#fff; border:0; border-radius:4px; cursor:pointer;"
-      >
-        Detail
-      </button>
-    `;
+    return matchesUpt && matchesKawasan && matchesDate && hasCoordinate;
+  });
 
-      L.circleMarker([+r.lat, +r.lon], {
-      radius: 9,
-      color: '#ffffff',
-      weight: 2,
-      fillColor: s.color,
-      fillOpacity: 1
-    })
-    .bindPopup(
-      `
-        <div class="siaga-map-popup">
-          <p class="text-xs font-bold uppercase tracking-wide text-forest-700">
-            Laporan Karhutla
-          </p>
-    
-          <h4 class="mt-1 text-sm font-bold text-slate-900">
-            ${esc(r.nkws)}
-          </h4>
-    
-          <p class="mt-1 text-xs text-slate-600">
-            ${esc(r.nupt)} • ${esc(r.npulau)}
-          </p>
-    
-          <div class="mt-3 space-y-1 text-xs text-slate-700">
-            <p>
-              <span class="font-semibold">Tanggal:</span>
-              ${esc(r.tanggal)}
-            </p>
-    
-            <p>
-              <span class="font-semibold">Status:</span>
-              ${esc(r.status)}
-            </p>
-    
-            <p>
-              <span class="font-semibold">Luas:</span>
-              ${esc(r.luas || 0)} ha
-            </p>
-          </div>
-    
-          <button
-            type="button"
-            onclick="window.showReport('${r.id}')"
-            class="mt-3 w-full rounded-lg bg-forest-700 px-3 py-2 text-xs font-bold text-white hover:bg-forest-800"
-          >
-            Lihat detail lengkap
-          </button>
-        </div>
-      `,
+  visibleReports.forEach((report) => {
+    const marker = createReportMapMarker(report);
+
+    marker.bindPopup(
+      getReportMapPopupHtml(report),
       {
-        /*
-          Leaflet akan menggeser peta agar popup tidak terpotong.
-        */
+        className: 'siaga-leaflet-popup',
         autoPan: true,
         keepInView: true,
-    
-        /*
-          Jarak aman popup dari sisi viewport peta.
-        */
-        autoPanPaddingTopLeft: [24, 80],
-        autoPanPaddingBottomRight: [24, 110],
-    
-        /*
-          Batasi lebar dan tinggi agar tidak melewati area peta.
-        */
-        maxWidth: 280,
+        autoPanPaddingTopLeft: [24, 70],
+        autoPanPaddingBottomRight: [24, 100],
+        maxWidth: 290,
         minWidth: 220,
-        maxHeight: 240,
-    
-        /*
-          Offset agar popup terbuka sedikit lebih tinggi dari marker.
-        */
+        maxHeight: 250,
         offset: [0, -8],
-    
-        closeButton: true,
-        className: 'siaga-leaflet-popup'
+        closeButton: true
       }
-    )
-    .addTo(reportLayer);
+    );
+
+    /*
+      Leaflet menghitung ulang panning setelah popup benar-benar dirender.
+      Berguna untuk popup marker dekat tepi bawah/kanan peta.
+    */
+    marker.on('popupopen', (event) => {
+      const popup = event.popup;
+
+      setTimeout(() => {
+        if (popup?.getLatLng()) {
+          map.panInside(popup.getLatLng(), {
+            paddingTopLeft: [24, 70],
+            paddingBottomRight: [24, 110],
+            animate: true,
+            duration: 0.25
+          });
+        }
+      }, 50);
+    });
+
+    marker.addTo(reportLayer);
   });
 }
 
