@@ -526,44 +526,48 @@
                 <th class="p-2 text-left">
                   <button
                     type="button"
-                    class="active-sort-btn inline-flex items-center gap-1 font-semibold hover:text-red-700"
-                    data-active-sort="nkws"
+                    class="detail-sort-btn"
+                    data-detail-sort-group="active"
+                    data-detail-sort-key="nkws"
                   >
                     NUPT / NKWS
-                    <span data-active-sort-icon="nkws">↕</span>
+                    <span id="activeSortNkws">↕</span>
                   </button>
                 </th>
             
                 <th class="p-2 text-left">
                   <button
                     type="button"
-                    class="active-sort-btn inline-flex items-center gap-1 font-semibold hover:text-red-700"
-                    data-active-sort="status_terakhir"
+                    class="detail-sort-btn"
+                    data-detail-sort-group="active"
+                    data-detail-sort-key="status_terakhir"
                   >
                     Status terakhir
-                    <span data-active-sort-icon="status_terakhir">↕</span>
+                    <span id="activeSortStatus">↕</span>
                   </button>
                 </th>
             
                 <th class="p-2 text-left">
                   <button
                     type="button"
-                    class="active-sort-btn inline-flex items-center gap-1 font-semibold hover:text-red-700"
-                    data-active-sort="sejak_tanggal"
+                    class="detail-sort-btn"
+                    data-detail-sort-group="active"
+                    data-detail-sort-key="sejak_tanggal"
                   >
                     Sejak
-                    <span data-active-sort-icon="sejak_tanggal">↕</span>
+                    <span id="activeSortDate">↕</span>
                   </button>
                 </th>
             
                 <th class="p-2 text-right">
                   <button
                     type="button"
-                    class="active-sort-btn inline-flex items-center gap-1 font-semibold hover:text-red-700"
-                    data-active-sort="jumlah_hari"
+                    class="detail-sort-btn"
+                    data-detail-sort-group="active"
+                    data-detail-sort-key="jumlah_hari"
                   >
                     Durasi
-                    <span data-active-sort-icon="jumlah_hari">↓</span>
+                    <span id="activeSortDays">↓</span>
                   </button>
                 </th>
               </tr>
@@ -577,7 +581,7 @@
     <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
       <div class="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h3 class="font-bold text-slate-900">Tunggakan Update Harian</h3>
+          <h3 class="font-bold text-slate-900">Perlu Update</h3>
           <p class="text-xs text-slate-500">Status terbuka yang belum diperbarui hingga hari ini.</p>
         </div>
         <span id="pendingUpdateCount" class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">0 lokasi</span>
@@ -586,39 +590,44 @@
       <div class="max-h-80 overflow-auto rounded-lg border border-slate-100">
         <table class="w-full text-left text-xs">
           <thead class="sticky top-0 z-10 bg-slate-100 text-slate-600">
-            <tr>
-              <th class="p-2">
-                <button
-                  type="button"
-                  class="inline-flex items-center font-bold hover:text-forest-700"
-                  data-detail-sort="pending"
-                  data-sort-key="nkws"
-                >
-                  NUPT / NKWS <span id="pendingSortNkws"></span>
-                </button>
-              </th>
-              <th class="p-2">
-                <button
-                  type="button"
-                  class="inline-flex items-center font-bold hover:text-forest-700"
-                  data-detail-sort="pending"
-                  data-sort-key="status_terakhir"
-                >
-                  Status terakhir <span id="pendingSortStatus"></span>
-                </button>
-              </th>
-              <th class="p-2 text-right">
-                <button
-                  type="button"
-                  class="ml-auto inline-flex items-center font-bold hover:text-forest-700"
-                  data-detail-sort="pending"
-                  data-sort-key="jumlah_hari_terlambat"
-                >
-                  Terlambat <span id="pendingSortDays"></span>
-                </button>
-              </th>
-            </tr>
-          </thead>
+              <tr>
+                <th class="p-2 text-left">
+                  <button
+                    type="button"
+                    class="detail-sort-btn"
+                    data-detail-sort-group="pending"
+                    data-detail-sort-key="nkws"
+                  >
+                    NUPT / NKWS
+                    <span id="pendingSortNkws">↕</span>
+                  </button>
+                </th>
+            
+                <th class="p-2 text-left">
+                  <button
+                    type="button"
+                    class="detail-sort-btn"
+                    data-detail-sort-group="pending"
+                    data-detail-sort-key="status_terakhir"
+                  >
+                    Status
+                    <span id="pendingSortStatus">↕</span>
+                  </button>
+                </th>
+            
+                <th class="p-2 text-right">
+                  <button
+                    type="button"
+                    class="detail-sort-btn"
+                    data-detail-sort-group="pending"
+                    data-detail-sort-key="jumlah_hari_terlambat"
+                  >
+                    Terlambat
+                    <span id="pendingSortDays">↓</span>
+                  </button>
+                </th>
+              </tr>
+            </thead>
           <tbody id="pendingUpdateBody"></tbody>
         </table>
       </div>
@@ -4541,85 +4550,184 @@ function setupDetailCarouselSwipe() {
   }, { passive: true });
 }
   
+/* ==========================================================================
+   1. FUNGSI HELPER & EVENT BINDER (Di luar init)
+   ========================================================================== */
+
+/**
+   * Mengatur listener event klik global untuk sorting tabel detail/operasional
+   */
+function bindDetailSorting() {
+  /*
+    Menggunakan Delegation Event pada document agar kompatibel 
+    dengan tombol sort berbasis [data-detail-sort-group] maupun [data-active-sort]
+  */
+  document.addEventListener('click', (event) => {
+    // 1. Penanganan Sort berbasis Group (Active & Pending)
+    const groupBtn = event.target.closest('[data-detail-sort-group]');
+    if (groupBtn) {
+      const group = groupBtn.dataset.detailSortGroup;
+      const key = groupBtn.dataset.detailSortKey;
+
+      if (typeof changeDetailSort === 'function' && group && key) {
+        changeDetailSort(group, key);
+      }
+      return;
+    }
+
+    // 2. Penanganan Sort khusus Active Extinction (Legacy / Direct)
+    const activeBtn = event.target.closest('[data-active-sort]');
+    if (activeBtn) {
+      const key = activeBtn.dataset.activeSort;
+      if (!key) return;
+
+      if (activeExtinctionSort.key === key) {
+        activeExtinctionSort.direction =
+          activeExtinctionSort.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        activeExtinctionSort.key = key;
+        activeExtinctionSort.direction =
+          key === 'jumlah_hari' || key === 'sejak_tanggal' ? 'desc' : 'asc';
+      }
+
+      updateActiveExtinctionSortIcons();
+      if (typeof renderOperationalDetails === 'function') {
+        renderOperationalDetails();
+      }
+    }
+  });
+}
+
+/**
+   * Mengbarui tampilan indikator ikon panah sorting (↑, ↓, ↕)
+   */
+function updateActiveExtinctionSortIcons() {
+  document.querySelectorAll('[data-active-sort-icon]').forEach((icon) => {
+    const key = icon.dataset.activeSortIcon;
+
+    if (key !== activeExtinctionSort.key) {
+      icon.textContent = '↕';
+      return;
+    }
+
+    icon.textContent = activeExtinctionSort.direction === 'asc' ? '↑' : '↓';
+  });
+}
+
+/**
+   * Skrip Pengujian Unit Logika Gelombang Operasional
+   */
+function runActiveOperationalWaveTest() {
+  const testReports = [
+    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-01', status: 'Proses Groundcheck' },
+    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-02', status: 'Upaya Pemadaman' },
+    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-03', status: 'Upaya Pemadaman' },
+    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-04', status: 'Perlu Konfirmasi' },
+    { kawasan_id: 102, nupt: 'BKSDA RIAU', nkws: 'TN Tesso Nilo', tanggal: '2026-09-05', status: 'Upaya Pemadaman' },
+    { kawasan_id: 102, nupt: 'BKSDA RIAU', nkws: 'TN Tesso Nilo', tanggal: '2026-09-06', status: 'Sudah Padam' }
+  ];
+
+  const active = getActiveExtinctionReports(testReports, null);
+  console.table(active);
+
+  const openWave = active.find((item) => item.nkws === 'Kawasan Rangkaian Terbuka');
+  const tessoNilo = active.find((item) => item.nkws === 'TN Tesso Nilo');
+
+  console.assert(openWave?.sejak_tanggal === '2026-09-01', 'Kasus 1 gagal: sejak_tanggal harus 1 Sep');
+  console.assert(openWave?.jumlah_hari === 4, 'Kasus 1 gagal: durasi harus 4 hari');
+  console.assert(openWave?.status_terakhir === 'Perlu Konfirmasi', 'Kasus 1 gagal: status terakhir harus Perlu Konfirmasi');
+  console.assert(!tessoNilo, 'Kasus TN Tesso Nilo gagal: Upaya → Sudah Padam tidak boleh aktif');
+
+  console.info('Test gelombang operasional selesai. Tidak ada Assertion failed = lulus.');
+}
+
+
+/* ==========================================================================
+   2. FUNGSI INISIALISASI UTAMA (TUNGGAL)
+   ========================================================================== */
+
 async function init() {
-  // 1. Inisialisasi Peta & Form Awal
-  setupMap();
-  loadKawasanGeoJSON();
-  $('#tanggal').value = today();
-  $('#pointsContainer').innerHTML = pointRow();
-  connectionLabel();
-  await loadReports();
-  await loadKawasanMaster();
-  
-  matrixStartDate = null;
-  renderAll();
-  
-  subscribeReportsRealtime();
-  };
- 
-  // 3. Event Listeners - Navigasi Tab
+  try {
+    // A. Setup Peta & Form Awal
+    setupMap();
+    loadKawasanGeoJSON();
+    $('#tanggal').value = today();
+    $('#pointsContainer').innerHTML = pointRow();
+    connectionLabel();
+
+    // B. Fetch Data Master & Laporan dari Database/API
+    await loadKawasanMaster();
+    await loadReports();
+
+    // C. Reset Matriks & Render Seluruh Tampilan UI
+    matrixStartDate = null;
+    renderAll();
+
+    // D. Pengait Listener Sorting & Update Ikon
+    bindDetailSorting();
+    updateActiveExtinctionSortIcons();
+
+    // E. Aktifkan Realtime Subscription Supabase
+    subscribeReportsRealtime();
+
+    // F. Setup Seluruh Event Listener UI & Form
+    setupEventListeners();
+
+  } catch (error) {
+    console.error('Gagal menginisialisasi aplikasi:', error);
+    if (typeof toast === 'function') {
+      toast(error.message, true);
+    }
+  }
+}
+
+/**
+   * Mengelompokkan seluruh Event Listener DOM aplikasi
+   */
+function setupEventListeners() {
+  // 1. Navigasi Tab
   $$('.tab-button').forEach(btn => {
     btn.onclick = () => setView(btn.dataset.view);
   });
 
- // 4. Event Listeners - Matriks & Filter
+  // 2. Control Matriks & Filter Pulau
   $('#pulauFilter').onchange = renderMatrix;
-  
-  $('#expandAll').onclick = () => {
-    collapsedPulau.clear();
-    renderMatrix();
-  };
-  
-  $('#collapseAll').onclick = () => {
-    PULAU.forEach(p => collapsedPulau.add(p));
-    renderMatrix();
-  };
-  
+  $('#expandAll').onclick = () => { collapsedPulau.clear(); renderMatrix(); };
+  $('#collapseAll').onclick = () => { PULAU.forEach(p => collapsedPulau.add(p)); renderMatrix(); };
   $('#matrixPrev').onclick = () => shiftMatrix(-14);
   $('#matrixNext').onclick = () => shiftMatrix(14);
   $('#matrixToday').onclick = resetMatrix;
-  
-  // Event Listeners - Pencarian Kawasan (NKWS)
+
+  // 3. Filter Pencarian Kawasan (NKWS)
   const kawasanSearchInput = $('#kawasanSearchFilter');
   const resetKawasanSearchBtn = $('#resetKawasanSearchBtn');
-  
+
   if (kawasanSearchInput) {
     const handleKawasanSearch = () => {
       updateKawasanSearchResetButton();
       renderMatrix();
     };
-  
     kawasanSearchInput.addEventListener('input', handleKawasanSearch);
     kawasanSearchInput.addEventListener('change', handleKawasanSearch);
   }
-  
+
   if (resetKawasanSearchBtn) {
     resetKawasanSearchBtn.onclick = () => {
       if (!kawasanSearchInput) return;
-  
       kawasanSearchInput.value = '';
       updateKawasanSearchResetButton();
       renderMatrix();
       kawasanSearchInput.focus();
     };
   }
-  
-  // Event Listeners - Pengurutan Tabel Detail (Rincian & Tunggakan)
-  $$('[data-detail-sort]').forEach((button) => {
-    button.onclick = () => {
-      toggleDetailsSort(
-        button.dataset.detailSort,
-        button.dataset.sortKey
-      );
-    };
-  });
 
-  // 5. Event Listeners - Filter Peta
+  // 4. Filter Peta
   ['mapUptFilter', 'mapKawasanFilter', 'mapDateFilter'].forEach(id => {
-    $('#' + id).onchange = renderMap;
+    const el = $('#' + id);
+    if (el) el.onchange = renderMap;
   });
 
-  // 6. Event Listeners - Form & Dinamika Titik Koordinat
+  // 5. Form Input Laporan & Dinamika Titik Koordinat
   $('#addPointBtn').onclick = () => {
     $('#pointsContainer').insertAdjacentHTML('beforeend', pointRow());
   };
@@ -4628,6 +4736,8 @@ async function init() {
       e.target.closest('.point-row').remove();
     }
   };
+  
+  // Dynamic Select Cascade (Hanya dipasang 1x)
   $('#npulau').onchange = () => {
     $('#nupt').value = '';
     $('#nkws').value = '';
@@ -4637,47 +4747,29 @@ async function init() {
     $('#nkws').value = '';
     populateSelects();
   };
+
   $('#parseBtn').onclick = parseRaw;
   $('#reportForm').onsubmit = saveForm;
   $('#cancelEditBtn').onclick = resetForm;
 
-  // 7. Event Listeners - Modal Detail Laporan
-  $$('.modal-close').forEach((button) => {
-    button.onclick = closeModal;
-  });
-  $('#detailModal').onclick = (event) => {
-  /* Klik backdrop menutup modal; klik panel tidak. */
-  if (event.target === $('#detailModal')) {
-    closeModal();
-    }
+  // 6. Modal Detail & Carousel Navigation
+  $$('.modal-close').forEach(button => button.onclick = closeModal);
+  
+  $('#detailModal').onclick = (e) => {
+    if (e.target === $('#detailModal')) closeModal();
   };
-  $('#modalEditBtn').onclick = () => {
-    openEdit(selectedReport);
-  };
+  $('#modalEditBtn').onclick = () => openEdit(selectedReport);
   $('#deleteBtn').onclick = removeCurrent;
 
   $('#detailPrevBtn').onclick = prevSlide;
   $('#detailNextBtn').onclick = nextSlide;
-  
-  $('#npulau').onchange = () => {
-  $('#nupt').value = '';
-  $('#nkws').value = '';
 
-    populateSelects();
-  };
-  
-  $('#nupt').onchange = () => {
-    $('#nkws').value = '';
-  
-    populateSelects();
-  };
-  // --- TAMBAHAN SKRIP FULL REPORT & ESCAPE KEY ---
-  $$('.full-report-close').forEach(button => {
-    button.onclick = closeFullReport;
-  });
+  // 7. Modal Full Report & Keyboard Navigation
+  $$('.full-report-close').forEach(button => button.onclick = closeFullReport);
   $('#fullReportModal').onclick = e => {
     if (e.target === $('#fullReportModal')) closeFullReport();
   };
+
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       closeModal();
@@ -4685,158 +4777,30 @@ async function init() {
     }
   });
 
-  document.addEventListener('keydown', handleDetailCarouselKeyboard);
-  setupDetailCarouselSwipe();
-  
+  if (typeof handleDetailCarouselKeyboard === 'function') {
+    document.addEventListener('keydown', handleDetailCarouselKeyboard);
+  }
+  if (typeof setupDetailCarouselSwipe === 'function') {
+    setupDetailCarouselSwipe();
+  }
+
+  // 8. Resize Window (Sticky Matrix Layout Trigger)
   window.addEventListener('resize', () => {
-    /* Tidak merender ulang data; hanya menjaga browser menghitung layout sticky. */
     const matrixContainer = $('#matrixScrollContainer');
-  
     if (matrixContainer) {
       matrixContainer.style.display = 'none';
       void matrixContainer.offsetHeight;
       matrixContainer.style.display = '';
     }
   });
-
-function runActiveOperationalWaveTest() {
-  const testReports = [
-    /*
-      Kasus 1:
-      1 Groundcheck → 2-3 Upaya → 4 Konfirmasi
-      Expected: AKTIF, sejak 1 Sep, 4 hari, status akhir Konfirmasi.
-    */
-    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-01', status: 'Proses Groundcheck' },
-    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-02', status: 'Upaya Pemadaman' },
-    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-03', status: 'Upaya Pemadaman' },
-    { kawasan_id: 101, nupt: 'UPT TEST', nkws: 'Kawasan Rangkaian Terbuka', tanggal: '2026-09-04', status: 'Perlu Konfirmasi' },
-
-    /*
-      Kasus 2: TN Tesso Nilo
-      5 Upaya → 6 Sudah Padam
-      Expected: TIDAK AKTIF.
-    */
-    { kawasan_id: 102, nupt: 'BKSDA RIAU', nkws: 'TN Tesso Nilo', tanggal: '2026-09-05', status: 'Upaya Pemadaman' },
-    { kawasan_id: 102, nupt: 'BKSDA RIAU', nkws: 'TN Tesso Nilo', tanggal: '2026-09-06', status: 'Sudah Padam' }
-  ];
-
-  const active = getActiveExtinctionReports(testReports, null);
-
-  console.table(active);
-
-  const openWave = active.find(
-    (item) => item.nkws === 'Kawasan Rangkaian Terbuka'
-  );
-
-  const tessoNilo = active.find(
-    (item) => item.nkws === 'TN Tesso Nilo'
-  );
-
-  console.assert(
-    openWave?.sejak_tanggal === '2026-09-01',
-    'Kasus 1 gagal: sejak_tanggal harus 1 Sep'
-  );
-
-  console.assert(
-    openWave?.jumlah_hari === 4,
-    'Kasus 1 gagal: durasi harus 4 hari'
-  );
-
-  console.assert(
-    openWave?.status_terakhir === 'Perlu Konfirmasi',
-    'Kasus 1 gagal: status terakhir harus Perlu Konfirmasi'
-  );
-
-  console.assert(
-    !tessoNilo,
-    'Kasus TN Tesso Nilo gagal: Upaya → Sudah Padam tidak boleh aktif'
-  );
-
-  console.info('Test gelombang operasional selesai. Tidak ada Assertion failed = lulus.');
-}
-  
-function bindActiveExtinctionSort() {
-  document.querySelectorAll('[data-active-sort]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const key = button.dataset.activeSort;
-
-      if (activeExtinctionSort.key === key) {
-        activeExtinctionSort.direction =
-          activeExtinctionSort.direction === 'asc'
-            ? 'desc'
-            : 'asc';
-      } else {
-        activeExtinctionSort.key = key;
-
-        /*
-          Durasi dan tanggal umumnya lebih nyaman dari terbesar/terbaru.
-          Nama dan status dimulai dari A–Z.
-        */
-        activeExtinctionSort.direction =
-          key === 'jumlah_hari' || key === 'sejak_tanggal'
-            ? 'desc'
-            : 'asc';
-      }
-
-      updateActiveExtinctionSortIcons();
-      renderOperationalDetails();
-    });
-  });
 }
 
-function updateActiveExtinctionSortIcons() {
-  document
-    .querySelectorAll('[data-active-sort-icon]')
-    .forEach((icon) => {
-      const key = icon.dataset.activeSortIcon;
 
-      if (key !== activeExtinctionSort.key) {
-        icon.textContent = '↕';
-        return;
-      }
+/* ==========================================================================
+   3. JALANKAN INISIALISASI
+   ========================================================================== */
 
-      icon.textContent =
-        activeExtinctionSort.direction === 'asc'
-          ? '↑'
-          : '↓';
-    });
-}
-// Jalankan fungsi init saat dokumen selesai dimuat
 document.addEventListener('DOMContentLoaded', init);
-
-document.addEventListener('click', (event) => {
-  const button = event.target.closest('[data-detail-sort-group]');
-
-  if (!button) {
-    return;
-  }
-
-  const group = button.dataset.detailSortGroup;
-  const key = button.dataset.detailSortKey;
-
-  if (!group || !key) {
-    return;
-  }
-
-  changeDetailSort(group, key);
-});
-  
-async function init() {
-  try {
-    bindActiveExtinctionSort();
-
-    await loadKawasanMaster();
-    console.table(kawasanMaster);
-    
-    await loadReports();
-
-    renderAll();
-    updateActiveExtinctionSortIcons();
-  } catch (error) {
-    console.error(error);
-    toast(error.message, true);
-  }
-}
 </script>
 </body>
 </html>
