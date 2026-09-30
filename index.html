@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SIAGA Karhutla — Dashboard Pemantauan</title>
+  <title>SIAGA KARHUT KSDAE — Dashboard Pemantauan</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { theme: { extend: { colors: { forest: {50:'#effaf3',100:'#d8f2e1',500:'#287a4d',600:'#1e613d',700:'#174d31',800:'#103a26',900:'#0b291b'} } } } };
@@ -504,7 +504,7 @@
     <div class="flex items-center gap-3">
       <img 
         src="https://raw.githubusercontent.com/pjkarhutla-del/Laporan_Harian_Dalkarhut_KSDAE/main/Logo KK_kompres.png" 
-        alt="Logo SIAGA KARHUTLA" 
+        alt="Logo SIAGA KARHUT" 
         class="h-11 w-auto object-contain drop-shadow" 
       />
       <div>
@@ -5010,7 +5010,7 @@ const fd=x=>{if(!x)return '-';const d=new Date(x+'T00:00:00');return isNaN(d)?St
 const lokOk=s=>!(s.nama_lokasi==='-'&&!(s.koordinat_json||[]).length&&!s.geojson_path);
 const sarUsed=r=>r.sarpras.filter(x=>(+x.jumlah_eksisting_baik||0)+(+x.jumlah_eksisting_rusak||0)+(+x.update_kondisi_baik||0)+(+x.update_kondisi_rusak_ringan||0)+(+x.update_kondisi_rusak_berat||0)>0);
 function pdfBand(doc,sub){const pn=doc.internal.getCurrentPageInfo().pageNumber;doc.__b=doc.__b||new Set();if(doc.__b.has(pn))return;doc.__b.add(pn);const W=doc.internal.pageSize.getWidth();
-doc.setFillColor(...BR);doc.rect(0,0,W,22,'F');doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('SIAGA KARHUTLA - Detail Data DPR',14,10);
+doc.setFillColor(...BR);doc.rect(0,0,W,22,'F');doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('SIAGA KARHUT - Detail Data DPR',14,10);
 doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.text('Direktorat Jenderal Konservasi Sumber Daya Alam dan Ekosistem',14,16);
 doc.text(doc.splitTextToSize(sub||'',90)[0]||'',W-14,10,{align:'right'});doc.text('Dicetak: '+new Date().toLocaleString('id-ID'),W-14,16,{align:'right'});doc.setTextColor(0)}
 const at=(doc,o)=>{doc.autoTable({theme:'grid',styles:{fontSize:8.5,cellPadding:1.8,overflow:'linebreak',textColor:20},headStyles:{fillColor:BR,textColor:255,halign:'center'},footStyles:{fillColor:[241,245,249],textColor:20,fontStyle:'bold'},margin:{left:14,right:14,top:28,bottom:16},didDrawPage:()=>pdfBand(doc,doc.__sub),...o});return doc.lastAutoTable.finalY+6};
