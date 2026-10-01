@@ -4917,7 +4917,7 @@ const angN=a=>a==='Non-APBN'?'Non APBN':['APBN','Non APBN','Gabungan'].includes(
 /* FILTER PEMDA: UPT yang namanya mengandung 'Pemerintah Daerah' tidak dipakai di fitur DPR
    (dropdown form, Detail Data DPR, ekspor PDF/Excel/CSV). Untuk menampilkan kembali,
    ubah isPemda menjadi: const isPemda=()=>false; */
-const isPemda=n=>/pemerintah\s+daerah/i.test(n||'');
+const isPemda=n=>/pemerintah/i.test(n||'');
 const upts=()=>{const s=[...new Set(kawasanMaster.map(k=>k.nupt))].filter(u=>!isPemda(u)).sort();return s.length?s:Object.keys(DPR_EKS).filter(u=>!isPemda(u)).sort()};
 const opt=(a,v)=>a.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('');
 const eksRows=u=>{const m={};(DPR_EKS[eksKey(u)]||[]).forEach(r=>m[r[0].toLowerCase()]=r);return m};
