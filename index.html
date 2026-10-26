@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DASHBOARD KARHUT KSDAE</title>
+<style>
+  :root{--forest:#08171a;--panel:#10291f;--ash:#f4efe4;--dim:#a9b8b2;--ember:#e6c987;--deep:#b88a3e;--ink:#1c1405;--line:rgba(244,239,228,.14)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;background:radial-gradient(ellipse at 50% -10%,#14343a 0%,#0c2024 45%,var(--forest) 100%);background-attachment:fixed;color:var(--ash);line-height:1.6;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;position:relative}
+  .glow{position:fixed;inset:auto -20% -15% -20%;height:65%;background:radial-gradient(ellipse at 50% 100%,rgba(201,164,92,.26),rgba(201,164,92,.07) 45%,transparent 70%);pointer-events:none;transition:background-position .3s}
+  #embers{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+  main{flex:1;display:flex;align-items:center;justify-content:center;padding:clamp(24px,6vw,64px) clamp(16px,5vw,48px);position:relative;z-index:1}
+  .card{width:100%;max-width:660px;background:rgba(14,38,42,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:24px;padding:clamp(24px,5vw,44px);box-shadow:0 24px 60px rgba(0,0,0,.4),inset 0 1px 0 rgba(244,239,228,.08)}
+  .badge{display:inline-flex;align-items:center;gap:10px;padding:7px 15px;border:1px solid rgba(201,164,92,.55);border-radius:999px;color:var(--ember);font-size:.92rem;font-weight:600;background:rgba(201,164,92,.1)}
+  .badge i{width:9px;height:9px;border-radius:50%;background:var(--ember);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(201,164,92,.7)}100%{box-shadow:0 0 0 12px rgba(201,164,92,0)}}
+  h1{margin:24px 0 14px;font-size:clamp(2.1rem,7.5vw,3.7rem);line-height:1.06;font-weight:800;letter-spacing:-.03em}
+  .lead{font-size:clamp(1.02rem,2.5vw,1.2rem);color:var(--dim)}
+
+  .cta{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:28px;padding:19px 24px;border:0;border-radius:16px;background:linear-gradient(135deg,var(--ember),var(--deep));color:var(--ink);font:700 1.12rem/1.2 inherit;font-family:inherit;text-decoration:none;cursor:pointer;box-shadow:0 10px 30px rgba(184,138,62,.35);transition:transform .15s ease,box-shadow .2s ease;will-change:transform}
+  .cta:hover{box-shadow:0 14px 38px rgba(201,164,92,.5)}
+  .cta:active{transform:scale(.98)!important}
+  .cta svg{width:22px;height:22px;transition:transform .2s}
+  .cta:hover svg{transform:translateX(4px)}
+  .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);animation:rip .6s ease-out forwards;pointer-events:none}
+  @keyframes rip{to{transform:scale(1);opacity:0}}
+  :focus-visible{outline:3px solid var(--ash);outline-offset:3px}
+
+  .timer{display:flex;align-items:center;gap:16px;margin-top:22px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.18)}
+  .ring{position:relative;width:56px;height:56px;flex:none}
+  .ring svg{width:56px;height:56px;transform:rotate(-90deg)}
+  .ring circle{fill:none;stroke-width:5}
+  .ring .bg{stroke:var(--line)}
+  .ring .fg{stroke:var(--ember);stroke-linecap:round;stroke-dasharray:138.2;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear}
+  .ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:1.05rem}
+  .timer p{flex:1;font-size:.95rem;color:var(--dim);line-height:1.45}
+  .ghost{padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--ash);font:600 .9rem inherit;font-family:inherit;cursor:pointer;transition:background .2s,border-color .2s;white-space:nowrap}
+  .ghost:hover{background:rgba(242,238,230,.08);border-color:rgba(242,238,230,.4)}
+
+  .newlink{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+  .newlink small{display:block;color:var(--dim);font-size:.92rem;margin-bottom:8px}
+  .urlrow{display:flex;gap:10px;align-items:stretch}
+  .url{flex:1;min-width:0;display:flex;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.18);color:var(--ash);font-size:.9rem;word-break:break-all;text-decoration:none;line-height:1.35}
+  .url:hover{border-color:var(--ember)}
+  .copy{min-width:112px}
+  .tip{margin-top:12px;font-size:.88rem;color:var(--dim)}
+
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,24px);opacity:0;padding:12px 20px;border-radius:12px;background:var(--ash);color:var(--ink);font-weight:600;font-size:.95rem;pointer-events:none;transition:.25s;z-index:5}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  .trees{position:relative;z-index:0;width:100%;height:clamp(60px,12vw,120px);display:block;margin-top:-1px}
+
+  @media(max-width:520px){.timer{flex-wrap:wrap}.timer p{flex-basis:calc(100% - 80px)}.ghost{width:100%}.urlrow{flex-direction:column}.copy{width:100%;min-height:44px}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="glow" id="glow"></div>
+<canvas id="embers" aria-hidden="true"></canvas>
+
+<main>
+  <section class="card" aria-labelledby="judul">
+    <div class="badge"><i></i>Dashboard Karhut KSDAE</div>
+    <h1 id="judul">Website ini sudah tidak aktif.</h1>
+    <p class="lead">Silahkan klik link berikut untuk mengisi laporan kebakaran.</p>
+
+    <a class="cta" id="go" href="https://messages-portfolio-nova-chrome.trycloudflare.com/dalkarhut/">
+      Isi laporan kebakaran
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+
+    <div class="timer" id="timer">
+      <div class="ring">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><circle class="bg" cx="24" cy="24" r="22"/><circle class="fg" id="fg" cx="24" cy="24" r="22"/></svg>
+        <b id="num">10</b>
+      </div>
+      <p id="msg" aria-live="polite">Anda akan dialihkan otomatis ke website baru.</p>
+      <button class="ghost" id="pause" type="button">Tunda</button>
+    </div>
+
+    <div class="newlink">
+      <small>Link website yang baru:</small>
+      <div class="urlrow">
+        <a class="url" id="url" href="https://messages-portfolio-nova-chrome.trycloudflare.com/dalkarhut/">https://messages-portfolio-nova-chrome.trycloudflare.com/dalkarhut/</a>
+        <button class="ghost copy" id="copy" type="button">Salin link</button>
+      </div>
+      <p class="tip">Perbarui bookmark atau pintasan Anda ke alamat baru ini.</p>
+    </div>
+  </section>
+</main>
+
+<svg class="trees" viewBox="0 0 1200 140" preserveAspectRatio="none" aria-hidden="true">
+  <path fill="#10303a" d="M0 140V95l30-45 30 45-12 0 28 35H0zM90 140l35-70 35 70zM170 140l30-55 30 55zM250 140l40-80 40 80zM340 140l28-50 28 50zM410 140l38-75 38 75zM500 140l30-60 30 60zM580 140l42-85 42 85zM680 140l28-52 28 52zM760 140l36-72 36 72zM850 140l30-58 30 58zM930 140l40-78 40 78zM1030 140l30-55 30 55zM1110 140l35-68 35 68z"/>
+  <path fill="#071417" d="M0 140V112l40-30 40 30zM60 140l30-45 30 45zM140 140l36-58 36 58zM230 140l28-42 28 42zM310 140l40-64 40 64zM410 140l32-48 32 48zM500 140l38-60 38 60zM600 140l30-46 30 46zM690 140l40-66 40 66zM790 140l30-44 30 44zM880 140l36-58 36 58zM970 140l30-46 30 46zM1060 140l40-62 40 62z"/>
+</svg>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  var URL_BARU="https://messages-portfolio-nova-chrome.trycloudflare.com/dalkarhut/";
+  var TOTAL=10, left=TOTAL, paused=false, timerId=null;
+  var $=function(i){return document.getElementById(i)};
+  var fg=$("fg"),num=$("num"),msg=$("msg"),pause=$("pause"),go=$("go");
+  var reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- Hitung mundur + pengalihan otomatis ---------- */
+  function paint(){
+    num.textContent=left;
+    fg.style.strokeDashoffset=(138.2*(1-left/TOTAL)).toFixed(1);
+  }
+  function tick(){
+    left--; paint();
+    if(left<=0){clearInterval(timerId);msg.textContent="Mengalihkan…";location.href=URL_BARU;}
+  }
+  function start(){clearInterval(timerId);timerId=setInterval(tick,1000);paused=false;pause.textContent="Tunda";msg.textContent="Anda akan dialihkan otomatis ke website baru.";}
+  function stop(){clearInterval(timerId);paused=true;pause.textContent="Lanjutkan";msg.textContent="Pengalihan otomatis ditunda.";}
+  pause.addEventListener("click",function(){paused?(left=TOTAL,paint(),start()):stop()});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!paused)stop()});
+  document.addEventListener("visibilitychange",function(){if(document.hidden&&!paused)stop()});
+  paint();start();
+
+  /* ---------- Salin link + toast ---------- */
+  var toastT;
+  function toast(t){var el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(function(){el.classList.remove("show")},2200)}
+  $("copy").addEventListener("click",function(){
+    var b=this;
+    function ok(){b.textContent="Tersalin ✓";toast("Link berhasil disalin");setTimeout(function(){b.textContent="Salin link"},2000)}
+    if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(URL_BARU).then(ok,fallback)}else fallback();
+    function fallback(){var t=document.createElement("textarea");t.value=URL_BARU;t.style.position="fixed";t.style.opacity="0";document.body.appendChild(t);t.select();try{document.execCommand("copy");ok()}catch(e){toast("Gagal menyalin, salin manual")}document.body.removeChild(t)}
+  });
+
+  /* ---------- Efek riak pada tombol utama + tombol "magnetik" ---------- */
+  go.addEventListener("click",function(e){
+    var r=go.getBoundingClientRect(),s=Math.max(r.width,r.height)*2,d=document.createElement("span");
+    d.className="ripple";d.style.width=d.style.height=s+"px";
+    d.style.left=(e.clientX-r.left-s/2)+"px";d.style.top=(e.clientY-r.top-s/2)+"px";
+    go.appendChild(d);setTimeout(function(){d.remove()},650);
+  });
+  if(!reduce&&window.matchMedia("(hover:hover)").matches){
+    go.addEventListener("mousemove",function(e){var r=go.getBoundingClientRect();
+      var x=(e.clientX-r.left-r.width/2)/r.width*8,y=(e.clientY-r.top-r.height/2)/r.height*8;
+      go.style.transform="translate("+x+"px,"+(y-2)+"px)"});
+    go.addEventListener("mouseleave",function(){go.style.transform=""});
+  }
+
+  /* ---------- Bara api yang bergerak mengikuti kursor/sentuhan ---------- */
+  if(reduce)return;
+  var cv=$("embers"),cx=cv.getContext("2d"),W,H,dpr=Math.min(window.devicePixelRatio||1,2),ps=[],mx=-999,my=-999,glow=$("glow");
+  function size(){W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0)}
+  function spawn(init){return{x:Math.random()*W,y:init?Math.random()*H:H+10,r:Math.random()*2.2+.8,vy:-(Math.random()*.6+.25),vx:0,ph:Math.random()*6.28,a:Math.random()*.6+.3}}
+  size();for(var i=0;i<(W<600?30:60);i++)ps.push(spawn(true));
+  addEventListener("resize",size);
+  function move(x,y){mx=x;my=y;glow.style.transform="translateX("+((x/W-.5)*60)+"px)"}
+  addEventListener("pointermove",function(e){move(e.clientX,e.clientY)});
+  addEventListener("pointerdown",function(e){move(e.clientX,e.clientY);for(var k=0;k<12;k++){var p=spawn();p.x=e.clientX;p.y=e.clientY;p.vy=-(Math.random()*2+1);p.vx=(Math.random()-.5)*3;ps.push(p)}});
+  addEventListener("pointerleave",function(){mx=my=-999});
+  (function loop(){
+    cx.clearRect(0,0,W,H);
+    for(var i=ps.length-1;i>=0;i--){
+      var p=ps[i];p.ph+=.03;
+      var dx=p.x-mx,dy=p.y-my,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<120&&dist>0){p.vx+=dx/dist*.18;p.vy+=dy/dist*.05}
+      p.vx*=.96;p.x+=p.vx+Math.sin(p.ph)*.4;p.y+=p.vy;
+      var life=p.y/H;
+      if(p.y<-10||p.x<-20||p.x>W+20){if(ps.length>(W<600?30:60)){ps.splice(i,1)}else{ps[i]=spawn()}continue}
+      cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.283);
+      cx.fillStyle="rgba(230,"+(180+25*life|0)+","+(110+40*life|0)+","+(p.a*Math.min(1,life+.2)).toFixed(2)+")";
+      cx.shadowColor="#e6c987";cx.shadowBlur=8;cx.fill();
+    }
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>
